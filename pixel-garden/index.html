@@ -13,7 +13,41 @@
 <meta name="twitter:card" content="summary_large_image" />
 <link rel="stylesheet" href="../_kit/releases/0.1.0-d889c4e04356/instrument.css" />
 <style>
+  @font-face {
+    font-family: "Tanker";
+    src: url("../_system/fonts/Tanker-Regular.woff2") format("woff2");
+    font-display: swap;
+  }
   html, body { margin: 0; min-block-size: 100%; }
+  [data-system="instrument"] .pg-chrome {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: var(--instrument-space-2);
+    min-block-size: 48px;
+    padding-inline: var(--instrument-space-4);
+    background: #161616;
+    font-family: "Tanker", var(--instrument-font-sans);
+    font-size: var(--instrument-font-size-small);
+    letter-spacing: var(--instrument-letter-spacing-label);
+    white-space: nowrap;
+  }
+  [data-system="instrument"] .pg-chrome-mark {
+    inline-size: var(--instrument-space-4);
+    block-size: var(--instrument-space-4);
+    margin-inline-end: var(--instrument-space-2);
+    background: #f61515;
+  }
+  [data-system="instrument"] .pg-chrome a {
+    color: #e0e0e0;
+    text-decoration: none;
+  }
+  [data-system="instrument"] .pg-chrome a:hover { color: #ffffff; }
+  [data-system="instrument"] .pg-chrome-sep { color: #6f6f6f; }
+  [data-system="instrument"] .pg-chrome-tool { color: #a8a8a8; }
+  [data-instrument-embed="true"] .pg-chrome { display: none; }
   [data-system="instrument"] .pg-index {
     max-inline-size: 1080px;
     margin: 0 auto;
@@ -124,6 +158,15 @@
 </head>
 <body data-system="instrument" data-instrument-release="0.1.0-d889c4e04356" data-instrument-polarity="ink" data-instrument-grid="off" data-instrument-grain="off" data-instrument-density="normal" data-instrument-motion="system">
 <script>if(new URLSearchParams(location.search).get('instrument-embed')==='1')document.body.dataset.instrumentEmbed='true';</script>
+
+<header class="pg-chrome">
+  <span class="pg-chrome-mark" aria-hidden="true"></span>
+  <a href="https://supermega.design">SUPERMEGA</a>
+  <span class="pg-chrome-sep">/</span>
+  <a href="/">EXPERIMENTS</a>
+  <span class="pg-chrome-sep">/</span>
+  <span class="pg-chrome-tool">PIXEL GARDEN LAB</span>
+</header>
 
 <canvas class="pg-garden" id="garden" aria-hidden="true"></canvas>
 
