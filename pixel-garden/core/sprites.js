@@ -251,26 +251,35 @@
   PG.labChrome = function ({ title, n }) {
     const style = document.createElement("style");
     style.textContent = `
+      @font-face { font-family: "Tanker";
+                   src: url("../_system/fonts/Tanker-Regular.woff2") format("woff2");
+                   font-display: swap; }
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { background: ${C.paper}; color: ${C.ink};
              font-family: ui-monospace, "SF Mono", Menlo, monospace; }
-      .lab-bar { display: flex; align-items: baseline; gap: 16px;
-                 padding: 14px 24px; border-bottom: 3px solid ${C.ink};
-                 background: ${C.paper}; position: relative; z-index: 10; }
-      .lab-bar a { color: ${C.ink}; text-decoration: none; font-size: 12px;
-                   opacity: .6; }
-      .lab-bar a:hover { opacity: 1; }
-      .lab-bar strong { font-size: 13px; letter-spacing: .08em;
-                        text-transform: uppercase; }
-      .lab-bar span.num { font-size: 12px; opacity: .45; }
+      .lab-bar { display: flex; align-items: center; gap: 8px;
+                 min-height: 48px; padding: 0 16px; background: #161616;
+                 font-family: "Tanker", -apple-system, sans-serif;
+                 font-size: 14px; letter-spacing: .02em; text-transform: uppercase;
+                 white-space: nowrap; overflow-x: auto; position: relative; z-index: 10; }
+      .lab-bar .mark { flex: 0 0 auto; width: 16px; height: 16px;
+                       margin-right: 8px; background: #f61515; }
+      .lab-bar a { color: #e0e0e0; text-decoration: none; }
+      .lab-bar a:hover { color: #ffffff; }
+      .lab-bar .sep { color: #6f6f6f; }
+      .lab-bar .here { color: #a8a8a8; }
+      .lab-bar .num { color: #6f6f6f; margin-right: 4px; }
     `;
     document.head.appendChild(style);
     /* Embedded in the workbench the viewer supplies the header — skip the bar. */
     if (new URLSearchParams(location.search).get("instrument-embed") === "1") return;
     const bar = document.createElement("div");
     bar.className = "lab-bar";
-    bar.innerHTML = `<a href="index.html">&larr; lab</a>
-      <span class="num">${n}</span> <strong>${title}</strong>`;
+    bar.innerHTML = `<span class="mark" aria-hidden="true"></span>
+      <a href="https://supermega.design">SUPERMEGA</a> <span class="sep">/</span>
+      <a href="/">EXPERIMENTS</a> <span class="sep">/</span>
+      <a href="index.html">PIXEL GARDEN LAB</a> <span class="sep">/</span>
+      <span class="here"><span class="num">${n}</span>${title}</span>`;
     document.body.prepend(bar);
   };
 })();
