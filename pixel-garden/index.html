@@ -61,16 +61,8 @@
     background: var(--instrument-color-surface);
     box-shadow: var(--instrument-shadow-rule);
   }
-  [data-system="instrument"] .pg-seed-copy {
-    border: 0;
-    padding: 2px var(--instrument-space-2);
-    background: #f61515;
-    color: #ffffff;
-    font: inherit;
-    text-transform: uppercase;
-    cursor: pointer;
-  }
-  [data-system="instrument"] .pg-seed-copy:hover { background: #ff3131; }
+  [data-system="instrument"] .pg-seed-cta { margin-block-start: var(--instrument-space-4); }
+  [data-system="instrument"] .pg-seed-cta .instrument-glass-button { inline-size: 100%; }
   [data-system="instrument"] .pg-seed-body {
     padding: var(--instrument-space-4);
     color: var(--instrument-color-text-muted);
@@ -222,13 +214,17 @@
   <div class="pg-grid" id="grid"></div>
 
   <section class="pg-seed" id="seed">
-    <span class="pg-card-header"><span>Seed Prompt — plant this in your project</span><button class="pg-seed-copy" id="seed-copy" type="button">Copy</button></span>
+    <span class="pg-card-header"><span>Seed Prompt — plant this in your project</span><span></span></span>
     <div class="pg-seed-body">
       <p>This whole lab runs on one small engine. The seed prompt below is written
         for coding agents — paste it into Claude Code, Cursor, or whatever you
         build with, and it carries the full spec: the 4px grid, the grow-from-the-ground
         algorithm, live source links, and all ten mechanics. Your agent reads it and
         grows a garden of your own. Free to use; <a href="seed-prompt.txt">raw .txt</a>.</p>
+      <div class="instrument-glass-button-wrap pg-seed-cta">
+        <span class="instrument-glass-button-shadow" aria-hidden="true"></span>
+        <button class="instrument-glass-button" id="seed-copy" type="button"><span class="instrument-glass-button-content">Copy Seed Prompt</span></button>
+      </div>
       <details class="pg-seed-details">
         <summary>Read the prompt</summary>
         <pre id="seed-text">Loading…</pre>
@@ -593,15 +589,16 @@ function iconSprite(name) {
     .then((r) => (r.ok ? r.text() : Promise.reject()))
     .then((t) => { seedText.textContent = t; })
     .catch(() => { seedText.textContent = "Open seed-prompt.txt next to this page."; });
+  const seedCopyLabel = seedCopy.querySelector(".instrument-glass-button-content");
   seedCopy.addEventListener("click", async () => {
     try {
       await navigator.clipboard.writeText(seedText.textContent);
-      seedCopy.textContent = "Copied";
+      seedCopyLabel.textContent = "Copied — now paste it into your agent";
     } catch {
-      seedCopy.textContent = "Select + copy below";
+      seedCopyLabel.textContent = "Select + copy below";
       document.querySelector(".pg-seed-details").open = true;
     }
-    setTimeout(() => { seedCopy.textContent = "Copy"; }, 2000);
+    setTimeout(() => { seedCopyLabel.textContent = "Copy Seed Prompt"; }, 2500);
   });
 
   window.PIXEL_GARDEN_ADAPTER = adapter;
