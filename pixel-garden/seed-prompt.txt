@@ -13,57 +13,79 @@ CORE RULES (reimplement these, or fetch the engine below)
 - GRID = 4 (cell pitch), PX = 3 (square size). snap(v) rounds to the grid.
 - A sprite is { rows: ["..F..", ".FFF.", ...], stemCol, pal: { F: "#hex" } }.
   Each character indexes a palette color; "." is empty. stemCol anchors
-  the sprite to its ground x.
+  the sprite to its ground x. Vertical anchor: spriteCells puts the
+  bottom row one grid cell ABOVE groundY (y = groundY - (rows - r) * cell),
+  so set groundY to the top of your soil strip.
 - spriteCells(sprite, scale, groundX, groundY) flattens rows into cells
   ordered bottom-to-top — stem first, petals last — so growth reads as
   planting, not printing.
 - Grower(cells, { bornAt, duration }) reveals floor(eased * cells.length)
-  cells per frame. The ease is expo-in: Math.pow(2, 12 * t - 12) — starts
-  slow, snaps shut. Fully grown sprites flicker: hide 3 pseudo-random
+  cells per frame. Ease is expo-in WITH CLAMPS AT BOTH ENDS:
+  t <= 0 ? 0 : t >= 1 ? 1 : Math.pow(2, 12 * t - 12), and clamp the input
+  with Math.min(1, age / duration). Unclamped it indexes past the cell
+  array and crashes. Fully grown sprites flicker: hide 3 pseudo-random
   cells every 100ms (a building that hums after the crew goes home).
-- Determinism: seed all randomness with an fnv-1a hash of a string key so
-  a scene is identical on every visit.
-- Scenes are layers, back to front: sky fill, halftone dot texture, pixel
-  sun (two-tone disc + 8-dot ray ring), drifting lobed clouds, meadow
-  band, soil strip, then the growing sprites. Pre-render the static
-  layers to an offscreen canvas once per resize; animate only growers and
-  clouds.
+- Respect prefers-reduced-motion: render everything fully grown, skip
+  the flicker and any cursor trails. A grow-in animation is exactly the
+  case that needs this.
+- Determinism: seed all randomness from an fnv-1a hash. The engine's
+  PG.rng(seed) accepts a string or a number; if you write your own
+  number-only rng, call it as rng(fnv("key")).
+- Scene layers. Pre-render the static stack to an offscreen canvas once
+  per resize, in this order: sky fill + halftone dot texture, pixel sun
+  (two-tone disc + an 8-ray ring, 3 dots per ray), background ridges /
+  mountains, meadow band, soil strip. Then every frame draw: the static
+  canvas, the drifting lobed clouds ON TOP of it, then the growing
+  sprites. Clouds come after the ground layers, not before.
+- Dithered fills are a HUE trick, not a value trick. 3x3 squares on a
+  4px grid cover 56%, so 44% of the background mixes through every
+  dithered mass. That separation survives only when layers differ in hue
+  (green meadow on cream sky). On a low-hue-contrast brand palette
+  (monochrome browns, all-blue, etc.) large dithered grounds collapse
+  into mud — fill big ground masses SOLID and lay sparse pixel grain on
+  top; keep the dot-matrix texture for sky, sun, clouds, and sprites.
+- Scale responsively: tie sprite scale, band heights, and ridge
+  amplitude to viewport width (and min(width, height) for ridges), or
+  phones get viewport-sized plants.
 - image-rendering: pixelated; ctx.imageSmoothingEnabled = false; multiply
   canvas buffer sizes by devicePixelRatio.
 
-SOURCE OF TRUTH (fetch and read these before writing code)
+SOURCE OF TRUTH (fetch and read BOTH files before writing code — they
+form one namespace; sprites.js defines PG.FONT/FLOWERS/TREE that
+pixel-core.js's text helpers depend on)
 - https://experiments.supermega.design/pixel-garden/core/pixel-core.js
 - https://experiments.supermega.design/pixel-garden/core/sprites.js
-Plain classic-script JavaScript. No dependencies, no build step. The
-window.PG namespace exports GRID, PX, snap, fnv, rng, Grower, spriteCells,
-textCells, textWidth, FLOWERS, TREE, attachTrail.
+Plain classic-script JavaScript. No dependencies, no build step. Key
+exports on window.PG: GRID, PX, snap, fnv, rng, Grower, Ungrower,
+spriteCells, textCells, textWidth, recolor, FONT, FLOWERS, TREE,
+attachTrail, reducedMotion — plus more; read the files rather than
+trusting any list.
 
-TEN APPLICATIONS TO ADAPT (live pages under /pixel-garden/)
-00 meadow — the full scene: sky, sun, mountains, meadow band, flowers
-01 case-study garden — data-driven: one flower per shipped project;
-   species = service category, height = engagement length, left-to-right
-   = ship order
-02 year strip — fifty-two weeks planted along one wide ground line
-03 404 wilted garden — grey dead flowers; the cursor is a watering can
+TEN APPLICATIONS TO ADAPT — live at
+https://experiments.supermega.design/pixel-garden/NN-slug.html
+(exact filenames below; there are no directory-style URLs)
+00-meadow.html — the full scene: sky, sun, mountains, meadow, flowers
+01-case-study-garden.html — data-driven: one flower per shipped project;
+   species = service category, height = engagement length, order = ship date
+02-year-strip.html — fifty-two weeks planted along one wide ground line
+03-404-wilted.html — grey dead flowers; the cursor is a watering can
    that colors them back to life
-04 time-aware hero — one meadow, four palettes, picked by the visitor's
-   local clock
-05 og generator — a title string in, a deterministic 1200x630 share
+04-time-aware-hero.html — one meadow, four palettes, picked by the clock
+05-og-generator.html — a title string in, a deterministic 1200x630 share
    image out (canvas.toDataURL)
-06 construction hero — a tower crane assembles a wordmark letter by
-   letter: trolley rides the jib, cable drops, each letter builds from
-   the ground up
-07 seed trail — the cursor drops seeds; the garden persists in
+06-construction-hero.html — a tower crane assembles a wordmark letter by
+   letter: trolley rides the jib, cable drops, letters build from the ground
+07-seed-trail.html — the cursor drops seeds; the garden persists in
    localStorage and replants itself next visit
-08 loading terrarium — growth as an honest progress bar; grown cells map
-   to percent loaded
-09 proposal headers — themed scenes (arcade, classroom, tool bench) with
-   PNG export
-10 team sprites — pixel portraits growing in on IntersectionObserver
+08-loading-terrarium.html — growth as an honest progress bar; grown
+   cells map to percent loaded
+09-proposal-headers.html — themed scenes (arcade, classroom, tool bench)
+   with PNG export
+10-team-sprites.html — pixel portraits growing in on IntersectionObserver
 
 ADAPT, DON'T CLONE
-Re-palette to the user's brand, redraw sprites for their domain, keep the
-grow-from-the-ground metaphor — that is the soul of it. Made by SUPERMEGA
-Design (https://supermega.design), decoded from config.floguo.com. Free to
-use in your projects; a link back to https://experiments.supermega.design
-is appreciated.
+Re-palette to the user's brand (minding the hue rule above), redraw
+sprites for their domain, keep the grow-from-the-ground metaphor — that
+is the soul of it. Made by SUPERMEGA Design (https://supermega.design),
+decoded from config.floguo.com. Free to use in your projects; a link
+back to https://experiments.supermega.design is appreciated.
