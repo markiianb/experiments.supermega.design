@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SUPERMEGA lab — 07 · seed trail</title>
+<style>
+  #scene {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    z-index: 2; pointer-events: none;
+  }
+  main { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; padding: 48px 24px 320px; }
+  main section { min-height: 52vh; padding-top: 10vh; }
+  main h1 { font-size: 26px; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 18px; }
+  main h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+  main p { font-size: 14px; line-height: 1.8; margin-bottom: 14px; max-width: 520px; }
+  main code { font-size: 13px; background: #f0e7d2; padding: 1px 5px; }
+  .hud {
+    position: fixed; right: 24px; bottom: 10px; z-index: 3;
+    font-size: 12px; text-align: right; color: #f3e9d2;
+  }
+  .hud a { color: inherit; }
+  .caption {
+    position: fixed; left: 24px; bottom: 10px; z-index: 3;
+    font-size: 11px; color: #e3d5b8; max-width: 62vw; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="scene" aria-hidden="true"></canvas>
+
+<main>
+  <section>
+    <h1>seed trail</h1>
+    <p>your cursor sheds pixels as it moves. shed them over the soil at the bottom of the screen and they take root — a seed sits for a second, then a flower comes up.</p>
+    <p>wiggle the cursor over the soil, then pause. the dropped pixels do the rest.</p>
+  </section>
+  <section>
+    <h2>the garden remembers</h2>
+    <p>every flower you plant is stored in this browser under the key <code>pg-seed-garden</code>. close the tab, come back next week — the bed replants itself, one flower at a time.</p>
+    <p>the bed holds 120 plants. past that, the oldest flower composts itself to make room for yours.</p>
+  </section>
+  <section>
+    <h2>why we built it</h2>
+    <p>most cursor effects evaporate the moment you stop moving. this one leaves something behind — a garden you grew half by accident, still standing on your next visit.</p>
+    <p>keep scrolling. the soil stays with you.</p>
+  </section>
+</main>
+
+<div class="hud"><span id="count">0</span> / 120 planted &middot; <a href="#" id="clear">clear garden</a></div>
+<div class="caption" id="caption">what this is — a planting cursor study. dropped trail pixels become seeds; the garden is stored in this browser.</div>
+
+<canvas id="trail" aria-hidden="true"
+  style="position:fixed;inset:0;pointer-events:none;z-index:9999;"></canvas>
+
+<script src="core/pixel-core.js"></script>
+<script src="core/sprites.js"></script>
+<script>
+"use strict";
+PG.labChrome({ title: "seed trail", n: "07" });
+
+const KEY = "pg-seed-garden";
+const CAP = 120;
+const DROP_BAND = 150;      // planting zone: bottom 150px of the viewport
+const scene = document.getElementById("scene");
+const countEl = document.getElementById("count");
+const clearEl = document.getElementById("clear");
+const reduced = PG.reducedMotion;
+
+let ctx = null, w = 0, h = 0, bandLayer = null;
+let plants = [];    // { r, sp, sc, at, x, grower }
+let seeds = [];     // { x, y0, color, t0 }
+let composts = [];  // Ungrowers
+let firstBuild = true;
+
+const groundY = () => h - 56;
+const soilTop = () => h - 52;
+
+function loadRecs() {
+  try {
+    const v = JSON.parse(localStorage.getItem(KEY) || "[]");
+    return Array.isArray(v) ? v.slice(-CAP) : [];
+  } catch (err) { return []; }
+}
+function save() {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(
+      plants.map((p) => ({ r: p.r, sp: p.sp, sc: p.sc, at: p.at }))
+    ));
+  } catch (err) { /* storage unavailable — garden lives for this visit only */ }
+}
+
+function makePlant(rec, bornAt, duration) {
+  const x = PG.snap(Math.max(16, Math.min(w - 16, rec.r * w)));
+  const sprite = PG.FLOWER_LIST[Math.abs(rec.sp) % PG.FLOWER_LIST.length];
+  return {
+    r: rec.r, sp: rec.sp, sc: rec.sc, at: rec.at, x,
+    grower: new PG.Grower(PG.spriteCells(sprite, rec.sc, x, groundY()), { bornAt, duration }),
+  };
+}
+
+function buildBand() {
+  bandLayer = PG.offscreen(w, h, (c) => {
+    const gt = PG.snap(soilTop());
+    c.fillStyle = "#46290f";
+    c.fillRect(0, gt, w, h - gt);
+    const rand = PG.rng("smd-soil");
+    c.fillStyle = "#3d9a62";
+    for (let x = 0; x < w; x += PG.GRID)
+      if (rand() < 0.55) c.fillRect(x, gt - PG.GRID, PG.PX, PG.PX);
+    for (let y = gt; y < h; y += PG.GRID) {
+      for (let x = 0; x < w; x += PG.GRID) {
+        const v = rand();
+        c.fillStyle = v < 0.10 ? "#5a3820" : v < 0.20 ? "#8a5c33" : "#6b4226";
+        c.fillRect(x, y, PG.PX, PG.PX);
+      }
+    }
+  });
+}
+
+function updateHud() { countEl.textContent = plants.length; }
+
+function build() {
+  const fit = PG.fitCanvas(scene);
+  ctx = fit.ctx; w = fit.w; h = fit.h;
+  buildBand();
+  const now = performance.now();
+  if (firstBuild) {
+    const recs = loadRecs();
+    const step = Math.min(90, Math.max(25, Math.floor(2400 / Math.max(1, recs.length))));
+    plants = recs.map((rec, i) => makePlant(rec, now + 400 + i * step, 750));
+    firstBuild = false;
+  } else {
+    plants = plants.map((p, i) => makePlant(p, now + i * 15, 350));
+  }
+  updateHud();
+}
+
+function tooClose(x) {
+  for (const s of seeds) if (Math.abs(s.x - x) < 24) return true;
+  for (const p of plants) if (Math.abs(p.x - x) < 24) return true;
+  return false;
+}
+
+function sprout(s, t) {
+  const rand = PG.rng(PG.fnv("seed-" + s.x + "-" + Math.round(s.y0)));
+  const rec = {
+    r: s.x / w,
+    sp: Math.floor(rand() * PG.FLOWER_LIST.length),
+    sc: 0.45 + rand() * 0.4,
+    at: Date.now(),
+  };
+  plants.push(makePlant(rec, t, 800));
+  if (plants.length > CAP) {
+    const old = plants.shift();
+    composts.push(new PG.Ungrower(old.grower.cells, { duration: 650 }));
+  }
+  save();
+  updateHud();
+}
+
+clearEl.addEventListener("click", (e) => {
+  e.preventDefault();
+  const now = performance.now();
+  plants.forEach((p, i) => {
+    composts.push(new PG.Ungrower(p.grower.cells, { bornAt: now + i * 25, duration: 550 }));
+  });
+  plants = [];
+  seeds = [];
+  try { localStorage.removeItem(KEY); } catch (err) {}
+  updateHud();
+});
+
+function frame(t) {
+  if (scene.offsetWidth !== w || scene.offsetHeight !== h) {
+    if (scene.offsetWidth < 10) { requestAnimationFrame(frame); return; }
+    build();
+  }
+  ctx.clearRect(0, 0, w, h);
+  ctx.drawImage(bandLayer, 0, 0, w, h);
+  if (composts.length) composts = composts.filter((u) => !u.draw(ctx, t));
+  for (const p of plants) p.grower.draw(ctx, t);
+  for (let i = seeds.length - 1; i >= 0; i--) {
+    const s = seeds[i];
+    const age = t - s.t0;
+    if (age > 1000) { seeds.splice(i, 1); sprout(s, t); continue; }
+    const sink = PG.easeOutQuad(Math.min(1, age / 500));
+    const sy = s.y0 + (groundY() - 6 - s.y0) * sink;
+    ctx.globalAlpha = age > 700 ? (Math.floor(t / 90) % 2 ? 0.5 : 1) : 1;
+    ctx.fillStyle = s.color;
+    ctx.fillRect(s.x, PG.snap(sy), 5, 5);
+    ctx.globalAlpha = 1;
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+PG.attachTrail(document.getElementById("trail"), {
+  max: 26,
+  onPlant: (x, y, color) => {
+    if (y < h - DROP_BAND) return;
+    const sx = PG.snap(Math.max(16, Math.min(w - 16, x)));
+    if (tooClose(sx)) return;
+    seeds.push({ x: sx, y0: Math.min(y, groundY() - 12), color, t0: performance.now() });
+  },
+});
+
+if (reduced) {
+  document.getElementById("caption").textContent +=
+    " (reduced motion is on — the trail rests; your saved garden still appears.)";
+}
+
+window.__pg7 = { plants: () => plants.length, seeds: () => seeds.length };
+</script>
+</body>
+</html>

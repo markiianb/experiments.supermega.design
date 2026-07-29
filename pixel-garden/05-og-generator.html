@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>05 — og image generator</title>
+<style>
+  main { max-width: 680px; margin: 0 auto; padding: 40px 24px 120px; }
+  .gen label { display: block; font-size: 11px; opacity: .6; margin-bottom: 6px; }
+  .row { display: flex; gap: 12px; margin-bottom: 20px; }
+  .row input {
+    flex: 1; font: 14px ui-monospace, "SF Mono", Menlo, monospace;
+    padding: 10px 12px; border: 3px solid #1c1a17; background: #fffdf6;
+    color: #1c1a17; outline: none;
+  }
+  .row input:focus { background: #ffffff; }
+  .row button {
+    font: 12px ui-monospace, "SF Mono", Menlo, monospace;
+    padding: 10px 16px; border: 3px solid #1c1a17; background: #1c1a17;
+    color: #faf4e8; cursor: pointer;
+  }
+  .row button:hover { background: #e23b47; border-color: #e23b47; }
+  #og {
+    width: 100%; display: block; border: 3px solid #1c1a17;
+    image-rendering: pixelated; background: #f6ead6;
+  }
+  .caption { font-size: 11px; opacity: .6; margin-top: 10px; line-height: 1.6; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em;
+       margin: 40px 0 12px; }
+  .presets { display: flex; gap: 14px; }
+  .preset { flex: 1; cursor: pointer; border: 3px solid #1c1a17;
+            background: #fffdf6; padding: 8px; }
+  .preset:hover { background: #ffffff; }
+  .preset canvas { width: 100%; display: block; }
+  .preset p { font-size: 10px; margin-top: 6px; opacity: .7; line-height: 1.4; }
+  .small { font-size: 10px; opacity: .45; margin-top: 14px; }
+</style>
+</head>
+<body>
+
+<main>
+  <section class="gen">
+    <label for="title-in">post title</label>
+    <div class="row">
+      <input id="title-in" type="text" value="" placeholder="type a post title"
+             spellcheck="false" autocomplete="off" />
+      <button id="dl" type="button">download png</button>
+    </div>
+    <canvas id="og" width="1200" height="630" aria-label="generated og image"></canvas>
+    <p class="caption">the slug of the title seeds a deterministic 1200×630 scene
+      — sky tint, halftone, flowers, clouds, sun or moon. same title, same image,
+      every time.</p>
+    <h2>presets</h2>
+    <div class="presets" id="presets"></div>
+    <p class="small">preset examples — sample titles</p>
+  </section>
+</main>
+
+<canvas id="trail" aria-hidden="true"
+  style="position:fixed;inset:0;pointer-events:none;z-index:9999;"></canvas>
+
+<script src="core/pixel-core.js"></script>
+<script src="core/sprites.js"></script>
+<script>
+"use strict";
+PG.labChrome({ title: "og image generator", n: "05" });
+PG.attachTrail(document.getElementById("trail"));
+
+const W = 1200, H = 630;
+const BAND_TOP = 460;            // ground band
+const INK = PG.COLORS.ink, PAPER = PG.COLORS.paper;
+
+/* dpr-free offscreen — export canvases must be exactly 1200×630 device px */
+function flat(w, h, draw) {
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const x = c.getContext("2d");
+  x.imageSmoothingEnabled = false;
+  draw(x, w, h);
+  return c;
+}
+
+const slugify = (s) =>
+  s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+/* curated sky tint pairs — never random rgb */
+const TINTS = [
+  { sky: "#f6ead6", dot: "#ecc89d", ground: "#2f7d4f", dirt: "#266a42", moonBias: false },
+  { sky: "#f8e2dc", dot: "#e9b3a2", ground: "#2f7d4f", dirt: "#266a42", moonBias: false },
+  { sky: "#e9eff1", dot: "#b9ccd4", ground: "#2c7050", dirt: "#23603f", moonBias: false },
+  { sky: "#ece2f1", dot: "#c8aede", ground: "#275f43", dirt: "#1f5237", moonBias: true  },
+  { sky: "#f9efd0", dot: "#e8cf86", ground: "#2f7d4f", dirt: "#266a42", moonBias: false },
+];
+
+const FLOWER_KEYS = Object.keys(PG.FLOWERS);
+
+/* ---------- title layout: scale 3, wrap to 2 lines, truncate with ... ---------- */
+function layoutTitle(title) {
+  const clean = title.toUpperCase().replace(/[^A-Z0-9 .\-]/g, "")
+    .replace(/\s+/g, " ").trim();
+  if (!clean) return [];
+  const S = 3, MAXW = W - 64 * 2;
+  const words = clean.split(" ");
+  const lines = [];
+  let cur = "", overflow = false;
+  for (let i = 0; i < words.length; i++) {
+    let wd = words[i];
+    while (wd.length > 1 && PG.textWidth(wd, S) > MAXW) wd = wd.slice(0, -1);
+    const test = cur ? cur + " " + wd : wd;
+    if (PG.textWidth(test, S) <= MAXW) { cur = test; continue; }
+    lines.push(cur);
+    if (lines.length === 2) { overflow = true; cur = ""; break; }
+    cur = wd;
+  }
+  if (cur) lines.push(cur);
+  if (lines.length > 2) { lines.length = 2; overflow = true; }
+  if (overflow) {
+    let last = lines[1];
+    while (last && PG.textWidth(last + " ...", S) > MAXW)
+      last = last.slice(0, -1).replace(/\s+$/, "");
+    lines[1] = last ? last + " ..." : "...";
+  }
+  return lines;
+}
+
+/* ---------- deterministic scene from a title ---------- */
+function buildScene(title) {
+  const slug = slugify(title);
+  const r = PG.rng("og-" + slug);
+
+  const tint = TINTS[Math.floor(r() * TINTS.length)];
+
+  // halftone blob layout
+  const blobs = [];
+  const nBlobs = 3 + Math.floor(r() * 3);
+  for (let i = 0; i < nBlobs; i++) {
+    blobs.push({ cx: r(), cy: 0.05 + r() * 0.5,
+                 rx: 0.13 + r() * 0.14, ry: 0.13 + r() * 0.14,
+                 s: 0.6 + r() * 0.5 });
+  }
+
+  // clouds (static — drawn at t = 0)
+  const nClouds = 2 + Math.floor(r() * 3);
+  const cloudDefs = [];
+  for (let i = 0; i < nClouds; i++) {
+    cloudDefs.push({ baseX: 0.08 + r() * 0.84, y: 0.08 + r() * 0.42,
+                     rx: 0.07 + r() * 0.09, ry: 0.05 + r() * 0.05,
+                     speed: 0, alpha: 0.4 + r() * 0.22 });
+  }
+  const clouds = PG.makeClouds(W, BAND_TOP * 0.8, cloudDefs);
+
+  // sun or moon
+  const moon = tint.moonBias ? r() < 0.85 : r() < 0.22;
+  const lum = { x: PG.snap(W * (0.08 + r() * 0.54)),
+                y: PG.snap(H * (0.10 + r() * 0.18)),
+                R: PG.snap(52 + r() * 30) };
+  const stars = [];
+  if (moon) {
+    const nStars = 6 + Math.floor(r() * 6);
+    for (let i = 0; i < nStars; i++)
+      stars.push({ x: PG.snap(r() * W), y: PG.snap(r() * BAND_TOP * 0.7) });
+  }
+
+  // flowers — 3..7, slot placement, seeded species + scale
+  const nFlowers = 3 + Math.floor(r() * 5);
+  const flowers = [];
+  const slot = W / nFlowers;
+  for (let i = 0; i < nFlowers; i++) {
+    const x = PG.snap(slot * i + slot * (0.25 + r() * 0.5));
+    const key = FLOWER_KEYS[Math.floor(r() * FLOWER_KEYS.length)];
+    const scale = 2.0 + r() * 1.2;
+    flowers.push({ cells: PG.spriteCells(PG.FLOWERS[key], scale, x, BAND_TOP + 12) });
+  }
+
+  // text cells
+  const lines = layoutTitle(title);
+  const titleCells = [];
+  const lineGY = lines.length === 2 ? [524, 596] : [596];
+  lines.forEach((ln, i) =>
+    titleCells.push(...PG.textCells(ln, 64, lineGY[i], { scale: 3, color: PAPER })));
+
+  const brandW = PG.textWidth("SUPERMEGA", 1.5);
+  const brandCells = PG.textCells("SUPERMEGA", W - 64 - brandW, 64,
+    { scale: 1.5, color: INK });
+
+  // static layer (sky, celestial, clouds, ground)
+  const staticLayer = flat(W, H, (c) => {
+    c.imageSmoothingEnabled = true;     // halftone dots are the one aa exception
+    c.drawImage(PG.halftone(W, H, { bg: tint.sky, dot: tint.dot, blobs }), 0, 0, W, H);
+    c.imageSmoothingEnabled = false;
+
+    if (moon) {
+      c.fillStyle = "#fffdf6";
+      for (const s of stars) c.fillRect(s.x, s.y, PG.PX, PG.PX);
+      PG.fillEllipse(c, lum.x, lum.y, lum.R, lum.R, (dx, dy) => {
+        const cut = (dx - 0.62) * (dx - 0.62) + (dy + 0.28) * (dy + 0.28);
+        if (cut < 0.36) return null;                      // crescent bite
+        return dx * dx + dy * dy < 0.5 ? "#fbf8ef" : "#e8e2d0";
+      });
+    } else {
+      PG.fillEllipse(c, lum.x, lum.y, lum.R, lum.R, (dx, dy, d) =>
+        d < 0.45 ? "#ffd94a" : "#ffb23e");
+      c.fillStyle = "#ffb23e";
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        for (let k = 0; k < 3; k++) {
+          const rr = lum.R + 10 + k * PG.GRID;
+          c.fillRect(PG.snap(lum.x + Math.cos(a) * rr),
+                     PG.snap(lum.y + Math.sin(a) * rr), PG.PX, PG.PX);
+        }
+      }
+    }
+
+    PG.drawClouds(c, clouds, W, 0);
+
+    // ground band: solid like 00-meadow's ground (grid gaps over the sky read
+    // as plaid), then a sparse grid speckle for texture + grass ticks
+    c.fillStyle = tint.ground;
+    c.fillRect(0, BAND_TOP, W, H - BAND_TOP);
+    const gr = PG.rng("og-ground-" + slug);
+    c.fillStyle = tint.dirt;
+    for (let y = BAND_TOP; y < H; y += PG.GRID)
+      for (let x = 0; x < W; x += PG.GRID)
+        if (gr() < 0.08) c.fillRect(PG.snap(x), PG.snap(y), PG.PX, PG.PX);
+    c.fillStyle = "#3d9a62";
+    for (let x = 0; x < W; x += PG.GRID * 2)
+      if (gr() < 0.4) c.fillRect(PG.snap(x), BAND_TOP - PG.GRID, PG.PX, PG.PX);
+  });
+
+  // ink drop shadow one grid step down-right keeps the title readable on the band
+  const titleShadow = titleCells.map((c) =>
+    ({ x: c.x + PG.GRID, y: c.y + PG.GRID, color: INK, size: c.size }));
+
+  return { slug, staticLayer, flowers, titleCells, titleShadow, brandCells };
+}
+
+function drawCells(ctx, cells) {
+  for (const c of cells) { ctx.fillStyle = c.color; ctx.fillRect(c.x, c.y, c.size, c.size); }
+}
+
+function renderFull(scene) {
+  return flat(W, H, (c) => {
+    c.drawImage(scene.staticLayer, 0, 0);
+    for (const f of scene.flowers) drawCells(c, f.cells);
+    drawCells(c, scene.brandCells);
+    drawCells(c, scene.titleShadow);
+    drawCells(c, scene.titleCells);
+  });
+}
+
+/* ---------- main canvas: render with a short grow-in replay ---------- */
+const ogCanvas = document.getElementById("og");
+const ogCtx = ogCanvas.getContext("2d");
+ogCtx.imageSmoothingEnabled = false;
+
+let currentScene = null;
+let raf = 0;
+
+function showScene(scene) {
+  currentScene = scene;
+  cancelAnimationFrame(raf);
+  const t0 = performance.now();
+  const growers = [];
+  // flicker off: the preview must match the exported png exactly
+  growers.push(new PG.Grower(scene.brandCells, { bornAt: t0 + 100, duration: 400, flicker: false }));
+  scene.flowers.forEach((f, i) =>
+    growers.push(new PG.Grower(f.cells, { bornAt: t0 + 160 + i * 110, duration: 620, flicker: false })));
+  // shadow grower listed first so the glyph cells always land on top
+  growers.push(new PG.Grower(scene.titleShadow, { bornAt: t0 + 620, duration: 700, flicker: false }));
+  growers.push(new PG.Grower(scene.titleCells, { bornAt: t0 + 620, duration: 700, flicker: false }));
+
+  function loop(t) {
+    ogCtx.drawImage(scene.staticLayer, 0, 0);
+    let done = true;
+    for (const g of growers) { const d = g.draw(ogCtx, t); done = done && d; }
+    if (!done) raf = requestAnimationFrame(loop);
+  }
+  raf = requestAnimationFrame(loop);
+}
+
+/* ---------- input wiring ---------- */
+const input = document.getElementById("title-in");
+let debounce = 0;
+input.addEventListener("input", () => {
+  clearTimeout(debounce);
+  debounce = setTimeout(() => showScene(buildScene(input.value)), 300);
+});
+
+document.getElementById("dl").addEventListener("click", () => {
+  if (!currentScene) return;
+  const full = renderFull(currentScene);
+  const a = document.createElement("a");
+  a.href = full.toDataURL("image/png");
+  a.download = (currentScene.slug || "supermega") + "-og-1200x630.png";
+  a.click();
+});
+
+/* ---------- presets ---------- */
+const PRESETS = [
+  "Designing Super Interfaces",
+  "The Pixel Garden Notebook",
+  "Shipping Craft at Studio Speed",
+];
+const presetsEl = document.getElementById("presets");
+
+/* canvases painted while the document is still parsing can lose their backing
+   store in chromium — build every scene after load, one frame in */
+function boot() {
+  for (const t of PRESETS) {
+    const box = document.createElement("div");
+    box.className = "preset";
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    c.getContext("2d").drawImage(renderFull(buildScene(t)), 0, 0);
+    const p = document.createElement("p");
+    p.textContent = t.toLowerCase();
+    box.appendChild(c); box.appendChild(p);
+    box.addEventListener("click", () => {
+      input.value = t;
+      clearTimeout(debounce);
+      showScene(buildScene(t));
+    });
+    presetsEl.appendChild(box);
+  }
+  // start with the first preset so the page never opens empty
+  input.value = PRESETS[0];
+  showScene(buildScene(PRESETS[0]));
+}
+if (document.readyState === "complete") requestAnimationFrame(boot);
+else window.addEventListener("load", () => requestAnimationFrame(boot));
+</script>
+</body>
+</html>

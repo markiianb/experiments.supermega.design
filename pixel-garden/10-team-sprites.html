@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SUPERMEGA lab — 10 · team sprites</title>
+<style>
+  .intro {
+    min-height: calc(100vh - 130px);
+    display: flex; flex-direction: column; justify-content: center;
+    max-width: 1160px; margin: 0 auto; padding: 0 24px;
+  }
+  .intro h1 { font-size: 30px; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 18px; }
+  .intro p { font-size: 14px; line-height: 1.8; max-width: 540px; margin-bottom: 10px; }
+  .scroll-hint { margin-top: 26px; font-size: 12px; opacity: .55; }
+  #cards { max-width: 1160px; margin: 0 auto; padding: 24px 24px 56px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 28px; }
+  .card {
+    background: #fffdf7; border: 3px solid #1c1a17;
+    box-shadow: 8px 8px 0 #1c1a17; padding: 16px 16px 18px;
+  }
+  .card canvas { width: 100%; height: 300px; display: block; }
+  .card figcaption { margin-top: 12px; display: flex; flex-direction: column; gap: 4px; }
+  .card figcaption strong { font-size: 14px; text-transform: uppercase; letter-spacing: .05em; }
+  .card figcaption span { font-size: 12px; opacity: .7; }
+  .card figcaption em { font-size: 11px; font-style: normal; opacity: .5; }
+  .note { margin-top: 28px; font-size: 11px; opacity: .55; }
+  footer.caption {
+    max-width: 1160px; margin: 0 auto; padding: 0 24px 56px;
+    font-size: 11px; opacity: .55; line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<header class="intro">
+  <h1>the bench is growing</h1>
+  <p>supermega in sprite form. markiian tends the studio today, and three seats are already seeded — for the people who'll join the garden next.</p>
+  <p class="scroll-hint">scroll to meet the bench &darr;</p>
+</header>
+
+<section id="cards">
+  <div class="grid">
+    <figure class="card" id="card-founder">
+      <canvas aria-label="pixel sprite of markiian"></canvas>
+      <figcaption>
+        <strong>markiian</strong>
+        <span>founder — design, code, direction</span>
+        <em>hover for a wave</em>
+      </figcaption>
+    </figure>
+    <figure class="card" data-label="DESIGN">
+      <canvas aria-label="seedling in a pot labeled design"></canvas>
+      <figcaption>
+        <strong>open seat</strong>
+        <span>designer — craft over volume</span>
+      </figcaption>
+    </figure>
+    <figure class="card" data-label="ENG">
+      <canvas aria-label="seedling in a pot labeled eng"></canvas>
+      <figcaption>
+        <strong>open seat</strong>
+        <span>engineer — interfaces with feel</span>
+      </figcaption>
+    </figure>
+    <figure class="card" data-label="MOTION">
+      <canvas aria-label="seedling in a pot labeled motion"></canvas>
+      <figcaption>
+        <strong>open seat</strong>
+        <span>motion — pixels that breathe</span>
+      </figcaption>
+    </figure>
+  </div>
+  <p class="note">open roles are sample data — seats sprout as the work demands.</p>
+</section>
+
+<footer class="caption">what this is — a team section study. sprites grow in as you scroll, the founder waves on hover, and open roles are seedlings.</footer>
+
+<canvas id="trail" aria-hidden="true"
+  style="position:fixed;inset:0;pointer-events:none;z-index:9999;"></canvas>
+
+<script src="core/pixel-core.js"></script>
+<script src="core/sprites.js"></script>
+<script>
+"use strict";
+PG.labChrome({ title: "team sprites", n: "10" });
+
+const C = PG.COLORS;
+const SKIN = "#e8b48b", HAIR = "#33281c", INK = C.ink,
+      SHIRT = "#e23b47", PANTS = "#2d5fb8";
+
+/* original person sprite, 14×20 — head, body, legs, arms.
+   frame A: arms down. frame B: viewer-right arm raised (wave). */
+const FOUNDER_A = {
+  rows: [
+    "....HHHHHH....",
+    "...HHHHHHHH...",
+    "...HHSSSSHH...",
+    "...SSSSSSSS...",
+    "...SOSSSSOS...",
+    "...SSSSSSSS...",
+    "...SSSMMSSS...",
+    "....SSSSSS....",
+    "....TTTTTT....",
+    "..TTTTTTTTTT..",
+    ".TTTTTTTTTTTT.",
+    ".TTTTTTTTTTTT.",
+    ".STTTTTTTTTTS.",
+    "...TTTTTTTT...",
+    "...PPPPPPPP...",
+    "...PPP..PPP...",
+    "...PPP..PPP...",
+    "...PPP..PPP...",
+    "...PPP..PPP...",
+    "..BBBB..BBBB..",
+  ],
+  stemCol: 7,
+  pal: { H: HAIR, S: SKIN, O: INK, M: "#c4824e", T: SHIRT, P: PANTS, B: INK },
+};
+const FOUNDER_B = {
+  rows: [
+    "....HHHHHH....",
+    "...HHHHHHHH...",
+    "...HHSSSSHH.SS",
+    "...SSSSSSSS.SS",
+    "...SOSSSSOS.T.",
+    "...SSSSSSSS.T.",
+    "...SSSMMSSS.T.",
+    "....SSSSSS.T..",
+    "....TTTTTT.T..",
+    "..TTTTTTTTTT..",
+    ".TTTTTTTTTTT..",
+    ".TTTTTTTTTTT..",
+    ".STTTTTTTTTT..",
+    "...TTTTTTTT...",
+    "...PPPPPPPP...",
+    "...PPP..PPP...",
+    "...PPP..PPP...",
+    "...PPP..PPP...",
+    "...PPP..PPP...",
+    "..BBBB..BBBB..",
+  ],
+  stemCol: 7,
+  pal: { H: HAIR, S: SKIN, O: INK, M: "#c4824e", T: SHIRT, P: PANTS, B: INK },
+};
+
+/* terracotta pot + seedling for the open seats */
+const PLANTER = {
+  rows: [
+    "...F.F...",
+    "....E....",
+    "....E....",
+    ".RRRRRRR.",
+    ".PPPPPPP.",
+    ".PPPPPPP.",
+    "..PPPPP..",
+    "..PPPPP..",
+  ],
+  stemCol: 4,
+  pal: { F: "#5cb87e", E: C.stem, R: "#8a4d1f", P: "#b8742a" },
+};
+
+const cardEls = Array.from(document.querySelectorAll(".card"));
+const cards = cardEls.map((el, idx) => ({
+  el, idx,
+  canvas: el.querySelector("canvas"),
+  label: el.dataset.label || null,
+  founder: el.id === "card-founder",
+  started: false,
+  waving: false,
+  grower: null, frames: null,
+  ctx: null, w: 0, h: 0,
+}));
+
+function buildCard(card) {
+  const fit = PG.fitCanvas(card.canvas);
+  card.ctx = fit.ctx; card.w = fit.w; card.h = fit.h;
+  const gx = PG.snap(card.w / 2);
+  const gy = PG.snap(card.h - 36);
+  let cells;
+  if (card.founder) {
+    card.frames = [
+      PG.spriteCells(FOUNDER_A, 3, gx, gy),
+      PG.spriteCells(FOUNDER_B, 3, gx, gy),
+    ];
+    cells = card.frames[0];
+  } else {
+    const pot = PG.spriteCells(PLANTER, 3, gx, gy);
+    const lScale = 1.5;
+    const lw = PG.textWidth(card.label, lScale);
+    const labelY = PG.snap(gy - PLANTER.rows.length * 3 * PG.GRID - 22);
+    const label = PG.textCells(card.label, PG.snap(gx - lw / 2), labelY,
+      { scale: lScale, color: "#6b6258" });
+    cells = pot.concat(label);
+  }
+  card.grower = new PG.Grower(cells, {
+    bornAt: card.started ? performance.now() : Infinity,
+    duration: card.started ? 300 : 1000,
+  });
+}
+
+function renderCard(card, t) {
+  const ctx = card.ctx;
+  ctx.clearRect(0, 0, card.w, card.h);
+  const gx = PG.snap(card.w / 2);
+  const gy = PG.snap(card.h - 36);
+  PG.fillGrid(ctx, gx - 68, gy + 9, gx + 71, gy + 21, "#e8ddc5"); // bench shelf
+  if (card.founder && card.waving && !PG.reducedMotion && card.grower.progress(t) >= 1) {
+    const frame = card.frames[Math.floor(t / 300) % 2];
+    for (const cell of frame) {
+      ctx.fillStyle = cell.color;
+      ctx.fillRect(cell.x, cell.y, cell.size, cell.size);
+    }
+  } else {
+    card.grower.draw(ctx, t);
+  }
+}
+
+const io = new IntersectionObserver((entries) => {
+  for (const en of entries) {
+    if (!en.isIntersecting) continue;
+    const card = cards.find((c) => c.el === en.target);
+    if (!card || card.started) continue;
+    card.started = true;
+    card.grower.bornAt = performance.now() + card.idx * 170;
+    io.unobserve(en.target);
+  }
+}, { threshold: 0.25 });
+cards.forEach((c) => io.observe(c.el));
+
+const founderCard = cards.find((c) => c.founder);
+founderCard.el.addEventListener("mouseenter", () => { founderCard.waving = true; });
+founderCard.el.addEventListener("mouseleave", () => { founderCard.waving = false; });
+
+cards.forEach(buildCard);
+function loop(t) {
+  for (const c of cards) renderCard(c, t);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+let resizeT = 0;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeT);
+  resizeT = setTimeout(() => cards.forEach(buildCard), 120);
+});
+
+PG.attachTrail(document.getElementById("trail"));
+</script>
+</body>
+</html>

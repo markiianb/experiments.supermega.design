@@ -1,0 +1,4343 @@
+/* SUPERMEGA Instrument 0.1.0-d889c4e04356 */
+/* SUPERMEGA Instrument primitives. Every value sits on a four-pixel rhythm. */
+[data-system="instrument"] {
+	color-scheme: dark;
+
+	/* Client-tunable identity. Behaviour and hierarchy are not theme slots. */
+	--instrument-identity-accent: #f61515;
+	--instrument-identity-accent-hover: #ff3131;
+	--instrument-identity-accent-text: #ffffff;
+	--instrument-identity-mark-size: 16px;
+	--instrument-identity-mark-radius: 2px;
+
+	/* Graphite workstation palette. Red is reserved for identity and intent. */
+	--instrument-color-canvas: #1e1e1e;
+	--instrument-color-surface: #222222;
+	--instrument-color-surface-raised: #292929;
+	--instrument-color-surface-overlay: #161616;
+	--instrument-color-surface-active: #393939;
+	--instrument-color-text: #e0e0e0;
+	--instrument-color-text-muted: #a8a8a8;
+	--instrument-color-text-faint: #6f6f6f;
+	--instrument-color-rule: #343434;
+	--instrument-color-rule-strong: #525252;
+	--instrument-color-rule-subdued: #52525299;
+	--instrument-color-field: #00000066;
+	--instrument-color-accent: var(--instrument-identity-accent);
+	--instrument-color-accent-hover: var(--instrument-identity-accent-hover);
+	--instrument-color-accent-text: var(--instrument-identity-accent-text);
+	--instrument-color-focus: var(--instrument-identity-accent);
+	--instrument-color-focus-band: color-mix(
+		in srgb,
+		var(--instrument-color-focus) 42%,
+		transparent
+	);
+	--instrument-color-grid: color-mix(
+		in srgb,
+		var(--instrument-color-text) 9%,
+		transparent
+	);
+	--instrument-diff-insert: #3fb950;
+	--instrument-diff-delete: #f85149;
+	--instrument-diff-insert-wash: #3fb9502e;
+	--instrument-diff-delete-wash: #f8514929;
+	--instrument-code-string: #7ee787;
+	--instrument-code-number: #79c0ff;
+	--instrument-code-keyword: #ff7b72;
+	--instrument-status-success: #7ee787;
+	--instrument-status-error: #ff7b72;
+	--instrument-status-warning: #d29922;
+	--instrument-graph-option-1: #f61515;
+	--instrument-graph-option-2: #2155ff;
+	--instrument-graph-option-3: #00cc00;
+	--instrument-graph-option-4: #ffcc00;
+	--instrument-graph-option-5: #ff6600;
+	--instrument-graph-option-6: #00cccc;
+	--instrument-graph-option-7: #cc00cc;
+	--instrument-graph-option-8: #ff3399;
+
+	/* Proportional interface copy; Numerals Grid is limited to technical data. */
+	--instrument-font-sans:
+		-apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial,
+		sans-serif;
+	--instrument-font-mono:
+		"SFMono-Regular", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+	--instrument-font-size-label: 12px;
+	--instrument-font-size-small: 14px;
+	--instrument-font-size-control: 14px;
+	--instrument-font-size-body: 16px;
+	--instrument-font-size-reading: 18px;
+	--instrument-font-size-title: 20px;
+	--instrument-font-weight-regular: 400;
+	--instrument-font-weight-medium: 500;
+	--instrument-font-weight-semibold: 600;
+	--instrument-font-weight-bold: 700;
+	--instrument-line-height-tight: 1.2;
+	--instrument-line-height-normal: 1.5;
+	--instrument-line-height-relaxed: 1.65;
+	--instrument-letter-spacing-label: 0.02em;
+	--instrument-letter-spacing-wide: 0.08em;
+
+	/* Four-pixel rhythm. */
+	--instrument-space-0: 0;
+	--instrument-space-1: 4px;
+	--instrument-space-2: 8px;
+	--instrument-space-3: 12px;
+	--instrument-space-4: 16px;
+	--instrument-space-5: 20px;
+	--instrument-space-6: 24px;
+	--instrument-space-8: 32px;
+	--instrument-space-10: 40px;
+	--instrument-space-12: 48px;
+
+	/* Measured workstation geometry. */
+	--instrument-chrome-height: 48px;
+	--instrument-overview-width: 240px;
+	--instrument-inspector-width: 320px;
+	--instrument-inspector-wide-width: 480px;
+	--instrument-command-width: 240px;
+	--instrument-overview-sheet-max: 320px;
+	--instrument-inspector-sheet-max: 360px;
+	--instrument-work-min-width: 320px;
+	--instrument-work-min-height: 240px;
+	--instrument-tools-body-measure: 768px;
+	--instrument-dock-min-height: 50px;
+	--instrument-control-min-height: 24px;
+	--instrument-control-indicator-width: 12px;
+	--instrument-mobile-target-min: 44px;
+	--instrument-disabled-opacity: 0.46;
+	--instrument-row-height: 30px;
+	--instrument-row-height-compact: 24px;
+	--instrument-row-height-comfortable: 36px;
+	--instrument-field-label-width: 72px;
+	--instrument-rule-width: 1px;
+	--instrument-focus-band-width: 4px;
+	--instrument-dock-offset-x: -50%;
+	--instrument-full-measure: 100%;
+	--instrument-half-measure: 50%;
+	--instrument-breakpoint-workstation: 1200px;
+	--instrument-breakpoint-sheet: 768px;
+	--instrument-breakpoint-workstation-max: 1199px;
+	--instrument-breakpoint-sheet-max: 767px;
+
+	/* Geometry is quiet. Only the floating dock and explicit glass actions round. */
+	--instrument-radius-control: 0px;
+	--instrument-radius-mini: 2px;
+	--instrument-radius-surface: 0px;
+	--instrument-radius-floating: 8px;
+	--instrument-radius-round: 9999px;
+	--instrument-shadow-rule: 0 0 0 var(--instrument-rule-width)
+		var(--instrument-color-rule);
+	--instrument-shadow-rule-strong: 0 0 0 var(--instrument-rule-width)
+		var(--instrument-color-rule-strong);
+	--instrument-shadow-focus:
+		inset var(--instrument-focus-band-width) 0 var(--instrument-color-focus),
+		0 0 0 var(--instrument-rule-width) var(--instrument-color-rule-strong);
+	--instrument-shadow-modal: 0 24px 64px
+		color-mix(in srgb, #000000 56%, transparent);
+	--instrument-rule-horizontal: linear-gradient(
+		to right,
+		transparent,
+		var(--instrument-color-rule-strong) 24%,
+		var(--instrument-color-rule-strong) 76%,
+		transparent
+	);
+	--instrument-rule-vertical: linear-gradient(
+		to bottom,
+		transparent,
+		var(--instrument-color-rule-strong) 24%,
+		var(--instrument-color-rule-strong) 76%,
+		transparent
+	);
+	--instrument-section-wash: linear-gradient(
+		to right,
+		transparent,
+		var(--instrument-color-rule-subdued)
+	);
+	--instrument-field-wash: linear-gradient(
+		to right,
+		transparent,
+		var(--instrument-color-rule-subdued)
+	);
+
+	/* Direct manipulation is immediate; spatial changes settle quickly. */
+	--instrument-duration-instant: 0ms;
+	--instrument-duration-fast: 120ms;
+	--instrument-duration-base: 200ms;
+	--instrument-duration-slow: 300ms;
+	--instrument-duration-glass: 400ms;
+	--instrument-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+	--instrument-ease-decelerate: cubic-bezier(0, 0, 0, 1);
+	--instrument-ease-accelerate: cubic-bezier(0.3, 0, 1, 1);
+	--instrument-ease-glass: cubic-bezier(0.25, 1, 0.5, 1);
+
+	/* Independent material coordinates. */
+	--instrument-grid-size: 24px;
+	--instrument-grid-line-width: 1px;
+	--instrument-grain-size: 420px;
+	--instrument-grain-opacity: 0.22;
+	--instrument-grain-blend: screen;
+	--instrument-data-label-measure: 112px;
+	--instrument-data-track-min: 96px;
+	--instrument-data-value-measure: 64px;
+	--instrument-material-transition: var(--instrument-duration-base);
+	--instrument-material-grid-image:
+		linear-gradient(
+			to right,
+			var(--instrument-color-grid) var(--instrument-grid-line-width),
+			transparent var(--instrument-grid-line-width)
+		),
+		linear-gradient(
+			to bottom,
+			var(--instrument-color-grid) var(--instrument-grid-line-width),
+			transparent var(--instrument-grid-line-width)
+		);
+	--instrument-material-grain-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www%2Ew3%2Eorg/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.85' numOctaves='4' seed='23' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+
+	/* Small, explicit stack. */
+	--instrument-z-base: 0;
+	--instrument-z-material: 70;
+	--instrument-z-raised: 10;
+	--instrument-z-dock: 20;
+	--instrument-z-sheet: 40;
+	--instrument-z-overlay: 45;
+	--instrument-z-portal: 50;
+	--instrument-z-toast: 60;
+}
+
+[data-system="instrument"][data-instrument-polarity="light"] {
+	color-scheme: light;
+	--instrument-color-canvas: #fffefe;
+	--instrument-color-surface: #fafafa;
+	--instrument-color-surface-raised: #f1f1f1;
+	--instrument-color-surface-overlay: #ffffff;
+	--instrument-color-surface-active: #e0e0e0;
+	--instrument-color-text: #0e101b;
+	--instrument-color-text-muted: #6f6f6f;
+	--instrument-color-text-faint: #8d8d8d;
+	--instrument-color-rule: #e0e0e0;
+	--instrument-color-rule-strong: #c6c6c6;
+	--instrument-color-rule-subdued: #c6c6c699;
+	--instrument-color-field: #0000000f;
+	--instrument-code-string: #1a7f37;
+	--instrument-code-number: #0550ae;
+	--instrument-code-keyword: #cf222e;
+	--instrument-status-success: #1a7f37;
+	--instrument-status-error: #cf222e;
+	--instrument-status-warning: #9a6700;
+	--instrument-grain-opacity: 0.18;
+	--instrument-grain-blend: multiply;
+	--instrument-color-focus-band: color-mix(
+		in srgb,
+		var(--instrument-color-focus) 58%,
+		transparent
+	);
+}
+
+[data-system="instrument"][data-instrument-density="compact"] {
+	--instrument-row-height: var(--instrument-row-height-compact);
+}
+
+[data-system="instrument"][data-instrument-density="comfortable"] {
+	--instrument-row-height: var(--instrument-row-height-comfortable);
+}
+
+[data-system="instrument"][data-instrument-motion="reduced"] {
+	--instrument-duration-fast: var(--instrument-duration-instant);
+	--instrument-duration-base: var(--instrument-duration-instant);
+	--instrument-duration-slow: var(--instrument-duration-instant);
+	--instrument-material-transition: var(--instrument-duration-instant);
+}
+@property --instrument-glass-button-angle {
+	syntax: "<angle>";
+	inherits: false;
+	initial-value: -75deg;
+}
+
+@property --instrument-glass-action-angle {
+	syntax: "<angle>";
+	inherits: false;
+	initial-value: -75deg;
+}
+
+/* Workstation shell: one global frame, one dominant work field, one dock. */
+[data-system="instrument"] {
+	--instrument-current-overview-width: var(--instrument-overview-width);
+	--instrument-current-inspector-width: var(--instrument-inspector-width);
+	position: relative;
+	isolation: isolate;
+	background: var(--instrument-color-canvas);
+	color: var(--instrument-color-text);
+	font-family: var(--instrument-font-sans);
+	font-size: var(--instrument-font-size-body);
+	line-height: var(--instrument-line-height-normal);
+}
+
+[data-system="instrument"] .instrument-brand {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--instrument-space-1);
+	min-inline-size: 0;
+	color: var(--instrument-color-text);
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-small);
+	font-weight: var(--instrument-font-weight-semibold);
+	letter-spacing: var(--instrument-letter-spacing-label);
+	white-space: nowrap;
+}
+
+[data-system="instrument"] .instrument-brand-signal {
+	display: inline-block;
+	inline-size: var(--instrument-space-1);
+	block-size: var(--instrument-space-4);
+	background: var(--instrument-color-accent);
+}
+
+[data-system="instrument"] .instrument-brand-slash {
+	color: var(--instrument-color-text-faint);
+}
+
+[data-system="instrument"] .instrument-shell {
+	display: grid;
+	grid-template-areas:
+		"chrome chrome chrome"
+		"overview work inspector";
+	grid-template-columns:
+		var(--instrument-current-overview-width)
+		minmax(var(--instrument-space-0), 1fr)
+		var(--instrument-current-inspector-width);
+	grid-template-rows: var(--instrument-chrome-height) minmax(0, 1fr);
+	min-block-size: 100dvh;
+	background: var(--instrument-color-canvas);
+	isolation: isolate;
+	transition: grid-template-columns var(--instrument-duration-base)
+		var(--instrument-ease-standard);
+}
+
+[data-system="instrument"]
+	.instrument-shell[data-instrument-overview="hidden"] {
+	--instrument-current-overview-width: var(--instrument-space-0);
+}
+
+[data-system="instrument"]
+	.instrument-shell[data-instrument-inspector="hidden"] {
+	--instrument-current-inspector-width: var(--instrument-space-0);
+}
+
+[data-system="instrument"] .instrument-shell[data-instrument-inspector="wide"] {
+	--instrument-current-inspector-width: var(--instrument-inspector-wide-width);
+}
+
+[data-system="instrument"] .instrument-chrome {
+	grid-area: chrome;
+	display: grid;
+	grid-template-columns:
+		var(--instrument-overview-width)
+		minmax(0, 1fr)
+		var(--instrument-command-width);
+	align-items: stretch;
+	min-inline-size: 0;
+	min-block-size: var(--instrument-chrome-height);
+	background: color-mix(
+		in srgb,
+		var(--instrument-color-canvas) 94%,
+		transparent
+	);
+	z-index: var(--instrument-z-raised);
+}
+
+[data-system="instrument"] .instrument-chrome::after {
+	position: absolute;
+	inset: calc(var(--instrument-chrome-height) - 1px) 0 auto;
+	block-size: 1px;
+	background: var(--instrument-rule-horizontal);
+	content: "";
+	pointer-events: none;
+}
+
+[data-system="instrument"] .instrument-chrome-zone {
+	position: relative;
+	display: flex;
+	align-items: center;
+	min-inline-size: 0;
+	block-size: var(--instrument-full-measure);
+	padding-inline: var(--instrument-space-6);
+}
+
+[data-system="instrument"]
+	.instrument-chrome-zone
+	+ .instrument-chrome-zone::before {
+	position: absolute;
+	inset: 0 auto 0 0;
+	inline-size: 1px;
+	background: var(--instrument-rule-vertical);
+	content: "";
+}
+
+[data-system="instrument"] .instrument-chrome-zone--navigation {
+	gap: var(--instrument-space-6);
+}
+
+[data-system="instrument"] .instrument-chrome-zone--navigation a,
+[data-system="instrument"] .instrument-chrome-zone--navigation span,
+[data-system="instrument"] .instrument-chrome-zone--command button,
+[data-system="instrument"] .instrument-chrome-zone--command a {
+	color: var(--instrument-color-text-muted);
+	font-size: var(--instrument-font-size-small);
+	font-weight: var(--instrument-font-weight-semibold);
+	text-decoration: none;
+}
+
+[data-system="instrument"] .instrument-chrome-zone--navigation a:hover,
+[data-system="instrument"] .instrument-chrome-zone--navigation a:focus-visible,
+[data-system="instrument"]
+	.instrument-chrome-zone--navigation
+	[aria-current="page"],
+[data-system="instrument"] .instrument-chrome-zone--command button:hover,
+[data-system="instrument"]
+	.instrument-chrome-zone--command
+	button:focus-visible,
+[data-system="instrument"] .instrument-chrome-zone--command a:hover,
+[data-system="instrument"] .instrument-chrome-zone--command a:focus-visible {
+	color: var(--instrument-color-text);
+}
+
+[data-system="instrument"] .instrument-chrome-zone--navigation a:focus-visible,
+[data-system="instrument"]
+	.instrument-chrome-zone--command
+	button:focus-visible,
+[data-system="instrument"] .instrument-chrome-zone--command a:focus-visible {
+	outline: 0;
+	box-shadow: inset 0 calc(var(--instrument-focus-band-width) * -1)
+		var(--instrument-color-accent);
+}
+
+[data-system="instrument"] .instrument-chrome-zone--command {
+	justify-content: flex-end;
+}
+
+[data-system="instrument"] .instrument-chrome-zone--command button,
+[data-system="instrument"] .instrument-chrome-zone--command a {
+	display: inline-flex;
+	align-items: center;
+	block-size: var(--instrument-full-measure);
+	padding-inline: var(--instrument-space-3);
+	background: transparent;
+	border: 0;
+	cursor: pointer;
+}
+
+[data-system="instrument"] .instrument-overview,
+[data-system="instrument"] .instrument-inspector {
+	position: relative;
+	overflow: auto;
+	min-inline-size: 0;
+	background: color-mix(
+		in srgb,
+		var(--instrument-color-canvas) 92%,
+		var(--instrument-color-surface)
+	);
+	transition:
+		opacity var(--instrument-duration-fast) var(--instrument-ease-standard),
+		visibility var(--instrument-duration-fast) var(--instrument-ease-standard);
+}
+
+[data-system="instrument"] .instrument-overview {
+	grid-area: overview;
+}
+
+[data-system="instrument"] .instrument-inspector {
+	grid-area: inspector;
+}
+
+[data-system="instrument"] .instrument-overview::after,
+[data-system="instrument"] .instrument-inspector::before {
+	position: absolute;
+	inset-block: 0;
+	inline-size: 1px;
+	background: var(--instrument-rule-vertical);
+	content: "";
+	pointer-events: none;
+}
+
+[data-system="instrument"] .instrument-overview::after {
+	inset-inline-end: 0;
+}
+
+[data-system="instrument"] .instrument-sheet-close {
+	display: none;
+}
+
+[data-system="instrument"] .instrument-inspector::before {
+	inset-inline-start: 0;
+}
+
+[data-system="instrument"]
+	.instrument-shell[data-instrument-overview="hidden"]
+	.instrument-overview,
+[data-system="instrument"]
+	.instrument-shell[data-instrument-inspector="hidden"]
+	.instrument-inspector {
+	opacity: 0;
+	visibility: hidden;
+}
+
+[data-system="instrument"] .instrument-work {
+	grid-area: work;
+	position: relative;
+	overflow: hidden;
+	min-inline-size: var(--instrument-work-min-width);
+	min-block-size: var(--instrument-work-min-height);
+	background: var(--instrument-color-canvas);
+	z-index: var(--instrument-z-base);
+}
+
+[data-system="instrument"] .instrument-mode-dock {
+	position: fixed;
+	inset-inline-start: var(--instrument-half-measure);
+	inset-block-end: var(--instrument-space-6);
+	display: flex;
+	align-items: center;
+	min-block-size: var(--instrument-dock-min-height);
+	inline-size: min(568px, calc(100% - var(--instrument-space-12)));
+	max-inline-size: calc(100% - var(--instrument-space-12));
+	padding: var(--instrument-space-2) var(--instrument-space-6);
+	overflow-x: auto;
+	background: var(--instrument-color-surface-overlay);
+	border: var(--instrument-rule-width) solid var(--instrument-color-rule-strong);
+	border-radius: var(--instrument-radius-floating);
+	box-shadow: inset 0 0 0 var(--instrument-rule-width)
+		var(--instrument-color-rule);
+	transform: translateX(var(--instrument-dock-offset-x));
+	z-index: var(--instrument-z-dock);
+}
+
+[data-system="instrument"][data-instrument-polarity="light"]
+	.instrument-mode-dock {
+	background: var(--instrument-color-surface-overlay);
+	box-shadow:
+		inset 0 0 0 var(--instrument-rule-width) var(--instrument-color-rule),
+		0 0 4px color-mix(in srgb, var(--instrument-color-text) 4%, transparent);
+}
+
+[data-system="instrument"] .instrument-panel {
+	background: color-mix(
+		in srgb,
+		var(--instrument-color-surface-overlay) 40%,
+		transparent
+	);
+	padding-block-end: calc(var(--instrument-space-3) / 2);
+}
+
+[data-system="instrument"] .instrument-panel-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	min-block-size: var(--instrument-control-min-height);
+	padding-inline: var(--instrument-space-3);
+	background: var(--instrument-section-wash);
+	font-size: var(--instrument-font-size-label);
+	font-weight: var(--instrument-font-weight-semibold);
+	letter-spacing: 0.2px;
+	text-transform: uppercase;
+}
+
+[data-system="instrument"] .instrument-panel-title,
+[data-system="instrument"] .instrument-panel-toggle {
+	margin: 0;
+	color: inherit;
+	background: transparent;
+	border: 0;
+	font: inherit;
+	text-align: start;
+}
+
+[data-system="instrument"] .instrument-panel-title {
+	opacity: 0.6;
+}
+
+[data-system="instrument"] .instrument-panel-toggle {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	justify-content: space-between;
+	min-block-size: var(--instrument-control-min-height);
+	cursor: pointer;
+}
+
+[data-system="instrument"] .instrument-panel-toggle:focus-visible {
+	outline: 0;
+	box-shadow: inset var(--instrument-focus-band-width) 0
+		var(--instrument-color-accent);
+}
+
+[data-system="instrument"] .instrument-panel-actions,
+[data-system="instrument"] .instrument-row-control,
+[data-system="instrument"] .instrument-row-value,
+[data-system="instrument"] .instrument-dock-controls,
+[data-system="instrument"] .instrument-dock-group {
+	display: flex;
+	align-items: center;
+}
+
+[data-system="instrument"] .instrument-panel-actions {
+	gap: var(--instrument-space-1);
+}
+
+[data-system="instrument"] .instrument-group {
+	display: grid;
+}
+
+[data-system="instrument"] .instrument-section {
+	min-block-size: var(--instrument-space-6);
+	margin: 0;
+	padding-inline: var(--instrument-space-3);
+	color: var(--instrument-color-text-muted);
+	background: var(--instrument-section-wash);
+	font-size: var(--instrument-font-size-label);
+	font-weight: var(--instrument-font-weight-semibold);
+	line-height: var(--instrument-space-6);
+	text-transform: uppercase;
+}
+
+[data-system="instrument"] .instrument-row {
+	display: grid;
+	grid-template-columns: var(--instrument-field-label-width) minmax(0, 1fr) auto;
+	align-items: center;
+	column-gap: var(--instrument-space-3);
+	min-block-size: var(--instrument-control-min-height);
+	margin-block-start: calc(var(--instrument-space-3) / 2);
+	padding: 0 var(--instrument-space-3);
+	background: transparent;
+}
+
+[data-system="instrument"] .instrument-row-label {
+	display: block;
+	min-inline-size: 0;
+	overflow: hidden;
+	color: var(--instrument-color-text-muted);
+	font-size: var(--instrument-font-size-label);
+	line-height: var(--instrument-control-min-height);
+	opacity: 0.5;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* Technical values precede their physical indicators, as on an instrument. */
+[data-system="instrument"] .instrument-row:has(input[type="range"]) {
+	grid-template-columns: var(--instrument-field-label-width) 76px minmax(
+			72px,
+			1fr
+		);
+	column-gap: calc(var(--instrument-space-3) / 2);
+}
+
+[data-system="instrument"]
+	.instrument-row:has(input[type="range"])
+	.instrument-row-label {
+	margin-inline-end: calc(var(--instrument-space-3) / 2);
+}
+
+[data-system="instrument"]
+	.instrument-row:has(input[type="range"])
+	.instrument-row-control {
+	grid-column: 3;
+}
+
+[data-system="instrument"]
+	.instrument-row:has(input[type="range"])
+	.instrument-row-value {
+	grid-row: 1;
+	grid-column: 2;
+}
+
+[data-system="instrument"] .instrument-row[data-instrument-density="dense"] {
+	min-block-size: var(--instrument-control-min-height);
+}
+
+[data-system="instrument"] .instrument-row[data-instrument-density="normal"] {
+	min-block-size: var(--instrument-row-height);
+}
+
+[data-system="instrument"] .instrument-row-hint,
+[data-system="instrument"] .instrument-row-unit {
+	color: var(--instrument-color-text-faint);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-row-control,
+[data-system="instrument"] .instrument-row-value {
+	justify-content: flex-end;
+	gap: var(--instrument-space-1);
+	min-inline-size: 0;
+}
+
+[data-system="instrument"] .instrument-row-control > * {
+	inline-size: var(--instrument-full-measure);
+}
+
+[data-system="instrument"] .instrument-row-value {
+	color: var(--instrument-color-text);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"]
+	.instrument-row:has(input[type="range"])
+	.instrument-row-value {
+	justify-content: flex-end;
+	min-block-size: var(--instrument-control-min-height);
+	padding-inline: var(--instrument-space-2);
+	background: var(--instrument-color-field);
+	border-radius: var(--instrument-radius-mini);
+	box-shadow: inset 0 0 0 var(--instrument-rule-width)
+		var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"] .instrument-control,
+[data-system="instrument"] .instrument-action,
+[data-system="instrument"] .instrument-choice {
+	min-block-size: var(--instrument-control-min-height);
+	color: var(--instrument-color-text);
+	background: var(--instrument-color-field);
+	border: 0;
+	border-radius: var(--instrument-radius-mini);
+	box-shadow: inset 0 0 0 var(--instrument-rule-width)
+		var(--instrument-color-rule-subdued);
+	font: inherit;
+	font-size: var(--instrument-font-size-small);
+	accent-color: var(--instrument-color-accent);
+	transition:
+		background-color var(--instrument-duration-fast)
+		var(--instrument-ease-standard),
+		box-shadow var(--instrument-duration-fast) var(--instrument-ease-standard),
+		color var(--instrument-duration-fast) var(--instrument-ease-standard);
+}
+
+[data-system="instrument"] .instrument-control:hover,
+[data-system="instrument"] .instrument-action:hover,
+[data-system="instrument"] .instrument-choice:hover {
+	background: var(--instrument-color-surface-active);
+	box-shadow: var(--instrument-shadow-rule-strong);
+}
+
+[data-system="instrument"] .instrument-control:focus-visible,
+[data-system="instrument"] .instrument-action:focus-visible,
+[data-system="instrument"] .instrument-choice:focus-visible,
+[data-system="instrument"] .instrument-reset-surface:focus-visible {
+	outline: 0;
+	box-shadow: var(--instrument-shadow-focus);
+}
+
+[data-system="instrument"] .instrument-action {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--instrument-space-1);
+	padding-inline: var(--instrument-space-3);
+	cursor: pointer;
+}
+
+[data-system="instrument"] .instrument-action[aria-pressed="true"],
+[data-system="instrument"] .instrument-choice[aria-checked="true"],
+[data-system="instrument"] .instrument-choice:checked {
+	color: var(--instrument-color-text);
+	background: var(--instrument-color-rule-subdued);
+	box-shadow: none;
+	font-weight: var(--instrument-font-weight-semibold);
+}
+
+[data-system="instrument"] .instrument-action[data-instrument-tone="critical"],
+[data-system="instrument"] .instrument-action[data-instrument-tone="primary"] {
+	box-shadow:
+		var(--instrument-shadow-rule-strong),
+		0 0 4px var(--instrument-color-focus-band);
+}
+
+[data-system="instrument"] .instrument-action:disabled,
+[data-system="instrument"] .instrument-control:disabled,
+[data-system="instrument"] .instrument-choice:disabled {
+	color: var(--instrument-color-text-faint);
+	cursor: not-allowed;
+	opacity: var(--instrument-disabled-opacity);
+}
+
+[data-system="instrument"] .instrument-range {
+	appearance: none;
+	inline-size: var(--instrument-full-measure);
+	block-size: var(--instrument-control-min-height);
+	margin: 0;
+	padding: 0;
+	background-color: var(--instrument-color-field);
+	background-image: var(--instrument-field-wash);
+	background-repeat: no-repeat;
+	background-size: var(--instrument-range-fill, 50%) 100%;
+	border: 0;
+	border-radius: var(--instrument-radius-control);
+	cursor: pointer;
+	outline: 0;
+}
+
+[data-system="instrument"] .instrument-range::-webkit-slider-runnable-track {
+	block-size: var(--instrument-control-min-height);
+	background: transparent;
+	border: 0;
+	border-radius: 0;
+}
+
+[data-system="instrument"] .instrument-range::-webkit-slider-thumb {
+	appearance: none;
+	inline-size: var(--instrument-control-indicator-width);
+	block-size: var(--instrument-control-min-height);
+	margin-block-start: 0;
+	background: var(--instrument-color-rule-strong);
+	border: 0;
+	border-radius: 0;
+	cursor: pointer;
+}
+
+[data-system="instrument"]
+	.instrument-range:focus-visible::-webkit-slider-thumb {
+	box-shadow: 0 0 0 var(--instrument-focus-band-width)
+		var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"] .instrument-range::-moz-range-track {
+	block-size: var(--instrument-control-min-height);
+	background: transparent;
+	border: 0;
+	border-radius: 0;
+}
+
+[data-system="instrument"] .instrument-range::-moz-range-thumb {
+	inline-size: var(--instrument-control-indicator-width);
+	block-size: var(--instrument-control-min-height);
+	background: var(--instrument-color-rule-strong);
+	border: 0;
+	border-radius: 0;
+	cursor: pointer;
+}
+
+[data-system="instrument"] .instrument-range:focus-visible::-moz-range-thumb {
+	box-shadow: 0 0 0 var(--instrument-focus-band-width)
+		var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"] .instrument-range:disabled {
+	cursor: default;
+	opacity: var(--instrument-disabled-opacity);
+}
+
+[data-system="instrument"] .instrument-choice[type="checkbox"],
+[data-system="instrument"] .instrument-choice[type="radio"] {
+	appearance: none;
+	inline-size: var(--instrument-control-min-height);
+	block-size: var(--instrument-control-min-height);
+	margin: 0;
+	background: var(--instrument-color-field);
+	border: 0;
+	border-radius: 0;
+	box-shadow: inset 0 0 0 var(--instrument-rule-width)
+		var(--instrument-color-rule-subdued);
+	cursor: pointer;
+}
+
+[data-system="instrument"] .instrument-choice[type="checkbox"]:checked,
+[data-system="instrument"] .instrument-choice[type="radio"]:checked {
+	background-color: var(--instrument-color-rule-subdued);
+	background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' xmlns='http://www%2Ew3%2Eorg/2000/svg'%3E%3Cpath d='m2%2E5 6 2%2E2 2%2E2L9%2E5 3%2E5' fill='none' stroke='%23e0e0e0' stroke-width='1%2E5'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: center;
+	box-shadow: none;
+}
+
+[data-system="instrument"] .instrument-text-field {
+	min-inline-size: 0;
+	padding-inline: var(--instrument-space-2);
+}
+
+[data-system="instrument"] .instrument-textarea {
+	display: block;
+	inline-size: var(--instrument-full-measure);
+	min-block-size: calc(var(--instrument-space-12) * 2);
+	padding: var(--instrument-space-3);
+	resize: vertical;
+	font-family: var(--instrument-font-sans);
+	font-size: var(--instrument-font-size-small);
+	line-height: var(--instrument-space-6);
+}
+
+[data-system="instrument"] select.instrument-control {
+	appearance: none;
+	padding-inline: var(--instrument-space-3) var(--instrument-space-6);
+	background-color: var(--instrument-color-field);
+	background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' xmlns='http://www%2Ew3%2Eorg/2000/svg'%3E%3Cpath d='m3 4%2E5 3 3 3-3' fill='none' stroke='%23a8a8a8' stroke-width='1%2E25'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 6px center;
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-label);
+	line-height: var(--instrument-control-min-height);
+	text-overflow: ellipsis;
+}
+
+[data-system="instrument"] select.instrument-control option {
+	color: var(--instrument-color-text);
+	background: var(--instrument-color-canvas);
+}
+
+[data-system="instrument"] .instrument-swatch {
+	inline-size: var(--instrument-control-min-height);
+	block-size: var(--instrument-control-min-height);
+	border: 0;
+	border-radius: var(--instrument-radius-round);
+	box-shadow: var(--instrument-shadow-rule-strong);
+}
+
+[data-system="instrument"] .instrument-tabular {
+	font-family: var(--instrument-font-mono);
+	font-feature-settings:
+		"tnum" 1,
+		"zero" 1;
+	font-variant-numeric: tabular-nums slashed-zero;
+}
+
+[data-system="instrument"] .instrument-reset-surface {
+	border-radius: var(--instrument-radius-control);
+	cursor: default;
+}
+
+/* Segments read as one state surface, never as a row of unrelated buttons. */
+[data-system="instrument"] .instrument-renderer-choice {
+	position: relative;
+	display: flex;
+	gap: 0;
+	margin: 0;
+	padding: 0;
+	background: var(--instrument-color-field);
+	border: 0;
+}
+
+[data-system="instrument"] .instrument-renderer-choice::before,
+[data-system="instrument"] .instrument-renderer-choice::after {
+	position: absolute;
+	inset-inline: 0;
+	block-size: var(--instrument-rule-width);
+	background: var(--instrument-rule-horizontal);
+	content: "";
+	pointer-events: none;
+	z-index: 1;
+}
+
+[data-system="instrument"] .instrument-renderer-choice::before {
+	inset-block-start: 0;
+}
+
+[data-system="instrument"] .instrument-renderer-choice::after {
+	inset-block-end: 0;
+}
+
+[data-system="instrument"] .instrument-renderer-choice .instrument-action {
+	position: relative;
+	color: var(--instrument-color-text-muted);
+	background: transparent;
+	border-radius: 0;
+	box-shadow: none;
+	font-weight: var(--instrument-font-weight-regular);
+}
+
+[data-system="instrument"]
+	.instrument-renderer-choice
+	.instrument-action
+	+ .instrument-action::before {
+	position: absolute;
+	inset: 0 auto 0 0;
+	inline-size: var(--instrument-rule-width);
+	background: var(--instrument-rule-vertical);
+	content: "";
+}
+
+[data-system="instrument"]
+	.instrument-renderer-choice
+	.instrument-action:hover {
+	color: var(--instrument-color-text);
+	background: transparent;
+	box-shadow: none;
+}
+
+[data-system="instrument"]
+	.instrument-renderer-choice
+	.instrument-action[aria-pressed="true"] {
+	color: var(--instrument-color-text);
+	background: var(--instrument-color-rule-subdued);
+	box-shadow: none;
+	font-weight: var(--instrument-font-weight-semibold);
+}
+
+[data-system="instrument"] .instrument-disclosure {
+	position: relative;
+	background: var(--instrument-color-field);
+}
+
+[data-system="instrument"] .instrument-disclosure::before,
+[data-system="instrument"] .instrument-disclosure::after {
+	position: absolute;
+	inset-inline: 0;
+	block-size: var(--instrument-rule-width);
+	background: var(--instrument-rule-horizontal);
+	content: "";
+	pointer-events: none;
+}
+
+[data-system="instrument"] .instrument-disclosure::before {
+	inset-block-start: 0;
+}
+
+[data-system="instrument"] .instrument-disclosure::after {
+	inset-block-end: 0;
+}
+
+[data-system="instrument"] .instrument-disclosure > summary {
+	display: flex;
+	align-items: baseline;
+	gap: var(--instrument-space-3);
+	padding: var(--instrument-space-3);
+	color: var(--instrument-color-text);
+	font-size: var(--instrument-font-size-small);
+	font-weight: var(--instrument-font-weight-semibold);
+	cursor: pointer;
+	list-style: none;
+	user-select: none;
+}
+
+[data-system="instrument"]
+	.instrument-disclosure
+	> summary::-webkit-details-marker {
+	display: none;
+}
+
+[data-system="instrument"] .instrument-disclosure > summary::before {
+	color: var(--instrument-color-accent);
+	content: "+";
+	font-family: var(--instrument-font-mono);
+}
+
+[data-system="instrument"] .instrument-disclosure[open] > summary::before {
+	content: "−";
+}
+
+[data-system="instrument"] .instrument-disclosure-body {
+	padding: 0 var(--instrument-space-3) var(--instrument-space-3);
+}
+
+[data-system="instrument"] .instrument-disclosure-body::before {
+	display: block;
+	block-size: var(--instrument-rule-width);
+	margin-block-end: var(--instrument-space-3);
+	background: var(--instrument-rule-horizontal);
+	content: "";
+}
+
+[data-system="instrument"] .instrument-dock-controls {
+	gap: var(--instrument-space-4);
+}
+
+[data-system="instrument"] .instrument-dock-group {
+	gap: var(--instrument-space-4);
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+[data-system="instrument"] .instrument-dock-group + .instrument-dock-group {
+	position: relative;
+	margin-inline-start: var(--instrument-space-1);
+	padding-inline-start: var(--instrument-space-5);
+}
+
+[data-system="instrument"]
+	.instrument-dock-group
+	+ .instrument-dock-group::before {
+	position: absolute;
+	inset: calc(var(--instrument-space-1) * -1) auto
+		calc(var(--instrument-space-1) * -1) 0;
+	inline-size: 2px;
+	background: var(--instrument-rule-vertical);
+	content: "";
+}
+
+[data-system="instrument"] .instrument-mode-dock .instrument-action {
+	min-block-size: auto;
+	padding: 0;
+	color: var(--instrument-color-text-faint);
+	background: transparent;
+	box-shadow: none;
+	font-size: var(--instrument-font-size-small);
+	font-weight: var(--instrument-font-weight-semibold);
+	white-space: nowrap;
+}
+
+[data-system="instrument"] .instrument-mode-dock .instrument-action:hover,
+[data-system="instrument"]
+	.instrument-mode-dock
+	.instrument-action:focus-visible,
+[data-system="instrument"]
+	.instrument-mode-dock
+	.instrument-action[aria-pressed="true"] {
+	color: var(--instrument-color-text);
+	background: transparent;
+	box-shadow: none;
+}
+
+[data-system="instrument"]
+	.instrument-mode-dock
+	.instrument-action:focus-visible {
+	outline: var(--instrument-rule-width) solid var(--instrument-color-focus);
+	outline-offset: var(--instrument-space-1);
+}
+
+[data-system="instrument"] .instrument-visually-hidden {
+	position: absolute;
+	inline-size: var(--instrument-rule-width);
+	block-size: var(--instrument-rule-width);
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+[data-system="instrument"] .instrument-status,
+[data-system="instrument"] .instrument-notice,
+[data-system="instrument"] .instrument-help,
+[data-system="instrument"] .instrument-credit {
+	padding: var(--instrument-space-3);
+	color: var(--instrument-color-text-muted);
+	background: color-mix(
+		in srgb,
+		var(--instrument-color-surface-overlay) 32%,
+		transparent
+	);
+	font-size: var(--instrument-font-size-small);
+}
+
+[data-system="instrument"] .instrument-status {
+	display: grid;
+	grid-template-columns: var(--instrument-space-2) minmax(0, 1fr) auto;
+	align-items: center;
+	gap: var(--instrument-space-2);
+}
+
+[data-system="instrument"] .instrument-status-mark {
+	inline-size: var(--instrument-space-2);
+	block-size: var(--instrument-space-2);
+	background: var(--instrument-color-text-faint);
+	border-radius: var(--instrument-radius-round);
+}
+
+[data-system="instrument"]
+	.instrument-status[data-instrument-tone="active"]
+	.instrument-status-mark,
+[data-system="instrument"]
+	.instrument-status[data-instrument-tone="error"]
+	.instrument-status-mark {
+	background: var(--instrument-color-accent);
+}
+
+[data-system="instrument"] .instrument-status-value {
+	color: var(--instrument-color-text);
+}
+
+[data-system="instrument"] .instrument-status[data-instrument-tone="attention"],
+[data-system="instrument"]
+	.instrument-notice[data-instrument-tone="attention"] {
+	color: var(--instrument-color-text);
+	box-shadow: inset var(--instrument-focus-band-width) 0
+		var(--instrument-color-accent);
+}
+
+[data-system="instrument"] .instrument-toast {
+	position: fixed;
+	inset-inline-end: var(--instrument-space-4);
+	inset-block-end: var(--instrument-space-4);
+	max-inline-size: var(--instrument-inspector-width);
+	padding: var(--instrument-space-3);
+	background: var(--instrument-color-surface-overlay);
+	border: var(--instrument-rule-width) solid var(--instrument-color-rule-strong);
+	border-radius: var(--instrument-radius-floating);
+	z-index: var(--instrument-z-toast);
+}
+
+[data-system="instrument"].instrument-portal {
+	position: relative;
+	color: var(--instrument-color-text);
+	font-family: var(--instrument-font-sans);
+	z-index: var(--instrument-z-portal);
+}
+
+[data-system="instrument"] .instrument-overlay {
+	position: fixed;
+	inset: 0;
+	background: color-mix(
+		in srgb,
+		var(--instrument-color-canvas) 76%,
+		transparent
+	);
+	z-index: var(--instrument-z-portal);
+}
+
+[data-system="instrument"] .instrument-dialog {
+	position: fixed;
+	inset-block-start: var(--instrument-half-measure);
+	inset-inline-start: var(--instrument-half-measure);
+	inline-size: min(
+		var(--instrument-inspector-width),
+		calc(100% - var(--instrument-space-8))
+	);
+	padding: var(--instrument-space-4);
+	background: var(--instrument-color-surface-overlay);
+	border: var(--instrument-rule-width) solid var(--instrument-color-rule-strong);
+	transform: translate(-50%, -50%);
+	z-index: var(--instrument-z-toast);
+}
+
+[data-system="instrument"] .instrument-dialog h2,
+[data-system="instrument"] .instrument-dialog p {
+	margin-block-start: 0;
+}
+
+[data-system="instrument"] .instrument-json,
+[data-system="instrument"] .instrument-compare,
+[data-system="instrument"] .instrument-graph,
+[data-system="instrument"] .instrument-chart,
+[data-system="instrument"] .instrument-ratios,
+[data-system="instrument"] .instrument-stacks,
+[data-system="instrument"] .instrument-dumbbells,
+[data-system="instrument"] .instrument-pipeline,
+[data-system="instrument"] .instrument-sparklines,
+[data-system="instrument"] .instrument-transcript {
+	margin: 0;
+	max-inline-size: calc(var(--instrument-space-8) * 24);
+	color: var(--instrument-color-text);
+	font-size: var(--instrument-font-size-small);
+}
+
+[data-system="instrument"] .instrument-json > figcaption,
+[data-system="instrument"] .instrument-compare > figcaption,
+[data-system="instrument"] .instrument-graph > figcaption,
+[data-system="instrument"] .instrument-chart > figcaption,
+[data-system="instrument"] .instrument-ratios > figcaption,
+[data-system="instrument"] .instrument-stacks > figcaption,
+[data-system="instrument"] .instrument-dumbbells > figcaption,
+[data-system="instrument"] .instrument-pipeline > figcaption,
+[data-system="instrument"] .instrument-sparklines > figcaption,
+[data-system="instrument"] .instrument-transcript > figcaption {
+	padding: var(--instrument-space-2) var(--instrument-space-3);
+	color: var(--instrument-color-text-muted);
+	background: var(--instrument-section-wash);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-json {
+	background: var(--instrument-color-field);
+	font-family: var(--instrument-font-mono);
+}
+
+[data-system="instrument"] .instrument-json-node > summary,
+[data-system="instrument"] .instrument-json-leaf {
+	display: grid;
+	grid-template-columns: minmax(96px, 1fr) auto;
+	gap: var(--instrument-space-3);
+	min-block-size: var(--instrument-control-min-height);
+	padding-inline: var(--instrument-space-3);
+	border-block-end: var(--instrument-rule-width) solid
+		var(--instrument-color-rule);
+	font-size: var(--instrument-font-size-label);
+	line-height: var(--instrument-control-min-height);
+}
+
+[data-system="instrument"] .instrument-json-node > summary {
+	cursor: pointer;
+	list-style: none;
+}
+
+[data-system="instrument"]
+	.instrument-json-node
+	> summary::-webkit-details-marker {
+	display: none;
+}
+
+[data-system="instrument"] .instrument-json-node > summary::before {
+	position: absolute;
+	margin-inline-start: calc(var(--instrument-space-2) * -1);
+	color: var(--instrument-color-accent);
+	content: "+";
+}
+
+[data-system="instrument"] .instrument-json-node[open] > summary::before {
+	content: "−";
+}
+
+[data-system="instrument"] .instrument-json-children {
+	padding-inline-start: var(--instrument-space-3);
+}
+
+[data-system="instrument"] .instrument-json-leaf > span,
+[data-system="instrument"] .instrument-json-node > summary > span:first-child {
+	color: var(--instrument-color-text-muted);
+}
+
+[data-system="instrument"] .instrument-json-leaf code {
+	color: var(--instrument-color-text);
+	font: inherit;
+}
+
+[data-system="instrument"] .instrument-compare {
+	overflow-x: auto;
+	background: var(--instrument-color-field);
+}
+
+[data-system="instrument"] .instrument-compare-head,
+[data-system="instrument"] .instrument-compare-row {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(240px, 1fr));
+}
+
+[data-system="instrument"] .instrument-compare-head > span {
+	padding: var(--instrument-space-2) var(--instrument-space-3);
+	color: var(--instrument-color-text-muted);
+	background: var(--instrument-section-wash);
+	font-size: var(--instrument-font-size-label);
+	font-weight: var(--instrument-font-weight-semibold);
+	text-transform: uppercase;
+}
+
+[data-system="instrument"] .instrument-compare-row > [data-instrument-change],
+[data-system="instrument"] .instrument-compare-blank {
+	display: grid;
+	grid-template-columns: var(--instrument-space-8) minmax(0, 1fr);
+	min-block-size: var(--instrument-control-min-height);
+	border-block-end: var(--instrument-rule-width) solid
+		var(--instrument-color-rule);
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-label);
+	line-height: var(--instrument-control-min-height);
+	text-decoration: none;
+	white-space: pre;
+}
+
+[data-system="instrument"]
+	.instrument-compare-row
+	> [data-instrument-change="delete"] {
+	background: var(--instrument-diff-delete-wash);
+}
+
+[data-system="instrument"]
+	.instrument-compare-row
+	> [data-instrument-change="insert"] {
+	background: var(--instrument-diff-insert-wash);
+}
+
+[data-system="instrument"]
+	.instrument-compare-row
+	> [data-instrument-change="equal"] {
+	background: transparent;
+}
+
+[data-system="instrument"] .instrument-compare-row code,
+[data-system="instrument"] .instrument-compare-unified-row code {
+	color: inherit;
+	font: inherit;
+}
+
+[data-system="instrument"] .instrument-compare-blank {
+	background-color: var(--instrument-color-surface);
+	background-image: repeating-linear-gradient(
+		-45deg,
+		transparent 0 var(--instrument-space-1),
+		var(--instrument-color-rule) var(--instrument-space-1)
+			calc(var(--instrument-space-1) + var(--instrument-rule-width))
+	);
+}
+
+[data-system="instrument"] .instrument-compare-unified-row {
+	display: grid;
+	grid-template-columns:
+		var(--instrument-space-8)
+		var(--instrument-space-8)
+		var(--instrument-space-6)
+		minmax(240px, 1fr);
+	min-block-size: var(--instrument-control-min-height);
+	border-block-end: var(--instrument-rule-width) solid
+		var(--instrument-color-rule);
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-label);
+	line-height: var(--instrument-control-min-height);
+	white-space: pre;
+}
+
+[data-system="instrument"]
+	.instrument-compare-unified-row[data-instrument-change="delete"] {
+	background: var(--instrument-diff-delete-wash);
+}
+
+[data-system="instrument"]
+	.instrument-compare-unified-row[data-instrument-change="insert"] {
+	background: var(--instrument-diff-insert-wash);
+}
+
+[data-system="instrument"] .instrument-compare-unified-row > span:nth-child(3) {
+	color: var(--instrument-color-text-faint);
+	text-align: center;
+}
+
+[data-system="instrument"] .instrument-compare-gutter {
+	padding-inline-end: var(--instrument-space-2);
+	color: var(--instrument-color-text-faint);
+	text-align: end;
+}
+
+[data-system="instrument"] .instrument-graph {
+	padding: var(--instrument-space-3);
+	background: var(--instrument-color-field);
+}
+
+[data-system="instrument"] .instrument-graph svg {
+	display: block;
+	inline-size: 100%;
+	block-size: calc(var(--instrument-space-12) * 4);
+	overflow: visible;
+	background-image: var(--instrument-material-grid-image);
+	background-size: var(--instrument-grid-size) var(--instrument-grid-size);
+}
+
+[data-system="instrument"] .instrument-graph polyline,
+[data-system="instrument"] .instrument-sparkline polyline {
+	fill: none;
+	stroke: var(--instrument-series-color, var(--instrument-color-text));
+	stroke-width: 1.25;
+	vector-effect: non-scaling-stroke;
+}
+
+[data-system="instrument"] .instrument-graph-legend,
+[data-system="instrument"] .instrument-stack-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--instrument-space-2) var(--instrument-space-4);
+	padding-block-start: var(--instrument-space-3);
+	color: var(--instrument-color-text-muted);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-graph-legend span,
+[data-system="instrument"] .instrument-stack-legend span {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--instrument-space-2);
+}
+
+[data-system="instrument"] .instrument-graph-legend i,
+[data-system="instrument"] .instrument-stack-legend i {
+	inline-size: var(--instrument-space-2);
+	block-size: var(--instrument-space-2);
+	background: var(--instrument-series-color);
+}
+
+/* Complete document-graph catalogue. Each variant shares one measured frame. */
+[data-system="instrument"] .instrument-chart {
+	overflow: hidden;
+	background: var(--instrument-color-field);
+	box-shadow: var(--instrument-shadow-rule);
+}
+
+[data-system="instrument"] .instrument-chart > header {
+	min-block-size: var(--instrument-control-min-height);
+	padding-inline: var(--instrument-space-3);
+	color: var(--instrument-color-text-muted);
+	background: var(--instrument-section-wash);
+	font-size: var(--instrument-font-size-label);
+	font-weight: var(--instrument-font-weight-semibold);
+	line-height: var(--instrument-control-min-height);
+	text-transform: uppercase;
+}
+
+[data-system="instrument"] .instrument-chart-body {
+	padding: var(--instrument-space-3);
+}
+
+[data-system="instrument"] .instrument-chart svg {
+	display: block;
+	inline-size: 100%;
+	min-block-size: calc(var(--instrument-space-12) * 3);
+	overflow: visible;
+}
+
+[data-system="instrument"] .instrument-chart svg text {
+	fill: var(--instrument-color-text-muted);
+	font-family: var(--instrument-font-mono);
+	font-size: 3px;
+	text-anchor: middle;
+}
+
+[data-system="instrument"] .instrument-chart-grid path,
+[data-system="instrument"] .instrument-chart-zero,
+[data-system="instrument"] .instrument-chart-radar-grid,
+[data-system="instrument"] .instrument-chart-tree-edge {
+	fill: none;
+	stroke: var(--instrument-color-rule);
+	stroke-width: var(--instrument-rule-width);
+	vector-effect: non-scaling-stroke;
+}
+
+[data-system="instrument"] .instrument-chart-line {
+	fill: none;
+	stroke: var(--instrument-chart-color);
+	stroke-width: 1.5;
+	vector-effect: non-scaling-stroke;
+}
+
+[data-system="instrument"] .instrument-chart-area,
+[data-system="instrument"] .instrument-chart-radar-series {
+	fill: color-mix(in srgb, var(--instrument-chart-color) 24%, transparent);
+	stroke: var(--instrument-chart-color);
+	stroke-width: var(--instrument-rule-width);
+	vector-effect: non-scaling-stroke;
+}
+
+[data-system="instrument"] .instrument-chart circle,
+[data-system="instrument"]
+	.instrument-chart
+	rect:not(.instrument-chart-tree-node rect) {
+	fill: var(--instrument-chart-color);
+}
+
+[data-system="instrument"] .instrument-chart-categories,
+[data-system="instrument"] .instrument-chart-legend {
+	display: grid;
+	color: var(--instrument-color-text-muted);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-chart-categories {
+	grid-template-columns: repeat(
+			var(--instrument-chart-columns),
+			minmax(0, 1fr)
+		);
+	padding-inline: var(--instrument-space-3);
+	font-family: var(--instrument-font-mono);
+	text-align: center;
+}
+
+[data-system="instrument"] .instrument-chart-legend {
+	grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+	gap: var(--instrument-space-2) var(--instrument-space-3);
+	padding-block-start: var(--instrument-space-3);
+}
+
+[data-system="instrument"] .instrument-chart-legend span {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--instrument-space-2);
+	min-inline-size: 0;
+}
+
+[data-system="instrument"] .instrument-chart-legend i {
+	flex: 0 0 var(--instrument-space-2);
+	inline-size: var(--instrument-space-2);
+	block-size: var(--instrument-space-2);
+	background: var(--instrument-chart-color);
+}
+
+[data-system="instrument"] .instrument-chart-distribution {
+	display: grid;
+	gap: var(--instrument-space-2);
+}
+
+[data-system="instrument"] .instrument-chart-distribution > div {
+	display: grid;
+	grid-template-columns: var(--instrument-data-label-measure) minmax(0, 1fr);
+	align-items: center;
+	min-block-size: var(--instrument-control-min-height);
+}
+
+[data-system="instrument"] .instrument-chart-distribution > div > span {
+	overflow: hidden;
+	color: var(--instrument-color-text-muted);
+	font-size: var(--instrument-font-size-label);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+[data-system="instrument"] .instrument-chart-distribution > div > div {
+	display: flex;
+	block-size: var(--instrument-space-4);
+	background: var(--instrument-color-surface);
+}
+
+[data-system="instrument"] .instrument-chart-distribution i {
+	inline-size: var(--instrument-chart-share);
+	background: var(--instrument-chart-color);
+}
+
+[data-system="instrument"] .instrument-chart-cohort {
+	inline-size: 100%;
+	border-collapse: collapse;
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-chart-cohort th,
+[data-system="instrument"] .instrument-chart-cohort td {
+	min-block-size: var(--instrument-control-min-height);
+	padding: var(--instrument-space-2);
+	border: var(--instrument-rule-width) solid var(--instrument-color-rule);
+}
+
+[data-system="instrument"] .instrument-chart-cohort th {
+	color: var(--instrument-color-text-muted);
+	font-weight: var(--instrument-font-weight-medium);
+	text-align: start;
+}
+
+[data-system="instrument"] .instrument-chart-cohort td {
+	background: color-mix(
+		in srgb,
+		var(--instrument-graph-option-2)
+			calc(var(--instrument-chart-intensity) * 64%),
+		transparent
+	);
+	text-align: end;
+}
+
+[data-system="instrument"] .instrument-chart-tree-node rect {
+	fill: var(--instrument-color-surface-raised);
+	stroke: var(--instrument-chart-color);
+	stroke-width: var(--instrument-rule-width);
+	vector-effect: non-scaling-stroke;
+}
+
+[data-system="instrument"]
+	.instrument-chart-tree-node[data-instrument-tone="attention"]
+	rect,
+[data-system="instrument"]
+	.instrument-chart-tree-node[data-instrument-tone="negative"]
+	rect {
+	stroke: var(--instrument-color-accent);
+}
+
+[data-system="instrument"]
+	.instrument-chart-tree-node[data-instrument-tone="positive"]
+	rect {
+	stroke: var(--instrument-diff-insert);
+}
+
+[data-system="instrument"] .instrument-chart-candle path {
+	fill: none;
+	stroke: var(--instrument-color-text-muted);
+	stroke-width: var(--instrument-rule-width);
+	vector-effect: non-scaling-stroke;
+}
+
+[data-system="instrument"]
+	.instrument-chart-candle[data-instrument-direction="up"]
+	rect {
+	fill: var(--instrument-diff-insert);
+}
+
+[data-system="instrument"]
+	.instrument-chart-candle[data-instrument-direction="down"]
+	rect {
+	fill: var(--instrument-diff-delete);
+}
+
+[data-system="instrument"] .instrument-matrix-scroll,
+[data-system="instrument"] .instrument-heatmap-scroll {
+	max-inline-size: calc(var(--instrument-space-8) * 24);
+	overflow: auto;
+}
+
+[data-system="instrument"] .instrument-matrix,
+[data-system="instrument"] .instrument-heatmap {
+	inline-size: 100%;
+	border-collapse: collapse;
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-matrix th,
+[data-system="instrument"] .instrument-matrix td,
+[data-system="instrument"] .instrument-heatmap th,
+[data-system="instrument"] .instrument-heatmap td {
+	min-inline-size: var(--instrument-space-12);
+	block-size: var(--instrument-space-8);
+	padding-inline: var(--instrument-space-2);
+	border: var(--instrument-rule-width) solid var(--instrument-color-rule);
+	text-align: end;
+}
+
+[data-system="instrument"] .instrument-matrix th,
+[data-system="instrument"] .instrument-heatmap th {
+	color: var(--instrument-color-text-muted);
+	background: var(--instrument-color-field);
+	font-weight: var(--instrument-font-weight-semibold);
+}
+
+[data-system="instrument"] .instrument-matrix td {
+	background: color-mix(
+		in srgb,
+		var(--instrument-diff-insert) calc(var(--instrument-matrix-intensity) * 56%),
+		var(--instrument-color-field)
+	);
+}
+
+[data-system="instrument"]
+	.instrument-matrix
+	td[data-instrument-sign="negative"] {
+	background: color-mix(
+		in srgb,
+		var(--instrument-diff-delete) calc(var(--instrument-matrix-intensity) * 56%),
+		var(--instrument-color-field)
+	);
+}
+
+[data-system="instrument"] .instrument-heatmap td {
+	background: color-mix(
+		in srgb,
+		var(--instrument-color-accent) calc(var(--instrument-heat) * 72%),
+		var(--instrument-color-field)
+	);
+}
+
+[data-system="instrument"] .instrument-ratios,
+[data-system="instrument"] .instrument-stacks,
+[data-system="instrument"] .instrument-dumbbells,
+[data-system="instrument"] .instrument-sparklines {
+	display: grid;
+	gap: calc(var(--instrument-space-3) / 2);
+}
+
+[data-system="instrument"] .instrument-ratio,
+[data-system="instrument"] .instrument-stack-row,
+[data-system="instrument"] .instrument-dumbbell,
+[data-system="instrument"] .instrument-sparkline {
+	display: grid;
+	grid-template-columns:
+		var(--instrument-data-label-measure)
+		minmax(var(--instrument-data-track-min), 1fr)
+		var(--instrument-data-value-measure);
+	align-items: center;
+	gap: var(--instrument-space-3);
+	min-block-size: var(--instrument-space-8);
+	padding-inline: var(--instrument-space-3);
+	background: var(--instrument-color-field);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-ratio > span,
+[data-system="instrument"] .instrument-stack-row > span,
+[data-system="instrument"] .instrument-dumbbell > span,
+[data-system="instrument"] .instrument-sparkline > span {
+	color: var(--instrument-color-text-muted);
+}
+
+[data-system="instrument"] .instrument-ratio output,
+[data-system="instrument"] .instrument-dumbbell output,
+[data-system="instrument"] .instrument-sparkline output {
+	text-align: end;
+}
+
+[data-system="instrument"] .instrument-ratio meter {
+	appearance: none;
+	inline-size: 100%;
+	block-size: var(--instrument-space-3);
+	background: var(--instrument-color-surface-overlay);
+	border: 0;
+}
+
+[data-system="instrument"] .instrument-ratio meter::-webkit-meter-bar {
+	background: var(--instrument-color-surface-overlay);
+	border: 0;
+	border-radius: 0;
+}
+
+[data-system="instrument"]
+	.instrument-ratio
+	meter::-webkit-meter-optimum-value {
+	background: var(--instrument-color-rule-strong);
+}
+
+[data-system="instrument"] .instrument-ratio meter::-moz-meter-bar {
+	background: var(--instrument-color-rule-strong);
+}
+
+[data-system="instrument"] .instrument-stack-row {
+	grid-template-columns: 112px minmax(96px, 1fr);
+}
+
+[data-system="instrument"] .instrument-stack-row > div {
+	display: flex;
+	block-size: var(--instrument-space-3);
+	background: var(--instrument-color-surface-overlay);
+}
+
+[data-system="instrument"] .instrument-stack-row > div > i {
+	flex: 0 0 var(--instrument-stack-share);
+	background: var(--instrument-series-color);
+}
+
+[data-system="instrument"] .instrument-dumbbell-track {
+	position: relative;
+	block-size: var(--instrument-space-6);
+}
+
+[data-system="instrument"] .instrument-dumbbell-track::before {
+	position: absolute;
+	inset: calc(50% - 1px) 0 auto;
+	block-size: var(--instrument-rule-width);
+	background: var(--instrument-color-rule);
+	content: "";
+}
+
+[data-system="instrument"] .instrument-dumbbell-track > i {
+	position: absolute;
+	inset-block-start: calc(50% - var(--instrument-space-1));
+	block-size: var(--instrument-space-2);
+}
+
+[data-system="instrument"]
+	.instrument-dumbbell-track
+	[data-instrument-point="before"] {
+	inset-inline-start: var(--instrument-before);
+	inline-size: var(--instrument-space-2);
+	background: var(--instrument-color-canvas);
+	border: var(--instrument-rule-width) solid var(--instrument-color-text-muted);
+	transform: translateX(-50%);
+}
+
+[data-system="instrument"]
+	.instrument-dumbbell-track
+	[data-instrument-point="after"] {
+	inset-inline-start: var(--instrument-after);
+	inline-size: var(--instrument-space-2);
+	background: var(--instrument-color-text);
+	transform: translateX(-50%);
+}
+
+[data-system="instrument"] .instrument-dumbbell-track [data-instrument-span] {
+	inset-inline-start: var(--instrument-span-start);
+	inline-size: var(--instrument-span-size);
+	block-size: var(--instrument-rule-width);
+	margin-block-start: calc(var(--instrument-space-1) - 1px);
+	background: var(--instrument-color-text-muted);
+}
+
+[data-system="instrument"] .instrument-pipeline {
+	overflow-x: auto;
+}
+
+[data-system="instrument"] .instrument-pipeline-rail {
+	display: flex;
+	align-items: stretch;
+	min-inline-size: max-content;
+}
+
+[data-system="instrument"] .instrument-pipeline-stage {
+	position: relative;
+	display: grid;
+	align-content: start;
+	gap: var(--instrument-space-1);
+	inline-size: 192px;
+	min-block-size: calc(var(--instrument-space-12) * 2);
+	padding: var(--instrument-space-3);
+	background: var(--instrument-color-field);
+	border: var(--instrument-rule-width) solid var(--instrument-color-rule);
+}
+
+[data-system="instrument"]
+	.instrument-pipeline-stage
+	+ .instrument-pipeline-stage {
+	margin-inline-start: var(--instrument-space-6);
+}
+
+[data-system="instrument"]
+	.instrument-pipeline-stage
+	+ .instrument-pipeline-stage::before {
+	position: absolute;
+	inset-inline-start: calc(var(--instrument-space-6) * -1);
+	inline-size: var(--instrument-space-6);
+	color: var(--instrument-color-text-faint);
+	content: "›";
+	text-align: center;
+}
+
+[data-system="instrument"] .instrument-pipeline-stage span,
+[data-system="instrument"] .instrument-pipeline-stage code {
+	color: var(--instrument-color-text-muted);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-pipeline-loop {
+	display: grid;
+	place-items: center;
+	inline-size: var(--instrument-space-12);
+	color: var(--instrument-color-accent);
+	font-family: var(--instrument-font-mono);
+}
+
+[data-system="instrument"] .instrument-sparkline svg {
+	inline-size: 100%;
+	block-size: var(--instrument-space-6);
+	overflow: visible;
+}
+
+[data-system="instrument"] .instrument-transcript > div {
+	max-block-size: calc(var(--instrument-space-12) * 8);
+	overflow-y: auto;
+	background: var(--instrument-color-field);
+}
+
+[data-system="instrument"] .instrument-transcript-line {
+	display: grid;
+	grid-template-columns: 96px minmax(0, 1fr) 64px;
+	gap: var(--instrument-space-3);
+	padding: var(--instrument-space-2) var(--instrument-space-3);
+	border-block-end: var(--instrument-rule-width) solid
+		var(--instrument-color-rule);
+}
+
+[data-system="instrument"] .instrument-transcript-line strong {
+	color: var(--instrument-color-text-muted);
+}
+
+[data-system="instrument"] .instrument-transcript-line time {
+	color: var(--instrument-color-text-faint);
+	text-align: end;
+}
+
+[data-system="instrument"]
+	.instrument-transcript-line[data-instrument-tone="positive"]
+	strong {
+	color: var(--instrument-diff-insert);
+}
+
+[data-system="instrument"]
+	.instrument-transcript-line[data-instrument-tone="negative"]
+	strong {
+	color: var(--instrument-diff-delete);
+}
+
+[data-system="instrument"]
+	.instrument-transcript-line[data-instrument-tone="accent"]
+	strong {
+	color: var(--instrument-color-accent);
+}
+
+[data-system="instrument"] .instrument-settings-column {
+	inline-size: min(100%, var(--instrument-inspector-wide-width));
+	min-block-size: 100%;
+	background: var(--instrument-color-canvas);
+}
+
+[data-system="instrument"] .instrument-settings-column > header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	min-block-size: var(--instrument-space-8);
+	padding-inline: var(--instrument-space-3);
+	background: var(--instrument-section-wash);
+}
+
+[data-system="instrument"] .instrument-settings-column > header h2 {
+	margin: 0;
+	font-size: var(--instrument-font-size-small);
+	font-weight: var(--instrument-font-weight-semibold);
+	text-transform: uppercase;
+}
+
+[data-system="instrument"] .instrument-settings-column-body {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+[data-system="instrument"] .instrument-settings-column-body > * + * {
+	position: relative;
+}
+
+[data-system="instrument"] .instrument-settings-column-body > * + *::before {
+	position: absolute;
+	inset-block: 0;
+	inset-inline-start: 0;
+	inline-size: var(--instrument-rule-width);
+	background: var(--instrument-rule-vertical);
+	content: "";
+}
+
+[data-system="instrument"] .instrument-horizontal-rail {
+	display: flex;
+	inline-size: 100%;
+	min-block-size: calc(100dvh - var(--instrument-chrome-height));
+	overflow-x: auto;
+	scroll-snap-type: inline mandatory;
+}
+
+[data-system="instrument"] .instrument-horizontal-column {
+	flex: 0 0 424px;
+	min-block-size: calc(100dvh - var(--instrument-chrome-height));
+	border-inline-end: var(--instrument-rule-width) solid
+		var(--instrument-color-rule);
+	scroll-snap-align: start;
+}
+
+/* Measured VMAX glass command, re-authored as a shared Instrument primitive. */
+[data-system="instrument"] .instrument-glass-button-wrap {
+	--instrument-glass-border-width: 1px;
+	position: relative;
+	display: inline-flex;
+	inline-size: 100%;
+	border-radius: var(--instrument-radius-floating);
+	pointer-events: none;
+	transition: transform var(--instrument-duration-glass)
+		var(--instrument-ease-glass);
+}
+
+[data-system="instrument"] .instrument-glass-button-shadow {
+	--instrument-glass-shadow-pad: 10px;
+	position: absolute;
+	inset-block-start: calc(var(--instrument-glass-shadow-pad) / -2);
+	inset-inline-start: calc(var(--instrument-glass-shadow-pad) / -2);
+	inline-size: calc(100% + var(--instrument-glass-shadow-pad));
+	block-size: calc(100% + var(--instrument-glass-shadow-pad));
+	filter: blur(3px);
+	pointer-events: none;
+	transition: filter var(--instrument-duration-glass)
+		var(--instrument-ease-glass);
+}
+
+[data-system="instrument"] .instrument-glass-button-shadow::after {
+	position: absolute;
+	inset-block-start: calc(var(--instrument-glass-shadow-pad) - 2px);
+	inset-inline-start: calc(var(--instrument-glass-shadow-pad) - 4px);
+	inline-size: calc(100% - var(--instrument-glass-shadow-pad) - 2px);
+	block-size: calc(100% - var(--instrument-glass-shadow-pad) - 2px);
+	box-sizing: border-box;
+	padding: 1px;
+	background: linear-gradient(rgb(0 0 0 / 20%), rgb(0 0 0 / 10%));
+	border-radius: var(--instrument-radius-floating);
+	content: "";
+	mask:
+		linear-gradient(#000 0 0) content-box exclude,
+		linear-gradient(#000 0 0);
+	transition: all var(--instrument-duration-glass) var(--instrument-ease-glass);
+}
+
+[data-system="instrument"] .instrument-glass-button {
+	position: relative;
+	z-index: 3;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 100%;
+	min-block-size: calc(var(--instrument-space-6) * 2);
+	box-sizing: border-box;
+	padding: var(--instrument-space-3) var(--instrument-space-6);
+	color: var(--instrument-color-text);
+	background: linear-gradient(
+		-75deg,
+		rgb(255 255 255 / 5%),
+		rgb(255 255 255 / 20%),
+		rgb(255 255 255 / 5%)
+	);
+	border: 0;
+	border-radius: var(--instrument-radius-floating);
+	box-shadow:
+		inset 0 1px 1px rgb(0 0 0 / 5%),
+		inset 0 -1px 1px rgb(255 255 255 / 40%),
+		0 2px 2px -1px rgb(0 0 0 / 15%),
+		inset 0 0 1px 1px rgb(255 255 255 / 15%);
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-small);
+	font-weight: var(--instrument-font-weight-medium);
+	line-height: var(--instrument-space-6);
+	letter-spacing: 0.2px;
+	text-transform: uppercase;
+	text-decoration: none;
+	cursor: pointer;
+	pointer-events: auto;
+	user-select: none;
+	-webkit-tap-highlight-color: transparent;
+	transition: all var(--instrument-duration-glass) var(--instrument-ease-glass);
+}
+
+[data-system="instrument"] .instrument-glass-button::after {
+	position: absolute;
+	z-index: 1;
+	inset-block-start: calc(var(--instrument-glass-border-width) / -2);
+	inset-inline-start: calc(var(--instrument-glass-border-width) / -2);
+	inline-size: calc(100% + var(--instrument-glass-border-width));
+	block-size: calc(100% + var(--instrument-glass-border-width));
+	box-sizing: border-box;
+	padding: var(--instrument-glass-border-width);
+	background:
+		conic-gradient(
+			from var(--instrument-glass-button-angle) at 50% 50%,
+			rgb(0 0 0 / 25%),
+			transparent 5% 40%,
+			rgb(0 0 0 / 25%) 50%,
+			transparent 60% 95%,
+			rgb(0 0 0 / 25%)
+		),
+		linear-gradient(rgb(255 255 255 / 25%), rgb(255 255 255 / 25%));
+	border-radius: var(--instrument-radius-floating);
+	box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 25%);
+	content: "";
+	mask:
+		linear-gradient(#000 0 0) content-box exclude,
+		linear-gradient(#000 0 0);
+	transition:
+		all var(--instrument-duration-glass) var(--instrument-ease-glass),
+		--instrument-glass-button-angle 500ms ease;
+}
+
+[data-system="instrument"] .instrument-glass-button-content {
+	position: relative;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 100%;
+	block-size: 100%;
+}
+
+[data-system="instrument"] .instrument-glass-button:hover {
+	box-shadow:
+		inset 0 1px 1px rgb(0 0 0 / 5%),
+		inset 0 -1px 1px rgb(255 255 255 / 40%),
+		0 1px 1px -1px rgb(0 0 0 / 20%),
+		inset 0 0 1px 1px rgb(255 255 255 / 30%);
+}
+
+[data-system="instrument"] .instrument-glass-button:hover::after {
+	--instrument-glass-button-angle: -125deg;
+}
+
+[data-system="instrument"]
+	.instrument-glass-button-wrap:has(.instrument-glass-button:hover)
+	.instrument-glass-button-shadow {
+	filter: blur(1px);
+}
+
+[data-system="instrument"]
+	.instrument-glass-button-wrap:has(.instrument-glass-button:hover)
+	.instrument-glass-button-shadow::after {
+	inset-block-start: calc(var(--instrument-glass-shadow-pad) - 4px);
+}
+
+[data-system="instrument"]
+	.instrument-glass-button-wrap:has(.instrument-glass-button:active) {
+	transform: rotateX(25deg);
+}
+
+[data-system="instrument"] .instrument-glass-button:focus-visible {
+	outline: 0;
+	box-shadow:
+		var(--instrument-shadow-focus),
+		inset 0 -1px 1px rgb(255 255 255 / 40%);
+}
+
+[data-system="instrument"]
+	.instrument-glass-button-wrap[data-instrument-tone="active"]
+	.instrument-glass-button {
+	background: linear-gradient(
+		-75deg,
+		transparent,
+		var(--instrument-color-focus-band),
+		transparent
+	);
+	box-shadow:
+		inset 0 2px 2px rgb(0 0 0 / 5%),
+		inset 0 -2px 2px rgb(255 255 255 / 50%),
+		0 4px 2px -2px rgb(0 0 0 / 20%),
+		inset 0 0 2px 4px rgb(255 255 255 / 10%),
+		0 0 3px 1px var(--instrument-color-focus-band);
+}
+
+[data-system="instrument"]
+	.instrument-glass-button-wrap[data-instrument-tone="negative"]
+	.instrument-glass-button {
+	background: linear-gradient(
+		-75deg,
+		transparent,
+		color-mix(in srgb, var(--instrument-color-accent) 50%, transparent),
+		transparent
+	);
+}
+
+/* Measured 24px glass action used inside prompt and list surfaces. */
+[data-system="instrument"] .instrument-action-glass-wrap {
+	--instrument-glass-border-width: 1px;
+	position: relative;
+	display: inline-flex;
+	border-radius: var(--instrument-radius-mini);
+	pointer-events: none;
+	transition: transform var(--instrument-duration-glass)
+		var(--instrument-ease-glass);
+}
+
+[data-system="instrument"] .instrument-action-glass {
+	position: relative;
+	z-index: 3;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: var(--instrument-control-min-height);
+	block-size: var(--instrument-control-min-height);
+	box-sizing: border-box;
+	padding: 0;
+	color: var(--instrument-color-text);
+	background: linear-gradient(
+		-75deg,
+		rgb(255 255 255 / 5%),
+		rgb(255 255 255 / 20%),
+		rgb(255 255 255 / 5%)
+	);
+	border: 0;
+	border-radius: var(--instrument-radius-mini);
+	box-shadow:
+		inset 0 2px 2px rgb(0 0 0 / 5%),
+		inset 0 -2px 2px rgb(255 255 255 / 50%),
+		0 4px 2px -2px rgb(0 0 0 / 20%),
+		inset 0 0 2px 4px rgb(255 255 255 / 20%),
+		0 0 0 #fff;
+	cursor: pointer;
+	pointer-events: auto;
+	user-select: none;
+	transition: all var(--instrument-duration-glass) var(--instrument-ease-glass);
+}
+
+[data-system="instrument"] .instrument-action-glass::after {
+	position: absolute;
+	z-index: 1;
+	inset-block-start: calc(var(--instrument-glass-border-width) / -2);
+	inset-inline-start: calc(var(--instrument-glass-border-width) / -2);
+	inline-size: calc(100% + var(--instrument-glass-border-width));
+	block-size: calc(100% + var(--instrument-glass-border-width));
+	box-sizing: border-box;
+	padding: var(--instrument-glass-border-width);
+	background:
+		conic-gradient(
+			from var(--instrument-glass-action-angle) at 50% 50%,
+			rgb(0 0 0 / 50%),
+			transparent 5% 40%,
+			rgb(0 0 0 / 50%) 50%,
+			transparent 60% 95%,
+			rgb(0 0 0 / 50%)
+		),
+		linear-gradient(rgb(255 255 255 / 50%), rgb(255 255 255 / 50%));
+	border-radius: var(--instrument-radius-mini);
+	box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 50%);
+	content: "";
+	mask:
+		linear-gradient(#000 0 0) content-box exclude,
+		linear-gradient(#000 0 0);
+	transition:
+		all var(--instrument-duration-glass) var(--instrument-ease-glass),
+		--instrument-glass-action-angle 500ms ease;
+}
+
+[data-system="instrument"] .instrument-action-glass-content {
+	position: relative;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 100%;
+	block-size: 100%;
+}
+
+[data-system="instrument"] .instrument-action-glass-shadow {
+	--instrument-glass-shadow-pad: 8px;
+	position: absolute;
+	inset-block-start: calc(var(--instrument-glass-shadow-pad) / -2);
+	inset-inline-start: calc(var(--instrument-glass-shadow-pad) / -2);
+	inline-size: calc(100% + var(--instrument-glass-shadow-pad));
+	block-size: calc(100% + var(--instrument-glass-shadow-pad));
+	filter: blur(2px);
+	pointer-events: none;
+}
+
+[data-system="instrument"] .instrument-action-glass-shadow::after {
+	position: absolute;
+	inset-block-start: calc(var(--instrument-glass-shadow-pad) - 2px);
+	inset-inline-start: calc(var(--instrument-glass-shadow-pad) - 4px);
+	inline-size: calc(100% - var(--instrument-glass-shadow-pad) - 2px);
+	block-size: calc(100% - var(--instrument-glass-shadow-pad) - 2px);
+	box-sizing: border-box;
+	padding: 1px;
+	background: linear-gradient(rgb(0 0 0 / 20%), rgb(0 0 0 / 10%));
+	border-radius: var(--instrument-radius-mini);
+	content: "";
+	mask:
+		linear-gradient(#000 0 0) content-box exclude,
+		linear-gradient(#000 0 0);
+}
+
+[data-system="instrument"] .instrument-action-glass:hover {
+	transform: scale(0.975);
+}
+
+[data-system="instrument"] .instrument-action-glass:hover::after {
+	--instrument-glass-action-angle: -125deg;
+}
+
+[data-system="instrument"]
+	.instrument-action-glass-wrap:has(.instrument-action-glass:active) {
+	transform: rotateX(25deg);
+}
+
+[data-system="instrument"] .instrument-action-glass:focus-visible {
+	outline: 0;
+	box-shadow: var(--instrument-shadow-focus);
+}
+
+/* Prompt surface: label, text work area, and a baseline-aligned action. */
+[data-system="instrument"] .instrument-prompt {
+	position: relative;
+	inline-size: 100%;
+	max-inline-size: var(--instrument-tools-body-measure, 768px);
+	margin-block-start: var(--instrument-space-6);
+	box-sizing: border-box;
+	background: var(--instrument-color-field);
+}
+
+[data-system="instrument"] .instrument-prompt::before,
+[data-system="instrument"] .instrument-prompt::after {
+	position: absolute;
+	inset-inline: 0;
+	block-size: var(--instrument-rule-width);
+	background: var(--instrument-rule-horizontal);
+	content: "";
+	pointer-events: none;
+}
+
+[data-system="instrument"] .instrument-prompt::before {
+	inset-block-start: 0;
+}
+
+[data-system="instrument"] .instrument-prompt::after {
+	inset-block-end: 0;
+}
+
+[data-system="instrument"] .instrument-prompt[data-instrument-attached="true"] {
+	margin-block-start: 0;
+}
+
+[data-system="instrument"]
+	.instrument-prompt[data-instrument-attached="true"]::before {
+	display: none;
+}
+
+[data-system="instrument"] .instrument-prompt-label {
+	display: block;
+	padding: var(--instrument-space-3) var(--instrument-space-6) 0;
+	color: var(--instrument-color-text);
+	font-size: var(--instrument-font-size-label);
+	font-weight: var(--instrument-font-weight-semibold);
+	line-height: var(--instrument-space-6);
+	letter-spacing: 0.2px;
+	text-transform: uppercase;
+	opacity: 0.5;
+}
+
+[data-system="instrument"] .instrument-prompt-row {
+	display: flex;
+	align-items: stretch;
+	inline-size: 100%;
+}
+
+[data-system="instrument"] .instrument-prompt-input {
+	display: block;
+	flex: 1 1 auto;
+	inline-size: 100%;
+	min-inline-size: 0;
+	min-block-size: calc(var(--instrument-space-3) * 4);
+	box-sizing: border-box;
+	padding: var(--instrument-space-3) var(--instrument-space-6);
+	resize: none;
+	overflow: hidden;
+	color: var(--instrument-color-text);
+	background: transparent;
+	border: 0;
+	outline: 0;
+	font-family: var(--instrument-font-sans);
+	font-size: var(--instrument-font-size-small);
+	line-height: var(--instrument-space-6);
+}
+
+[data-system="instrument"]
+	.instrument-prompt[data-instrument-prompt-mode="single"]
+	.instrument-prompt-input {
+	min-block-size: var(--instrument-chrome-height);
+	max-block-size: var(--instrument-chrome-height);
+	white-space: nowrap;
+}
+
+[data-system="instrument"]
+	.instrument-prompt[data-instrument-prompt-mode="multiline"]
+	.instrument-prompt-input {
+	max-block-size: 240px;
+	overflow-y: auto;
+}
+
+[data-system="instrument"] .instrument-prompt-input::placeholder {
+	color: var(--instrument-color-text);
+	opacity: 0.4;
+}
+
+[data-system="instrument"] .instrument-prompt-action {
+	display: flex;
+	align-self: stretch;
+	align-items: flex-end;
+	padding: 0 var(--instrument-space-3);
+}
+
+[data-system="instrument"] .instrument-prompt-action > * {
+	margin-block-end: var(--instrument-space-3);
+}
+
+/* Sidebar intro and history list share the same measured campaign grammar. */
+[data-system="instrument"] .instrument-sidebar-intro {
+	padding: var(--instrument-space-6);
+}
+
+[data-system="instrument"] .instrument-sidebar-title {
+	display: block;
+	margin: 0;
+	font-size: var(--instrument-font-size-small);
+	font-weight: var(--instrument-font-weight-semibold);
+	line-height: var(--instrument-space-6);
+}
+
+[data-system="instrument"] .instrument-sidebar-description {
+	display: block;
+	margin: 0;
+	padding-block-start: var(--instrument-space-3);
+	font-size: var(--instrument-font-size-small);
+	font-weight: var(--instrument-font-weight-regular);
+	line-height: var(--instrument-space-6);
+	opacity: 0.7;
+}
+
+[data-system="instrument"] .instrument-sidebar-action {
+	inline-size: 100%;
+	margin-block-start: var(--instrument-space-6);
+}
+
+[data-system="instrument"] .instrument-sidebar-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+[data-system="instrument"] .instrument-sidebar-item {
+	display: flex;
+	align-items: flex-start;
+	justify-content: flex-start;
+	margin-block-start: var(--instrument-space-6);
+	padding: 0 var(--instrument-space-6);
+	font-weight: var(--instrument-font-weight-semibold);
+	opacity: 0.6;
+}
+
+[data-system="instrument"]
+	.instrument-sidebar-item[data-instrument-active="true"] {
+	opacity: 1;
+}
+
+[data-system="instrument"]
+	.instrument-sidebar-item[data-instrument-dim="true"] {
+	opacity: 0.4;
+}
+
+[data-system="instrument"] .instrument-sidebar-item-target {
+	display: flex;
+	inline-size: 100%;
+	min-inline-size: 0;
+	margin: 0;
+	padding: 0;
+	color: inherit;
+	background: transparent;
+	border: 0;
+	font: inherit;
+	text-align: start;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+[data-system="instrument"] .instrument-sidebar-item-target:focus-visible {
+	outline: 0;
+	box-shadow: inset var(--instrument-focus-band-width) 0
+		var(--instrument-color-accent);
+}
+
+[data-system="instrument"] .instrument-sidebar-item-label {
+	inline-size: 100%;
+	min-inline-size: 0;
+}
+
+[data-system="instrument"] .instrument-sidebar-item-name {
+	display: block;
+	overflow: hidden;
+	font-size: var(--instrument-font-size-small);
+	line-height: var(--instrument-space-6);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+[data-system="instrument"] .instrument-sidebar-item-description {
+	display: block;
+	overflow: hidden;
+	font-size: var(--instrument-font-size-label);
+	font-weight: var(--instrument-font-weight-regular);
+	line-height: 18px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	opacity: 0.7;
+}
+
+[data-system="instrument"] .instrument-sidebar-item-trailing {
+	display: flex;
+	flex-shrink: 0;
+	align-self: center;
+	align-items: center;
+	padding-inline-start: var(--instrument-space-3);
+}
+
+/* Compact text and select surfaces used inside Settings rows. */
+[data-system="instrument"] .instrument-mini-field,
+[data-system="instrument"] .instrument-mini-select {
+	display: flex;
+	position: relative;
+	align-items: center;
+	inline-size: 100%;
+	block-size: var(--instrument-control-min-height);
+	box-sizing: border-box;
+	overflow: hidden;
+	background: var(--instrument-color-field);
+	border-radius: var(--instrument-radius-mini);
+	box-shadow: inset 0 0 0 var(--instrument-rule-width)
+		var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"] .instrument-mini-field:focus-within,
+[data-system="instrument"] .instrument-mini-select:focus-within {
+	box-shadow: inset 0 0 0 var(--instrument-rule-width)
+		var(--instrument-color-rule-strong);
+}
+
+[data-system="instrument"] .instrument-mini-prefix,
+[data-system="instrument"] .instrument-mini-suffix {
+	flex-shrink: 0;
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-label);
+	line-height: var(--instrument-control-min-height);
+	white-space: nowrap;
+	user-select: none;
+	opacity: 0.5;
+}
+
+[data-system="instrument"] .instrument-mini-prefix {
+	padding-inline-start: var(--instrument-space-3);
+}
+
+[data-system="instrument"] .instrument-mini-suffix {
+	padding-inline-end: calc(var(--instrument-space-3) / 2);
+}
+
+[data-system="instrument"] .instrument-mini-input,
+[data-system="instrument"] .instrument-mini-select-input {
+	flex: 1 1 auto;
+	inline-size: 100%;
+	min-inline-size: 0;
+	block-size: 100%;
+	box-sizing: border-box;
+	color: var(--instrument-color-text);
+	background: transparent;
+	border: 0;
+	outline: 0;
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-label);
+	line-height: var(--instrument-control-min-height);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+[data-system="instrument"] .instrument-mini-input {
+	padding: 0 calc(var(--instrument-space-3) / 2) 0 var(--instrument-space-3);
+}
+
+[data-system="instrument"]
+	.instrument-mini-field[data-instrument-align="right"]
+	.instrument-mini-input {
+	text-align: end;
+}
+
+[data-system="instrument"] .instrument-mini-select-input {
+	appearance: none;
+	padding: 0 var(--instrument-space-6) 0 var(--instrument-space-3);
+	cursor: pointer;
+}
+
+[data-system="instrument"] .instrument-mini-select-caret {
+	position: absolute;
+	inset-block: 0;
+	inset-inline-end: calc(var(--instrument-space-3) / 2);
+	display: flex;
+	align-items: center;
+	pointer-events: none;
+	opacity: 0.5;
+}
+
+/* Native field and choice families. */
+[data-system="instrument"] .instrument-choice-group {
+	display: flex;
+	align-items: center;
+	gap: var(--instrument-space-3);
+	min-inline-size: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+[data-system="instrument"] .instrument-choice-label {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--instrument-space-2);
+	min-inline-size: 0;
+	color: var(--instrument-color-text-muted);
+	font-size: var(--instrument-font-size-small);
+	cursor: pointer;
+}
+
+[data-system="instrument"] .instrument-choice-label:has(:disabled) {
+	cursor: not-allowed;
+	opacity: var(--instrument-disabled-opacity);
+}
+
+[data-system="instrument"] .instrument-swatch[aria-pressed="true"] {
+	box-shadow:
+		0 0 0 var(--instrument-rule-width) var(--instrument-color-canvas),
+		0 0 0 var(--instrument-space-1)
+		color-mix(in srgb, var(--instrument-color-focus) 50%, transparent);
+}
+
+[data-system="instrument"] .instrument-swatch:focus-visible {
+	outline: 0;
+	box-shadow:
+		0 0 0 var(--instrument-rule-width) var(--instrument-color-canvas),
+		0 0 0 var(--instrument-focus-band-width) var(--instrument-color-focus);
+}
+
+/* Disclosure anatomy keeps metadata and actions in the same measured header. */
+[data-system="instrument"] .instrument-disclosure-label {
+	min-inline-size: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+[data-system="instrument"] .instrument-disclosure-meta {
+	margin-inline-start: auto;
+	color: var(--instrument-color-text-muted);
+	font-weight: var(--instrument-font-weight-regular);
+	opacity: 0.5;
+}
+
+[data-system="instrument"] .instrument-disclosure-action {
+	flex-shrink: 0;
+}
+
+/* Information surfaces share structure and differ only by semantic tone. */
+[data-system="instrument"] .instrument-notice[data-instrument-tone="error"],
+[data-system="instrument"] .instrument-toast[data-instrument-tone="error"] {
+	color: var(--instrument-color-text);
+	box-shadow: inset var(--instrument-focus-band-width) 0
+		var(--instrument-color-accent);
+}
+
+[data-system="instrument"] .instrument-notice[data-instrument-tone="positive"],
+[data-system="instrument"] .instrument-toast[data-instrument-tone="positive"] {
+	color: var(--instrument-color-text);
+	box-shadow: inset var(--instrument-rule-width) 0
+		var(--instrument-color-rule-strong);
+}
+
+[data-system="instrument"] .instrument-help,
+[data-system="instrument"] .instrument-credit {
+	display: block;
+}
+
+[data-system="instrument"] .instrument-credit:hover,
+[data-system="instrument"] .instrument-credit:focus-visible {
+	color: var(--instrument-color-text);
+}
+
+[data-system="instrument"] .instrument-credit:focus-visible {
+	outline: 0;
+	box-shadow: inset var(--instrument-focus-band-width) 0
+		var(--instrument-color-focus);
+}
+
+/* Headline figures follow the Numerals Grid. */
+[data-system="instrument"] .instrument-metrics {
+	position: relative;
+	display: flex;
+	min-inline-size: 0;
+	background: var(--instrument-color-field);
+}
+
+[data-system="instrument"] .instrument-metrics::before,
+[data-system="instrument"] .instrument-metrics::after {
+	position: absolute;
+	inset-inline: 0;
+	block-size: var(--instrument-rule-width);
+	background: var(--instrument-rule-horizontal);
+	content: "";
+	pointer-events: none;
+}
+
+[data-system="instrument"] .instrument-metrics::before {
+	inset-block-start: 0;
+}
+
+[data-system="instrument"] .instrument-metrics::after {
+	inset-block-end: 0;
+}
+
+[data-system="instrument"] .instrument-metric {
+	position: relative;
+	display: grid;
+	flex: 1 1 0;
+	gap: var(--instrument-space-1);
+	min-inline-size: 0;
+	padding: var(--instrument-space-3);
+}
+
+[data-system="instrument"] .instrument-metric + .instrument-metric::before {
+	position: absolute;
+	inset-block: 0;
+	inset-inline-start: 0;
+	inline-size: var(--instrument-rule-width);
+	background: var(--instrument-rule-vertical);
+	content: "";
+}
+
+[data-system="instrument"] .instrument-metric-value {
+	color: var(--instrument-color-text);
+	font-size: var(--instrument-font-size-title);
+}
+
+[data-system="instrument"] .instrument-metric-label,
+[data-system="instrument"] .instrument-metric-delta {
+	color: var(--instrument-color-text-muted);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"]
+	.instrument-metric[data-instrument-tone="negative"]
+	.instrument-metric-delta {
+	color: var(--instrument-color-accent);
+}
+
+/* Native table semantics on the measured data surface. */
+[data-system="instrument"] .instrument-table-scroll {
+	max-inline-size: calc(var(--instrument-space-8) * 24);
+	overflow-x: auto;
+}
+
+[data-system="instrument"] .instrument-table {
+	inline-size: 100%;
+	border-collapse: collapse;
+	color: var(--instrument-color-text-muted);
+	font-size: var(--instrument-font-size-small);
+}
+
+[data-system="instrument"] .instrument-table caption {
+	padding-block-end: var(--instrument-space-3);
+	color: var(--instrument-color-text);
+	font-weight: var(--instrument-font-weight-semibold);
+	text-align: start;
+}
+
+[data-system="instrument"] .instrument-table th,
+[data-system="instrument"] .instrument-table td {
+	min-inline-size: calc(var(--instrument-space-6) * 4);
+	padding: var(--instrument-space-3) var(--instrument-space-3)
+		var(--instrument-space-3) 0;
+	text-align: start;
+	white-space: nowrap;
+}
+
+[data-system="instrument"] .instrument-table th {
+	color: var(--instrument-color-text);
+	font-weight: var(--instrument-font-weight-semibold);
+}
+
+[data-system="instrument"] .instrument-table [data-instrument-fluid="true"] {
+	min-inline-size: calc(var(--instrument-space-6) * 18);
+	white-space: normal;
+}
+
+[data-system="instrument"] .instrument-table [data-instrument-align="center"] {
+	text-align: center;
+}
+
+[data-system="instrument"] .instrument-table [data-instrument-align="end"] {
+	text-align: end;
+}
+
+[data-system="instrument"]
+	.instrument-table[data-instrument-variant="ruled"]
+	thead,
+[data-system="instrument"]
+	.instrument-table[data-instrument-variant="ruled"]
+	tr {
+	border-block-end: var(--instrument-rule-width) solid
+		var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"]
+	.instrument-table[data-instrument-variant="striped"]
+	tbody
+	tr:nth-child(even) {
+	background: var(--instrument-color-field);
+}
+
+[data-system="instrument"]
+	.instrument-table[data-instrument-variant="gradient"]
+	thead {
+	background: var(--instrument-section-wash);
+}
+
+[data-system="instrument"] .instrument-table-sort {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--instrument-space-2);
+	padding: 0;
+	color: inherit;
+	background: transparent;
+	border: 0;
+	font: inherit;
+	font-weight: inherit;
+	cursor: pointer;
+}
+
+[data-system="instrument"] .instrument-table-sort:focus-visible {
+	outline: var(--instrument-rule-width) solid var(--instrument-color-focus);
+	outline-offset: var(--instrument-space-1);
+}
+
+[data-system="instrument"] .instrument-table-caret {
+	display: inline-grid;
+	grid-template-rows: repeat(2, calc(var(--instrument-space-3) / 2));
+	align-items: center;
+	font-family: var(--instrument-font-mono);
+	font-size: calc(var(--instrument-font-size-label) / 2);
+	line-height: calc(var(--instrument-space-3) / 2);
+	opacity: 0.4;
+}
+
+[data-system="instrument"]
+	.instrument-table-caret[data-instrument-sort="ascending"]
+	> span:first-child,
+[data-system="instrument"]
+	.instrument-table-caret[data-instrument-sort="descending"]
+	> span:last-child {
+	color: var(--instrument-color-accent);
+	opacity: 1;
+}
+
+[data-system="instrument"] .instrument-table-group {
+	background: var(--instrument-section-wash);
+}
+
+[data-system="instrument"] .instrument-table-group > th {
+	padding-block: var(--instrument-space-2);
+	color: var(--instrument-color-text-muted);
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-label);
+	letter-spacing: var(--instrument-letter-spacing-label);
+	text-transform: uppercase;
+}
+
+[data-system="instrument"] .instrument-table-empty {
+	color: var(--instrument-color-text-faint);
+}
+
+/* Code rows use one grid block per line and a fixed numeral gutter. */
+[data-system="instrument"] .instrument-code {
+	max-inline-size: calc(var(--instrument-space-8) * 24);
+	margin: var(--instrument-space-6) 0 0;
+}
+
+[data-system="instrument"] .instrument-code figcaption {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--instrument-space-3);
+	padding-block-end: var(--instrument-space-3);
+	color: var(--instrument-color-text);
+	font-size: var(--instrument-font-size-small);
+	font-weight: var(--instrument-font-weight-semibold);
+}
+
+[data-system="instrument"] .instrument-code-copy {
+	min-block-size: var(--instrument-control-min-height);
+	padding-inline: var(--instrument-space-3);
+	color: var(--instrument-color-text-muted);
+	background: var(--instrument-color-field);
+	border: 0;
+	box-shadow: var(--instrument-shadow-rule);
+	cursor: pointer;
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-label);
+	text-transform: uppercase;
+}
+
+[data-system="instrument"] .instrument-code-copy:hover,
+[data-system="instrument"] .instrument-code-copy:focus-visible,
+[data-system="instrument"]
+	.instrument-code-copy[data-instrument-copy-state="copied"] {
+	color: var(--instrument-color-text);
+	outline: 0;
+	box-shadow: var(--instrument-shadow-focus);
+}
+
+[data-system="instrument"] .instrument-code-scroll {
+	overflow-x: auto;
+	background: var(--instrument-color-field);
+	box-shadow:
+		inset 0 var(--instrument-rule-width) var(--instrument-color-rule-subdued),
+		inset 0 calc(var(--instrument-rule-width) * -1)
+		var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"] .instrument-code-lines {
+	display: table;
+	min-inline-size: 100%;
+	padding-block: var(--instrument-space-3);
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-code-row {
+	display: table-row;
+	block-size: var(--instrument-space-6);
+	line-height: var(--instrument-space-6);
+}
+
+[data-system="instrument"] .instrument-code-gutter,
+[data-system="instrument"] .instrument-code-line {
+	display: table-cell;
+	padding-inline: var(--instrument-space-3);
+	white-space: pre;
+}
+
+[data-system="instrument"] .instrument-code-gutter {
+	inline-size: var(--instrument-chrome-height);
+	color: var(--instrument-color-text-faint);
+	text-align: end;
+	opacity: 0.5;
+}
+
+[data-system="instrument"] .instrument-code-line {
+	color: var(--instrument-color-text);
+}
+
+[data-system="instrument"]
+	.instrument-code-line
+	[data-instrument-code-tone="comment"] {
+	color: var(--instrument-color-text-faint);
+}
+
+[data-system="instrument"]
+	.instrument-code-line
+	[data-instrument-code-tone="string"] {
+	color: var(--instrument-code-string);
+}
+
+[data-system="instrument"]
+	.instrument-code-line
+	[data-instrument-code-tone="number"] {
+	color: var(--instrument-code-number);
+}
+
+[data-system="instrument"]
+	.instrument-code-line
+	[data-instrument-code-tone="keyword"] {
+	color: var(--instrument-code-keyword);
+	font-weight: var(--instrument-font-weight-semibold);
+}
+
+[data-system="instrument"]
+	.instrument-code-line
+	[data-instrument-code-tone="positive"] {
+	color: var(--instrument-status-success);
+}
+
+[data-system="instrument"]
+	.instrument-code-line
+	[data-instrument-code-tone="negative"] {
+	color: var(--instrument-status-error);
+}
+
+[data-system="instrument"]
+	.instrument-code-line
+	[data-instrument-code-tone="warning"] {
+	color: var(--instrument-status-warning);
+}
+
+[data-system="instrument"] .instrument-code-limit {
+	padding: var(--instrument-space-2) var(--instrument-space-3);
+	color: var(--instrument-color-text-faint);
+	font-size: var(--instrument-font-size-label);
+}
+
+/* Lists use a shared fixed gutter for numbers and square markers. */
+[data-system="instrument"] .instrument-list {
+	display: grid;
+	gap: var(--instrument-space-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+[data-system="instrument"] .instrument-list li {
+	display: grid;
+	grid-template-columns: var(--instrument-space-5) minmax(0, 1fr);
+	align-items: baseline;
+	gap: var(--instrument-space-2);
+	color: var(--instrument-color-text-muted);
+	font-size: var(--instrument-font-size-small);
+}
+
+[data-system="instrument"] .instrument-list-square {
+	justify-self: center;
+	inline-size: calc(
+		var(--instrument-space-2) -
+		var(--instrument-rule-width) *
+		2
+	);
+	block-size: calc(
+		var(--instrument-space-2) -
+		var(--instrument-rule-width) *
+		2
+	);
+	box-shadow: var(--instrument-shadow-rule-strong);
+}
+
+[data-system="instrument"] .instrument-list-number {
+	color: var(--instrument-color-text-faint);
+	font-size: var(--instrument-font-size-label);
+	text-align: end;
+}
+
+/* Terminal windows are reusable log, trace, and task-card surfaces. */
+[data-system="instrument"] .instrument-terminal {
+	background: var(--instrument-color-field);
+	box-shadow: var(--instrument-shadow-rule);
+}
+
+[data-system="instrument"] .instrument-terminal-header {
+	min-block-size: var(--instrument-control-min-height);
+	padding-inline: var(--instrument-space-3);
+	color: var(--instrument-color-text);
+	background: var(--instrument-section-wash);
+	font-size: var(--instrument-font-size-label);
+	font-weight: var(--instrument-font-weight-semibold);
+	line-height: var(--instrument-control-min-height);
+	text-transform: uppercase;
+}
+
+[data-system="instrument"] .instrument-terminal-body {
+	max-block-size: calc(var(--instrument-space-6) * 22);
+	padding-block: var(--instrument-space-3);
+	overflow-y: auto;
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-terminal-line {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: var(--instrument-space-3);
+	min-block-size: var(--instrument-space-6);
+	padding-inline: var(--instrument-space-3);
+	color: var(--instrument-color-text-muted);
+	line-height: var(--instrument-space-6);
+}
+
+[data-system="instrument"]
+	.instrument-terminal-line[data-instrument-tone="negative"] {
+	color: var(--instrument-color-accent);
+}
+
+[data-system="instrument"]
+	.instrument-terminal-line[data-instrument-tone="positive"] {
+	color: var(--instrument-color-text);
+}
+
+[data-system="instrument"] .instrument-terminal-label {
+	font-weight: var(--instrument-font-weight-semibold);
+	text-transform: uppercase;
+	opacity: 0.6;
+}
+
+/* Dialog anatomy stays restrained and uses the same action grammar. */
+[data-system="instrument"] .instrument-dialog-header,
+[data-system="instrument"] .instrument-dialog-footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--instrument-space-3);
+}
+
+[data-system="instrument"] .instrument-dialog-header h2 {
+	margin: 0;
+	font-size: var(--instrument-font-size-small);
+	font-weight: var(--instrument-font-weight-semibold);
+}
+
+[data-system="instrument"] .instrument-dialog-body {
+	padding-block: var(--instrument-space-4);
+}
+
+[data-system="instrument"] .instrument-dialog-footer {
+	justify-content: flex-end;
+	padding-block-start: var(--instrument-space-3);
+	box-shadow: inset 0 var(--instrument-rule-width)
+		var(--instrument-color-rule-subdued);
+}
+
+/* Application and document frames extend the workstation without inventing cards. */
+[data-system="instrument"] .instrument-application-window {
+	min-inline-size: 0;
+	background: var(--instrument-color-field);
+	box-shadow: var(--instrument-shadow-rule);
+}
+
+[data-system="instrument"] .instrument-application-window > header {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: var(--instrument-space-3);
+	min-block-size: var(--instrument-control-min-height);
+	padding-inline: var(--instrument-space-3);
+	background: var(--instrument-section-wash);
+	font-size: var(--instrument-font-size-label);
+	text-transform: uppercase;
+}
+
+[data-system="instrument"] .instrument-application-window-meta {
+	color: var(--instrument-color-text-faint);
+}
+
+[data-system="instrument"] .instrument-application-window-actions {
+	display: flex;
+	align-items: center;
+	gap: var(--instrument-space-1);
+}
+
+[data-system="instrument"] .instrument-application-window-body {
+	min-block-size: calc(var(--instrument-space-6) * 3);
+	padding: var(--instrument-space-3);
+	overflow: auto;
+}
+
+[data-system="instrument"] .instrument-document {
+	inline-size: min(100%, 768px);
+	padding: var(--instrument-space-8) var(--instrument-space-6);
+}
+
+[data-system="instrument"] .instrument-document-heading {
+	padding-block-end: var(--instrument-space-6);
+	box-shadow: inset 0 calc(var(--instrument-rule-width) * -1)
+		var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"] .instrument-document-eyebrow,
+[data-system="instrument"] .instrument-document-meta {
+	margin: 0;
+	color: var(--instrument-color-text-faint);
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-label);
+	text-transform: uppercase;
+}
+
+[data-system="instrument"] .instrument-document-heading h1 {
+	margin: var(--instrument-space-3) 0;
+	font-size: var(--instrument-font-size-title);
+	line-height: var(--instrument-line-height-tight);
+}
+
+[data-system="instrument"] .instrument-document-lede {
+	max-inline-size: 60ch;
+	margin: 0;
+	color: var(--instrument-color-text-muted);
+	font-size: var(--instrument-font-size-reading);
+	line-height: var(--instrument-line-height-relaxed);
+}
+
+[data-system="instrument"] .instrument-document-actions,
+[data-system="instrument"] .instrument-document-meta {
+	margin-block-start: var(--instrument-space-4);
+}
+
+[data-system="instrument"] .instrument-document-body {
+	padding-block-start: var(--instrument-space-6);
+	color: var(--instrument-color-text-muted);
+	font-size: var(--instrument-font-size-reading);
+	line-height: var(--instrument-line-height-relaxed);
+}
+
+[data-system="instrument"] .instrument-document-body > :first-child {
+	margin-block-start: 0;
+}
+
+/* Compact route, menu, tooltip, and command mechanics. */
+[data-system="instrument"] .instrument-navigation-tab {
+	display: inline-flex;
+	align-items: center;
+	min-block-size: var(--instrument-control-min-height);
+	padding-inline: var(--instrument-space-3);
+	color: var(--instrument-color-text-muted);
+	font-size: var(--instrument-font-size-small);
+	font-weight: var(--instrument-font-weight-semibold);
+	text-decoration: none;
+	box-shadow: inset 0 calc(var(--instrument-rule-width) * -1) transparent;
+}
+
+[data-system="instrument"] .instrument-navigation-tab:hover,
+[data-system="instrument"] .instrument-navigation-tab:focus-visible,
+[data-system="instrument"] .instrument-navigation-tab[aria-current="page"] {
+	color: var(--instrument-color-text);
+}
+
+[data-system="instrument"] .instrument-navigation-tab:focus-visible {
+	outline: 0;
+	box-shadow: inset 0 calc(var(--instrument-focus-band-width) * -1)
+		var(--instrument-color-focus);
+}
+
+/* The current-page underline reads as a marker, not a focus band — half width. */
+[data-system="instrument"] .instrument-navigation-tab[aria-current="page"] {
+	outline: 0;
+	box-shadow: inset 0 calc(var(--instrument-focus-band-width) / -2)
+		var(--instrument-color-focus);
+}
+
+[data-system="instrument"] .instrument-menu {
+	position: relative;
+	inline-size: max-content;
+}
+
+[data-system="instrument"] .instrument-menu > summary {
+	min-block-size: var(--instrument-control-min-height);
+	padding-inline: var(--instrument-space-3) var(--instrument-space-6);
+	color: var(--instrument-color-text);
+	background: var(--instrument-color-field);
+	box-shadow: var(--instrument-shadow-rule);
+	font-size: var(--instrument-font-size-small);
+	line-height: var(--instrument-control-min-height);
+	list-style: none;
+	cursor: pointer;
+}
+
+[data-system="instrument"] .instrument-menu > summary::-webkit-details-marker {
+	display: none;
+}
+
+/* Same caret construction as select.instrument-control — a glyph never centers. */
+[data-system="instrument"] .instrument-menu > summary::after {
+	position: absolute;
+	inset-block-start: 50%;
+	inset-inline-end: var(--instrument-space-2);
+	inline-size: var(--instrument-control-indicator-width);
+	block-size: var(--instrument-control-indicator-width);
+	background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' xmlns='http://www%2Ew3%2Eorg/2000/svg'%3E%3Cpath d='m3 4%2E5 3 3 3-3' fill='none' stroke='%23a8a8a8' stroke-width='1%2E25'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: center;
+	content: "";
+	transform: translateY(-50%);
+}
+
+[data-system="instrument"] .instrument-menu > summary:focus-visible {
+	outline: 0;
+	box-shadow: var(--instrument-shadow-focus);
+}
+
+[data-system="instrument"] .instrument-menu-popover {
+	position: absolute;
+	inset-block-start: calc(100% + var(--instrument-space-1));
+	inset-inline-start: 0;
+	display: grid;
+	min-inline-size: 176px;
+	padding: var(--instrument-space-1);
+	background: var(--instrument-color-surface-overlay);
+	box-shadow:
+		var(--instrument-shadow-rule-strong), var(--instrument-shadow-modal);
+	z-index: var(--instrument-z-overlay);
+}
+
+[data-system="instrument"]
+	.instrument-menu[data-instrument-align="end"]
+	.instrument-menu-popover {
+	inset-inline: auto 0;
+}
+
+[data-system="instrument"] .instrument-menu-popover a,
+[data-system="instrument"] .instrument-menu-popover button {
+	min-block-size: var(--instrument-control-min-height);
+	padding-inline: var(--instrument-space-3);
+	color: var(--instrument-color-text-muted);
+	background: transparent;
+	border: 0;
+	font: inherit;
+	font-size: var(--instrument-font-size-small);
+	line-height: var(--instrument-control-min-height);
+	text-align: start;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+[data-system="instrument"] .instrument-menu-popover a:hover,
+[data-system="instrument"] .instrument-menu-popover button:hover,
+[data-system="instrument"] .instrument-menu-popover a:focus-visible,
+[data-system="instrument"] .instrument-menu-popover button:focus-visible {
+	color: var(--instrument-color-text);
+	background: var(--instrument-color-surface-active);
+	outline: 0;
+}
+
+[data-system="instrument"] .instrument-tooltip {
+	position: relative;
+	display: inline-flex;
+}
+
+[data-system="instrument"] .instrument-tooltip-trigger {
+	display: inline-flex;
+}
+
+[data-system="instrument"] .instrument-tooltip-bubble {
+	position: absolute;
+	inset-inline-start: 50%;
+	inset-block-end: calc(100% + var(--instrument-space-2));
+	inline-size: max-content;
+	max-inline-size: 240px;
+	padding: var(--instrument-space-2) var(--instrument-space-3);
+	color: var(--instrument-color-text);
+	background: var(--instrument-color-surface-overlay);
+	box-shadow: var(--instrument-shadow-rule-strong);
+	font-size: var(--instrument-font-size-label);
+	opacity: 0;
+	pointer-events: none;
+	transform: translate(-50%, var(--instrument-space-1));
+	transition:
+		opacity var(--instrument-duration-fast) var(--instrument-ease-standard),
+		transform var(--instrument-duration-fast) var(--instrument-ease-standard);
+	z-index: var(--instrument-z-overlay);
+}
+
+[data-system="instrument"] .instrument-tooltip:hover .instrument-tooltip-bubble,
+[data-system="instrument"]
+	.instrument-tooltip:focus-within
+	.instrument-tooltip-bubble {
+	opacity: 1;
+	transform: translate(-50%, 0);
+}
+
+[data-system="instrument"] .instrument-action-list-item {
+	display: grid;
+	grid-template-columns: var(--instrument-control-min-height) minmax(0, 1fr) auto;
+	align-items: center;
+	gap: var(--instrument-space-3);
+	inline-size: 100%;
+	min-block-size: var(--instrument-chrome-height);
+	padding: var(--instrument-space-2) var(--instrument-space-3);
+	color: var(--instrument-color-text);
+	background: transparent;
+	border: 0;
+	box-shadow: inset 0 calc(var(--instrument-rule-width) * -1)
+		var(--instrument-color-rule-subdued);
+	font: inherit;
+	text-align: start;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+[data-system="instrument"] .instrument-action-list-item:hover,
+[data-system="instrument"] .instrument-action-list-item:focus-visible {
+	background: var(--instrument-color-field);
+	outline: 0;
+	box-shadow:
+		inset var(--instrument-focus-band-width) 0 var(--instrument-color-focus),
+		inset 0 calc(var(--instrument-rule-width) * -1)
+		var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"] .instrument-action-list-item:disabled {
+	cursor: not-allowed;
+	opacity: var(--instrument-disabled-opacity);
+}
+
+[data-system="instrument"] .instrument-action-list-leading {
+	display: grid;
+	place-items: center;
+	inline-size: var(--instrument-control-min-height);
+	block-size: var(--instrument-control-min-height);
+	color: var(--instrument-color-text-faint);
+	box-shadow: var(--instrument-shadow-rule);
+}
+
+[data-system="instrument"] .instrument-action-list-copy {
+	display: grid;
+	min-inline-size: 0;
+}
+
+[data-system="instrument"] .instrument-action-list-copy strong,
+[data-system="instrument"] .instrument-action-list-copy span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+[data-system="instrument"] .instrument-action-list-copy span,
+[data-system="instrument"] .instrument-action-list-trailing {
+	color: var(--instrument-color-text-faint);
+	font-size: var(--instrument-font-size-label);
+}
+
+/* Technical inline states, loaders, and odometers. */
+[data-system="instrument"] .instrument-inline-code {
+	padding-inline: var(--instrument-space-1);
+	color: var(--instrument-color-text);
+	background: var(--instrument-color-field);
+	box-shadow: inset 0 calc(var(--instrument-rule-width) * -1)
+		var(--instrument-color-rule-subdued);
+	font-family: var(--instrument-font-mono);
+	font-size: 0.875em;
+}
+
+[data-system="instrument"]
+	.instrument-inline-code[data-instrument-tone="success"] {
+	color: var(--instrument-diff-insert);
+}
+
+[data-system="instrument"]
+	.instrument-inline-code[data-instrument-tone="warning"],
+[data-system="instrument"]
+	.instrument-inline-code[data-instrument-tone="attention"],
+[data-system="instrument"]
+	.instrument-inline-code[data-instrument-tone="error"] {
+	color: var(--instrument-color-accent);
+}
+
+[data-system="instrument"] .instrument-loader {
+	display: grid;
+	grid-template-columns: var(--instrument-space-6) minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: var(--instrument-space-2);
+	min-block-size: var(--instrument-control-min-height);
+	color: var(--instrument-color-text-muted);
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-loader-frame {
+	color: var(--instrument-color-text);
+	animation: instrument-loader-pulse var(--instrument-duration-slow)
+		var(--instrument-ease-standard) infinite alternate;
+}
+
+[data-system="instrument"]
+	.instrument-loader[data-instrument-state="complete"]
+	.instrument-loader-frame {
+	color: var(--instrument-diff-insert);
+	animation: none;
+}
+
+[data-system="instrument"]
+	.instrument-loader[data-instrument-state="error"]
+	.instrument-loader-frame {
+	color: var(--instrument-color-accent);
+	animation: none;
+}
+
+[data-system="instrument"] .instrument-loader-elapsed {
+	color: var(--instrument-color-text-faint);
+}
+
+@keyframes instrument-loader-pulse {
+	from {
+		opacity: 0.35;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+[data-system="instrument"] .instrument-odometer {
+	display: inline-flex;
+	align-items: stretch;
+	color: var(--instrument-color-text);
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-title);
+	line-height: var(--instrument-chrome-height);
+}
+
+[data-system="instrument"]
+	.instrument-odometer
+	> span:not(.instrument-visually-hidden) {
+	display: grid;
+	place-items: center;
+	min-inline-size: var(--instrument-space-8);
+	block-size: var(--instrument-chrome-height);
+	background: var(--instrument-color-field);
+	box-shadow:
+		inset calc(var(--instrument-rule-width) * -1) 0
+		var(--instrument-color-rule-subdued),
+		inset 0 var(--instrument-rule-width) var(--instrument-color-rule-subdued),
+		inset 0 calc(var(--instrument-rule-width) * -1)
+		var(--instrument-color-rule-subdued);
+}
+
+/* Equation, comparison, rollout, and lineage figures preserve one measured grain. */
+[data-system="instrument"] .instrument-equation,
+[data-system="instrument"] .instrument-preference,
+[data-system="instrument"] .instrument-distribution,
+[data-system="instrument"] .instrument-graph-compare,
+[data-system="instrument"] .instrument-rollout,
+[data-system="instrument"] .instrument-lineage,
+[data-system="instrument"] .instrument-media-block {
+	margin: 0;
+	background: var(--instrument-color-field);
+	box-shadow: var(--instrument-shadow-rule);
+}
+
+[data-system="instrument"] .instrument-equation > figcaption,
+[data-system="instrument"] .instrument-preference > figcaption,
+[data-system="instrument"] .instrument-distribution > figcaption,
+[data-system="instrument"] .instrument-graph-compare > figcaption,
+[data-system="instrument"] .instrument-rollout > figcaption,
+[data-system="instrument"] .instrument-lineage > figcaption {
+	min-block-size: var(--instrument-control-min-height);
+	padding-inline: var(--instrument-space-3);
+	color: var(--instrument-color-text-muted);
+	background: var(--instrument-section-wash);
+	font-size: var(--instrument-font-size-label);
+	font-weight: var(--instrument-font-weight-semibold);
+	line-height: var(--instrument-control-min-height);
+	text-transform: uppercase;
+}
+
+[data-system="instrument"] .instrument-equation-expression {
+	padding: var(--instrument-space-8) var(--instrument-space-6);
+	overflow-x: auto;
+	color: var(--instrument-color-text);
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-title);
+	line-height: var(--instrument-line-height-relaxed);
+	text-align: center;
+	white-space: nowrap;
+}
+
+[data-system="instrument"] .instrument-equation > p {
+	margin: 0;
+	padding: var(--instrument-space-3);
+	color: var(--instrument-color-text-faint);
+	box-shadow: inset 0 var(--instrument-rule-width)
+		var(--instrument-color-rule-subdued);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-preference-prompt {
+	padding: var(--instrument-space-3);
+	box-shadow: inset 0 calc(var(--instrument-rule-width) * -1)
+		var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"] .instrument-preference-prompt strong,
+[data-system="instrument"] .instrument-preference-panes header {
+	font-size: var(--instrument-font-size-label);
+	text-transform: uppercase;
+}
+
+[data-system="instrument"] .instrument-preference-prompt p {
+	margin: var(--instrument-space-2) 0 0;
+	color: var(--instrument-color-text-muted);
+}
+
+[data-system="instrument"] .instrument-preference-panes {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--instrument-rule-width);
+	background: var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"] .instrument-preference-panes > section {
+	background: var(--instrument-color-canvas);
+}
+
+[data-system="instrument"]
+	.instrument-preference-panes
+	> section[data-instrument-choice="chosen"] {
+	background: color-mix(
+		in srgb,
+		var(--instrument-diff-insert-wash) 70%,
+		var(--instrument-color-canvas)
+	);
+}
+
+[data-system="instrument"]
+	.instrument-preference-panes
+	> section[data-instrument-choice="rejected"] {
+	background: color-mix(
+		in srgb,
+		var(--instrument-diff-delete-wash) 70%,
+		var(--instrument-color-canvas)
+	);
+}
+
+[data-system="instrument"] .instrument-preference-panes header {
+	display: flex;
+	justify-content: space-between;
+	padding: var(--instrument-space-2) var(--instrument-space-3);
+	box-shadow: inset 0 calc(var(--instrument-rule-width) * -1)
+		var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"] .instrument-preference-panes section > div {
+	padding: var(--instrument-space-4) var(--instrument-space-3);
+	color: var(--instrument-color-text-muted);
+	line-height: var(--instrument-line-height-relaxed);
+}
+
+[data-system="instrument"] .instrument-preference-margin {
+	display: block;
+	padding: var(--instrument-space-2) var(--instrument-space-3);
+	color: var(--instrument-color-text);
+	text-align: end;
+	box-shadow: inset 0 var(--instrument-rule-width)
+		var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"] .instrument-distribution-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+	align-items: end;
+	min-block-size: 184px;
+	padding: var(--instrument-space-4) var(--instrument-space-3);
+}
+
+[data-system="instrument"] .instrument-distribution-category {
+	display: grid;
+	grid-template-rows: 1fr auto auto;
+	gap: var(--instrument-space-1);
+	min-inline-size: 0;
+	text-align: center;
+}
+
+[data-system="instrument"] .instrument-distribution-bars {
+	display: flex;
+	align-items: end;
+	justify-content: center;
+	gap: var(--instrument-space-1);
+	block-size: 120px;
+}
+
+[data-system="instrument"] .instrument-distribution-bars i {
+	inline-size: var(--instrument-space-4);
+	block-size: var(--instrument-distribution-value);
+	min-block-size: var(--instrument-rule-width);
+	background: var(--instrument-color-rule-strong);
+}
+
+[data-system="instrument"]
+	.instrument-distribution-bars
+	i[data-instrument-series="secondary"] {
+	background: var(--instrument-color-text-faint);
+}
+
+[data-system="instrument"] .instrument-distribution-category strong,
+[data-system="instrument"] .instrument-distribution-category span,
+[data-system="instrument"] .instrument-distribution-legend {
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-distribution-category span {
+	color: var(--instrument-color-text-faint);
+}
+
+[data-system="instrument"] .instrument-distribution-legend {
+	display: flex;
+	gap: var(--instrument-space-4);
+	padding: var(--instrument-space-2) var(--instrument-space-3);
+	color: var(--instrument-color-text-muted);
+	box-shadow: inset 0 var(--instrument-rule-width)
+		var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"] .instrument-distribution-legend output {
+	margin-inline-start: auto;
+	color: var(--instrument-color-text);
+	font-family: var(--instrument-font-mono);
+}
+
+[data-system="instrument"] .instrument-graph-compare-head,
+[data-system="instrument"] .instrument-graph-compare-row {
+	display: grid;
+	grid-template-columns: 96px repeat(2, minmax(0, 1fr));
+	gap: var(--instrument-space-3);
+	align-items: center;
+	padding-inline: var(--instrument-space-3);
+}
+
+[data-system="instrument"] .instrument-graph-compare-head {
+	min-block-size: var(--instrument-control-min-height);
+	color: var(--instrument-color-text-faint);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-graph-compare-row {
+	min-block-size: var(--instrument-chrome-height);
+	box-shadow: inset 0 var(--instrument-rule-width)
+		var(--instrument-color-rule-subdued);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-graph-compare-row > div {
+	position: relative;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: var(--instrument-space-2);
+}
+
+[data-system="instrument"] .instrument-graph-compare-row i {
+	display: block;
+	inline-size: var(--instrument-compare-value);
+	min-inline-size: var(--instrument-rule-width);
+	block-size: var(--instrument-space-3);
+	background: var(--instrument-color-rule-strong);
+}
+
+[data-system="instrument"]
+	.instrument-graph-compare-row
+	[data-instrument-direction="up"]
+	i {
+	background: var(--instrument-diff-insert);
+}
+
+[data-system="instrument"]
+	.instrument-graph-compare-row
+	[data-instrument-direction="down"]
+	i {
+	background: var(--instrument-diff-delete);
+}
+
+[data-system="instrument"] .instrument-rollout {
+	overflow: hidden;
+}
+
+[data-system="instrument"] .instrument-rollout-track {
+	display: flex;
+	margin: 0;
+	padding: var(--instrument-space-3);
+	overflow-x: auto;
+	list-style: none;
+}
+
+[data-system="instrument"] .instrument-rollout-track li {
+	position: relative;
+	flex: 0 0 144px;
+	min-block-size: 112px;
+	padding: var(--instrument-space-3);
+	background: var(--instrument-color-canvas);
+	box-shadow: inset 0 0 0 var(--instrument-rule-width)
+		var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"] .instrument-rollout-track li + li {
+	margin-inline-start: var(--instrument-space-6);
+}
+
+[data-system="instrument"] .instrument-rollout-track li + li::before {
+	position: absolute;
+	inset-inline-end: 100%;
+	inset-block-start: 50%;
+	display: grid;
+	place-items: center;
+	inline-size: var(--instrument-space-6);
+	content: "›";
+	color: var(--instrument-color-text-faint);
+}
+
+[data-system="instrument"]
+	.instrument-rollout-track
+	li[data-instrument-fidelity="high"] {
+	background: color-mix(
+		in srgb,
+		var(--instrument-diff-insert-wash) 70%,
+		var(--instrument-color-canvas)
+	);
+}
+
+[data-system="instrument"]
+	.instrument-rollout-track
+	li[data-instrument-fidelity="low"] {
+	background: color-mix(
+		in srgb,
+		var(--instrument-diff-delete-wash) 70%,
+		var(--instrument-color-canvas)
+	);
+}
+
+[data-system="instrument"] .instrument-rollout-track header {
+	display: flex;
+	justify-content: space-between;
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-rollout-track code {
+	display: block;
+	margin-block-start: var(--instrument-space-4);
+	overflow-wrap: anywhere;
+	color: var(--instrument-color-text);
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-rollout-track span {
+	display: block;
+	margin-block-start: var(--instrument-space-2);
+	color: var(--instrument-color-text-faint);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-rollout-real {
+	display: grid;
+	grid-template-columns: 72px repeat(auto-fit, minmax(96px, 1fr));
+	gap: var(--instrument-rule-width);
+	padding: var(--instrument-space-3);
+	background: var(--instrument-color-rule-subdued);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-rollout-real > * {
+	padding: var(--instrument-space-2);
+	background: var(--instrument-color-canvas);
+}
+
+[data-system="instrument"] .instrument-lineage-scroll {
+	display: flex;
+	gap: var(--instrument-space-6);
+	padding: var(--instrument-space-3);
+	overflow-x: auto;
+}
+
+[data-system="instrument"] .instrument-lineage-scroll > section {
+	flex: 0 0 192px;
+}
+
+[data-system="instrument"] .instrument-lineage-scroll > section > header {
+	min-block-size: var(--instrument-control-min-height);
+	color: var(--instrument-color-text-faint);
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-label);
+	line-height: var(--instrument-control-min-height);
+	text-transform: uppercase;
+}
+
+[data-system="instrument"] .instrument-lineage-scroll > section > div {
+	display: grid;
+	gap: var(--instrument-space-3);
+}
+
+[data-system="instrument"] .instrument-lineage article {
+	display: grid;
+	gap: var(--instrument-space-1);
+	min-block-size: 96px;
+	padding: var(--instrument-space-3);
+	background: var(--instrument-color-canvas);
+	box-shadow: inset 0 0 0 var(--instrument-rule-width)
+		var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"]
+	.instrument-lineage
+	article[data-instrument-tone="attention"] {
+	box-shadow: inset var(--instrument-focus-band-width) 0
+		var(--instrument-graph-option-2);
+}
+
+[data-system="instrument"]
+	.instrument-lineage
+	article[data-instrument-tone="success"] {
+	background: color-mix(
+		in srgb,
+		var(--instrument-diff-insert-wash) 70%,
+		var(--instrument-color-canvas)
+	);
+}
+
+[data-system="instrument"]
+	.instrument-lineage
+	article[data-instrument-tone="error"] {
+	background: color-mix(
+		in srgb,
+		var(--instrument-diff-delete-wash) 70%,
+		var(--instrument-color-canvas)
+	);
+}
+
+[data-system="instrument"] .instrument-lineage article span,
+[data-system="instrument"] .instrument-lineage article code,
+[data-system="instrument"] .instrument-lineage article output {
+	color: var(--instrument-color-text-faint);
+	font-size: var(--instrument-font-size-label);
+}
+
+/* Identity, history, attachments, posts, auth, empty, and media compositions. */
+[data-system="instrument"] .instrument-identity {
+	display: grid;
+	grid-template-columns: var(--instrument-chrome-height) minmax(0, 1fr) auto;
+	align-items: center;
+	gap: var(--instrument-space-3);
+}
+
+[data-system="instrument"] .instrument-identity-avatar {
+	display: grid;
+	place-items: center;
+	inline-size: var(--instrument-chrome-height);
+	block-size: var(--instrument-chrome-height);
+	color: var(--instrument-color-text);
+	background: var(--instrument-color-field);
+	box-shadow: var(--instrument-shadow-rule);
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-body);
+}
+
+[data-system="instrument"] .instrument-identity-copy {
+	display: grid;
+}
+
+[data-system="instrument"] .instrument-identity-copy span,
+[data-system="instrument"] .instrument-identity-affiliation {
+	color: var(--instrument-color-text-faint);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-identity-affiliation {
+	padding: var(--instrument-space-1) var(--instrument-space-2);
+	box-shadow: var(--instrument-shadow-rule);
+	font-family: var(--instrument-font-mono);
+	text-transform: uppercase;
+}
+
+[data-system="instrument"] .instrument-history-item {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	gap: var(--instrument-space-3);
+	align-items: start;
+	min-block-size: var(--instrument-chrome-height);
+	padding: var(--instrument-space-3);
+	box-shadow: inset 0 calc(var(--instrument-rule-width) * -1)
+		var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"]
+	.instrument-history-item[data-instrument-active="true"] {
+	background: var(--instrument-color-field);
+	box-shadow:
+		inset var(--instrument-focus-band-width) 0 var(--instrument-color-focus),
+		inset 0 calc(var(--instrument-rule-width) * -1)
+		var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"] .instrument-history-item p {
+	margin: var(--instrument-space-1) 0 0;
+	color: var(--instrument-color-text-faint);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-history-status {
+	color: var(--instrument-color-accent);
+}
+
+[data-system="instrument"] .instrument-history-action button {
+	color: var(--instrument-color-text-muted);
+	background: transparent;
+	border: 0;
+	cursor: pointer;
+}
+
+[data-system="instrument"] .instrument-attachments {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+[data-system="instrument"] .instrument-attachments li {
+	display: grid;
+	grid-template-columns: var(--instrument-space-6) minmax(0, 1fr) auto auto;
+	gap: var(--instrument-space-3);
+	align-items: center;
+	min-block-size: var(--instrument-chrome-height);
+	padding-inline: var(--instrument-space-3);
+	box-shadow: inset 0 calc(var(--instrument-rule-width) * -1)
+		var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"] .instrument-attachment-mark,
+[data-system="instrument"] .instrument-attachment-meta {
+	color: var(--instrument-color-text-faint);
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-post-item a {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: var(--instrument-space-4);
+	min-block-size: calc(var(--instrument-space-12) * 2);
+	padding: var(--instrument-space-4) var(--instrument-space-3);
+	color: var(--instrument-color-text);
+	box-shadow: inset 0 calc(var(--instrument-rule-width) * -1)
+		var(--instrument-color-rule-subdued);
+	text-decoration: none;
+}
+
+[data-system="instrument"] .instrument-post-item a:hover,
+[data-system="instrument"] .instrument-post-item a:focus-visible {
+	background: var(--instrument-color-field);
+	outline: 0;
+	box-shadow:
+		inset var(--instrument-focus-band-width) 0 var(--instrument-color-focus),
+		inset 0 calc(var(--instrument-rule-width) * -1)
+		var(--instrument-color-rule-subdued);
+}
+
+[data-system="instrument"] .instrument-post-item-copy {
+	display: grid;
+	gap: var(--instrument-space-1);
+}
+
+[data-system="instrument"] .instrument-post-item-copy span,
+[data-system="instrument"] .instrument-post-item-meta {
+	color: var(--instrument-color-text-faint);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-auth-panel {
+	max-inline-size: 768px;
+}
+
+[data-system="instrument"] .instrument-auth-panel > header {
+	padding-block-end: var(--instrument-space-6);
+}
+
+[data-system="instrument"] .instrument-auth-panel h2 {
+	margin: 0;
+	font-size: var(--instrument-font-size-reading);
+}
+
+[data-system="instrument"] .instrument-auth-panel p {
+	max-inline-size: 60ch;
+	margin: var(--instrument-space-3) 0 0;
+	color: var(--instrument-color-text-muted);
+	line-height: var(--instrument-line-height-relaxed);
+}
+
+[data-system="instrument"] .instrument-auth-panel-body {
+	display: grid;
+	gap: var(--instrument-space-3);
+	padding: var(--instrument-space-6);
+	background: var(--instrument-color-field);
+	box-shadow: var(--instrument-shadow-rule);
+}
+
+[data-system="instrument"] .instrument-empty-state {
+	display: grid;
+	place-items: center;
+	min-block-size: 240px;
+	padding: var(--instrument-space-8);
+	text-align: center;
+}
+
+[data-system="instrument"] .instrument-empty-state-code {
+	color: var(--instrument-color-accent);
+	font-family: var(--instrument-font-mono);
+	font-size: var(--instrument-font-size-title);
+}
+
+[data-system="instrument"] .instrument-empty-state h2 {
+	margin: var(--instrument-space-3) 0 0;
+	font-size: var(--instrument-font-size-reading);
+}
+
+[data-system="instrument"] .instrument-empty-state p {
+	margin: var(--instrument-space-2) 0 0;
+	color: var(--instrument-color-text-muted);
+}
+
+[data-system="instrument"] .instrument-empty-state-action {
+	margin-block-start: var(--instrument-space-6);
+}
+
+[data-system="instrument"] .instrument-media-block-stage {
+	min-block-size: 144px;
+	overflow: hidden;
+}
+
+[data-system="instrument"] .instrument-media-block-stage > img,
+[data-system="instrument"] .instrument-media-block-stage > svg,
+[data-system="instrument"] .instrument-media-block-stage > canvas {
+	display: block;
+	max-inline-size: 100%;
+}
+
+[data-system="instrument"] .instrument-media-block > figcaption {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--instrument-space-3);
+	padding: var(--instrument-space-2) var(--instrument-space-3);
+	color: var(--instrument-color-text-faint);
+	box-shadow: inset 0 var(--instrument-rule-width)
+		var(--instrument-color-rule-subdued);
+	font-size: var(--instrument-font-size-label);
+}
+
+[data-system="instrument"] .instrument-media-block cite {
+	font-style: normal;
+}
+
+@media (max-width: 1199px) {
+	[data-system="instrument"] .instrument-shell {
+		grid-template-areas: "chrome" "work";
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	[data-system="instrument"] .instrument-chrome {
+		grid-template-columns: minmax(0, 1fr) auto;
+		overflow-x: auto;
+	}
+
+	[data-system="instrument"] .instrument-chrome-zone--navigation {
+		display: none;
+	}
+
+	[data-system="instrument"] .instrument-overview,
+	[data-system="instrument"] .instrument-inspector {
+		position: fixed;
+		display: none;
+		inset-block: var(--instrument-chrome-height) 0;
+		background: var(--instrument-color-canvas);
+		z-index: var(--instrument-z-sheet);
+	}
+
+	[data-system="instrument"] .instrument-sheet-close {
+		position: sticky;
+		inset-block-start: 0;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		inline-size: 100%;
+		min-block-size: var(--instrument-chrome-height);
+		padding-inline: var(--instrument-space-6);
+		color: var(--instrument-color-text);
+		background: color-mix(
+			in srgb,
+			var(--instrument-color-canvas) 96%,
+			transparent
+		);
+		border: 0;
+		box-shadow: inset 0 calc(var(--instrument-rule-width) * -1)
+			var(--instrument-color-rule);
+		font: inherit;
+		font-size: var(--instrument-font-size-small);
+		font-weight: var(--instrument-font-weight-semibold);
+		cursor: pointer;
+		z-index: var(--instrument-z-raised);
+	}
+
+	[data-system="instrument"] .instrument-sheet-close:focus-visible {
+		outline: 0;
+		box-shadow:
+			inset var(--instrument-focus-band-width) 0 var(--instrument-color-focus),
+			inset 0 calc(var(--instrument-rule-width) * -1)
+			var(--instrument-color-rule);
+	}
+
+	[data-system="instrument"]
+		.instrument-shell[data-instrument-active-sheet="overview"]
+		.instrument-overview,
+	[data-system="instrument"]
+		.instrument-shell[data-instrument-active-sheet="inspector"]
+		.instrument-inspector {
+		display: block;
+		opacity: 1;
+		visibility: visible;
+	}
+
+	[data-system="instrument"] .instrument-overview {
+		inset-inline: 0 auto;
+		inline-size: min(var(--instrument-overview-sheet-max), 100%);
+	}
+
+	[data-system="instrument"] .instrument-inspector {
+		inset-inline: auto 0;
+		inline-size: min(var(--instrument-inspector-sheet-max), 100%);
+	}
+}
+
+@media (max-width: 767px) {
+	[data-system="instrument"] .instrument-work {
+		min-inline-size: 0;
+	}
+
+	[data-system="instrument"] .instrument-overview,
+	[data-system="instrument"] .instrument-inspector {
+		inset-inline: 0;
+		inline-size: 100%;
+		max-inline-size: none;
+		padding-block-end: calc(
+			var(--instrument-dock-min-height) +
+			var(--instrument-space-4)
+		);
+	}
+
+	[data-system="instrument"] .instrument-mode-dock {
+		inset-inline: var(--instrument-space-2);
+		inset-block-end: max(
+			var(--instrument-space-2),
+			env(safe-area-inset-bottom)
+		);
+		max-inline-size: none;
+		padding-inline: var(--instrument-space-4);
+		transform: none;
+	}
+
+	[data-system="instrument"] .instrument-action,
+	[data-system="instrument"] .instrument-choice {
+		min-block-size: var(--instrument-mobile-target-min);
+	}
+
+	[data-system="instrument"] .instrument-mode-dock .instrument-action {
+		min-block-size: auto;
+	}
+
+	[data-system="instrument"] .instrument-preference-panes,
+	[data-system="instrument"] .instrument-graph-compare-head,
+	[data-system="instrument"] .instrument-graph-compare-row {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	[data-system="instrument"] .instrument-graph-compare-head > span {
+		display: none;
+	}
+
+	[data-system="instrument"] .instrument-history-item,
+	[data-system="instrument"] .instrument-post-item a {
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+
+	[data-system="instrument"] .instrument-post-item-meta {
+		grid-row: 2;
+		grid-column: 1;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	[data-system="instrument"] .instrument-loader-frame {
+		animation: none;
+	}
+}
+/* Grid, grain, polarity, and plain mode are independent coordinates. */
+[data-system="instrument"] {
+	--instrument-material-grid-opacity: 0;
+	--instrument-material-grain-current-opacity: 0;
+}
+
+[data-system="instrument"] .instrument-material-grid,
+[data-system="instrument"] .instrument-material-grain {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	z-index: var(--instrument-z-material);
+}
+
+[data-system="instrument"] .instrument-material-grid {
+	background-image: var(--instrument-material-grid-image);
+	background-size: var(--instrument-grid-size) var(--instrument-grid-size);
+	background-position: -1px -1px;
+	opacity: var(--instrument-material-grid-opacity);
+	transition: opacity var(--instrument-material-transition)
+		var(--instrument-ease-standard);
+}
+
+[data-system="instrument"] .instrument-material-grain {
+	background-image: var(--instrument-material-grain-image);
+	background-repeat: repeat;
+	background-size: var(--instrument-grain-size) var(--instrument-grain-size);
+	mix-blend-mode: var(--instrument-grain-blend);
+	opacity: var(--instrument-material-grain-current-opacity);
+	transition: opacity var(--instrument-material-transition)
+		var(--instrument-ease-standard);
+}
+
+[data-system="instrument"][data-instrument-grid="on"] {
+	--instrument-material-grid-opacity: 1;
+}
+
+[data-system="instrument"][data-instrument-grain="on"] {
+	--instrument-material-grain-current-opacity: var(--instrument-grain-opacity);
+}
+
+[data-system="instrument"][data-instrument-grid="off"] {
+	--instrument-material-grid-opacity: 0;
+}
+
+[data-system="instrument"][data-instrument-grain="off"] {
+	--instrument-material-grain-current-opacity: 0;
+}
+
+[data-system="instrument"][data-instrument-plain="true"] {
+	--instrument-color-accent: var(--instrument-color-text);
+	--instrument-color-accent-hover: var(--instrument-color-text);
+	--instrument-color-focus: var(--instrument-color-text);
+	--instrument-font-sans: system-ui, sans-serif;
+	--instrument-font-mono: ui-monospace, monospace;
+	--instrument-material-grid-opacity: 0;
+	--instrument-material-grain-current-opacity: 0;
+}
+
+[data-system="instrument"][data-instrument-plain="true"]
+	.instrument-material-grid,
+[data-system="instrument"][data-instrument-plain="true"]
+	.instrument-material-grain,
+[data-system="instrument"][data-instrument-plain="true"]
+	.instrument-rich-preview {
+	display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	[data-system="instrument"] {
+		--instrument-duration-fast: var(--instrument-duration-instant);
+		--instrument-duration-base: var(--instrument-duration-instant);
+		--instrument-duration-slow: var(--instrument-duration-instant);
+		--instrument-material-transition: var(--instrument-duration-instant);
+	}
+}
+
+@media print {
+	[data-system="instrument"] .instrument-material-grid,
+	[data-system="instrument"] .instrument-material-grain {
+		display: none;
+	}
+}

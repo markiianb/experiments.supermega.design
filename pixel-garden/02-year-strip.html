@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SUPERMEGA lab — 02 · year strip</title>
+<style>
+  .strip-outer { position: relative; border-bottom: 3px solid #1c1a17; }
+  .strip { overflow-x: auto; overflow-y: hidden; }
+  #scene { display: block; width: 3072px; height: 380px; background: #f6ead6; }
+  .legend {
+    position: absolute; top: 14px; right: 18px; z-index: 4;
+    background: #faf4e8; border: 2px solid #1c1a17; padding: 8px 12px;
+    box-shadow: 4px 4px 0 rgba(28, 26, 23, .18);
+  }
+  .legend div { display: flex; align-items: center; gap: 8px;
+                font-size: 11px; line-height: 1; }
+  .legend div + div { margin-top: 4px; }
+  .legend canvas { display: block; }
+  .hint {
+    position: absolute; right: 18px; bottom: 66px; z-index: 4;
+    font-size: 11px; opacity: .55; background: rgba(250, 244, 232, .8);
+    padding: 2px 6px;
+  }
+  .caption { padding: 10px 24px 0; font-size: 11px; opacity: .6; line-height: 1.6; }
+  main { max-width: 640px; margin: 0 auto; padding: 56px 24px 120px; }
+  main h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em;
+            margin-bottom: 12px; }
+  main p { font-size: 14px; line-height: 1.8; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+
+<div class="strip-outer">
+  <div class="strip" id="strip">
+    <canvas id="scene"></canvas>
+  </div>
+  <div class="legend" id="legend">
+    <div><canvas id="lg-flower" width="22" height="26"></canvas> post</div>
+    <div><canvas id="lg-tree" width="30" height="26"></canvas> ship</div>
+    <div><canvas id="lg-bird" width="28" height="22"></canvas> talk</div>
+  </div>
+  <div class="hint">scroll &rarr;</div>
+</div>
+<p class="caption">what this is — 2026 as one long garden bed, one slot per
+week. a post grows a flower, a ship plants a tree, a talk perches a bird on
+the wire. synthetic data, seeded with <span style="font-style:italic">supermega-2026</span>.
+scroll sideways.</p>
+
+<main>
+  <h2>a year you can walk along</h2>
+  <p>fifty-two weeks on one ground line. the strip reads left to right like a
+  field journal: quiet weeks stay bare, busy weeks get crowded, and the wire
+  overhead keeps count of the talks.</p>
+  <p>the data here is synthetic and seeded, so the same year grows the same
+  garden on every load. wire the real changelog in and the strip becomes a
+  living annual report.</p>
+</main>
+
+<canvas id="trail" aria-hidden="true"
+  style="position:fixed;inset:0;pointer-events:none;z-index:9999;"></canvas>
+
+<script src="core/pixel-core.js"></script>
+<script src="core/sprites.js"></script>
+<script>
+"use strict";
+PG.labChrome({ title: "year strip", n: "02" });
+
+/* ---------- layout ---------- */
+const PAD = 80;
+const WEEK_W = 56;
+const WEEKS = 52;
+const INNER_W = WEEK_W * WEEKS;          // 2912
+const CANVAS_W = INNER_W + PAD * 2;      // 3072
+const CANVAS_H = 380;
+const GROUND_Y = 292;                    // top of the soil band
+const SOIL_BOTTOM = 324;                 // paper label band below
+const WIRE_Y = 92;
+const POLE_EVERY = 8;                    // weeks between poles
+
+const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+                "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+const MONTH_START = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+
+const scene = document.getElementById("scene");
+const reduced = PG.reducedMotion;
+let ctx = null, w = 0, h = 0, staticLayer = null, clouds = [], growers = [];
+
+const weekX = (i) => PAD + i * WEEK_W;
+
+/* wire sag between poles — used for both the drawn wire and bird perches */
+function sagY(x) {
+  const spanW = POLE_EVERY * WEEK_W;
+  const x0 = PAD + Math.floor((x - PAD) / spanW) * spanW;
+  const t = Math.min(1, Math.max(0, (x - x0) / spanW));
+  return WIRE_Y + 48 * t * (1 - t);      // 12px max sag mid-span
+}
+
+/* ---------- synthetic 2026 data, deterministic ---------- */
+function buildYear() {
+  const rand = PG.rng("supermega-2026");
+  const weeks = [];
+  for (let i = 0; i < WEEKS; i++) {
+    const r = rand();
+    let posts = r < 0.30 ? 0 : r < 0.78 ? 1 : 2;
+    const ship = rand() < 0.21;
+    const talk = rand() < 0.12;
+    if (ship) posts = Math.min(posts, 1);      // keep the slot breathable
+    const flowers = [];
+    for (let k = 0; k < posts; k++) {
+      flowers.push({
+        fx: ship ? 0.18 : k === 0 ? 0.30 : 0.72,
+        species: Math.floor(rand() * PG.FLOWER_LIST.length),
+        scale: 0.5 + rand() * 0.3,
+      });
+    }
+    weeks.push({
+      i, flowers, talk,
+      ship: ship ? { fx: 0.62, scale: 0.85 + rand() * 0.2 } : null,
+    });
+  }
+  return weeks;
+}
+
+/* ---------- static layer: sky, sun, year, poles + wire, soil, labels ---------- */
+function buildStatic() {
+  return PG.offscreen(w, h, (c) => {
+    c.drawImage(PG.halftone(w, GROUND_Y, {
+      bg: "#f6ead6", dot: "#ecc89d",
+      blobs: [
+        { cx: 0.08, cy: 0.30, rx: 0.06, ry: 0.30, s: 0.9 },
+        { cx: 0.28, cy: 0.55, rx: 0.07, ry: 0.28, s: 0.8 },
+        { cx: 0.48, cy: 0.25, rx: 0.06, ry: 0.30, s: 0.9 },
+        { cx: 0.68, cy: 0.50, rx: 0.07, ry: 0.26, s: 0.8 },
+        { cx: 0.90, cy: 0.30, rx: 0.06, ry: 0.30, s: 0.9 },
+      ],
+    }), 0, 0, w, GROUND_Y);
+
+    // big year in the sky, start of the strip
+    for (const cell of PG.textCells("2026", PAD, 70, { scale: 3, color: "#1c1a17" })) {
+      c.fillStyle = cell.color;
+      c.fillRect(cell.x, cell.y, cell.size, cell.size);
+    }
+    // small pixel sun next to it
+    for (const cell of PG.spriteCells(PG.SUN_SMALL, 2, PAD + 320, 66)) {
+      c.fillStyle = cell.color;
+      c.fillRect(cell.x, cell.y, cell.size, cell.size);
+    }
+
+    // poles + sagging wire
+    c.fillStyle = "#6b4226";
+    for (let k = 0; k <= WEEKS; k += POLE_EVERY) {
+      const px = PG.snap(weekX(Math.min(k, WEEKS)));
+      PG.fillGrid(c, px, WIRE_Y - 8, px + 8, GROUND_Y, "#6b4226");
+      PG.fillGrid(c, px - 8, WIRE_Y - 8, px + 16, WIRE_Y - 4, "#46290f");
+    }
+    c.fillStyle = "#4a443c";
+    for (let x = PAD; x <= PAD + INNER_W; x += PG.GRID) {
+      c.fillRect(x, PG.snap(sagY(x)), PG.PX, PG.PX);
+    }
+
+    // soil band with texture, grass ticks on top
+    PG.fillGrid(c, 0, GROUND_Y, w, SOIL_BOTTOM, "#6b4226");
+    const rand = PG.rng("smd-strip-soil");
+    for (let y = PG.snap(GROUND_Y); y < SOIL_BOTTOM; y += PG.GRID) {
+      for (let x = 0; x < w; x += PG.GRID) {
+        const v = rand();
+        if (v < 0.10) { c.fillStyle = "#5a3820"; c.fillRect(x, y, PG.PX, PG.PX); }
+        else if (v < 0.18) { c.fillStyle = "#8a5c33"; c.fillRect(x, y, PG.PX, PG.PX); }
+      }
+    }
+    c.fillStyle = "#3d9a62";
+    for (let x = 0; x < w; x += PG.GRID * 2) {
+      if (rand() < 0.45) c.fillRect(x, PG.snap(GROUND_Y) - PG.GRID, PG.PX, PG.PX);
+    }
+
+    // label band: 52 week ticks + month labels in pixel font
+    PG.fillGrid(c, 0, SOIL_BOTTOM, w, h, "#faf4e8");
+    c.fillStyle = "#1c1a17";
+    for (let i = 0; i <= WEEKS; i++) {
+      const x = PG.snap(weekX(i));
+      c.fillRect(x, SOIL_BOTTOM + 4, PG.PX, PG.PX);
+    }
+    for (let m = 0; m < 12; m++) {
+      const x = PG.snap(PAD + (MONTH_START[m] / 364) * INNER_W);
+      c.fillRect(x, SOIL_BOTTOM + 4, PG.PX, PG.PX);
+      c.fillRect(x, SOIL_BOTTOM + 8, PG.PX, PG.PX);
+      for (const cell of PG.textCells(MONTHS[m], x, SOIL_BOTTOM + 40, { color: "#1c1a17" })) {
+        c.fillStyle = cell.color;
+        c.fillRect(cell.x, cell.y, cell.size, cell.size);
+      }
+    }
+  });
+}
+
+/* ---------- plant the year ---------- */
+function buildGrowers(weeks) {
+  const t0 = performance.now() + 300;
+  const out = [];
+  for (const wk of weeks) {
+    let n = 0;
+    const born = (extra) => t0 + wk.i * 55 + extra * 130;
+    for (const fl of wk.flowers) {
+      const x = PG.snap(weekX(wk.i) + fl.fx * WEEK_W);
+      out.push(new PG.Grower(
+        PG.spriteCells(PG.FLOWER_LIST[fl.species], fl.scale, x, GROUND_Y),
+        { bornAt: born(n++), duration: 700 }));
+    }
+    if (wk.ship) {
+      const x = PG.snap(weekX(wk.i) + wk.ship.fx * WEEK_W);
+      out.push(new PG.Grower(
+        PG.spriteCells(PG.TREE, wk.ship.scale, x, GROUND_Y),
+        { bornAt: born(n++), duration: 900 }));
+    }
+    if (wk.talk) {
+      const x = PG.snap(weekX(wk.i) + WEEK_W * 0.5);
+      out.push(new PG.Grower(
+        PG.spriteCells(PG.BIRD, 1, x, PG.snap(sagY(x))),
+        { bornAt: born(n++), duration: 550 }));
+    }
+  }
+  return out;
+}
+
+/* ---------- one drifting butterfly ---------- */
+const FLAP_A = PG.BUTTERFLY;
+const FLAP_B = { rows: ["..B..", "AABAA", "..B.."], stemCol: 2,
+                 pal: { A: "#e23b47", B: "#1c1a17" } };
+function drawButterfly(t) {
+  let bx, by, sprite;
+  if (reduced) {
+    bx = w * 0.3; by = 168; sprite = FLAP_A;
+  } else {
+    bx = w / 2 + Math.sin(t * 0.00013) * (w / 2 - 260);
+    by = 168 + Math.sin(t * 0.00047) * 44 + Math.sin(t * 0.0011) * 10;
+    sprite = Math.floor(t / 160) % 2 ? FLAP_A : FLAP_B;
+  }
+  for (const cell of PG.spriteCells(sprite, 1, PG.snap(bx), PG.snap(by))) {
+    ctx.fillStyle = cell.color;
+    ctx.fillRect(cell.x, cell.y, cell.size, cell.size);
+  }
+}
+
+/* ---------- legend icons ---------- */
+function drawIcon(id, sprite, scale, gx, gy) {
+  const c = document.getElementById(id).getContext("2d");
+  c.imageSmoothingEnabled = false;
+  for (const cell of PG.spriteCells(sprite, scale, gx, gy)) {
+    c.fillStyle = cell.color;
+    c.fillRect(cell.x, cell.y, cell.size, cell.size);
+  }
+}
+
+/* ---------- frame loop ---------- */
+function frame(t) {
+  ctx.clearRect(0, 0, w, h);
+  ctx.drawImage(staticLayer, 0, 0, w, h);
+  PG.drawClouds(ctx, clouds, w, reduced ? 0 : t);
+  for (const g of growers) g.draw(ctx, t);
+  drawButterfly(t);
+  requestAnimationFrame(frame);
+}
+
+/* deferred construction: canvases painted during parse can lose their
+   backing store in Chromium — wait for load + one rAF */
+window.addEventListener("load", () => {
+  requestAnimationFrame(() => {
+    const fit = PG.fitCanvas(scene);
+    ctx = fit.ctx; w = fit.w; h = fit.h;
+    staticLayer = buildStatic();
+    clouds = PG.makeClouds(w, GROUND_Y * 0.62, [
+      { baseX: 0.10, y: 0.20, rx: 0.035, ry: 0.12, speed: 4.5, alpha: 0.60 },
+      { baseX: 0.26, y: 0.45, rx: 0.028, ry: 0.10, speed: 7,   alpha: 0.50 },
+      { baseX: 0.44, y: 0.15, rx: 0.040, ry: 0.13, speed: 3.5, alpha: 0.62 },
+      { baseX: 0.62, y: 0.50, rx: 0.026, ry: 0.09, speed: 9,   alpha: 0.45 },
+      { baseX: 0.78, y: 0.22, rx: 0.034, ry: 0.12, speed: 5,   alpha: 0.58 },
+      { baseX: 0.94, y: 0.42, rx: 0.030, ry: 0.10, speed: 6.5, alpha: 0.52 },
+    ]);
+    growers = buildGrowers(buildYear());
+    drawIcon("lg-flower", PG.FLOWERS.poppy, 0.5, 10, 25);
+    drawIcon("lg-tree", PG.TREE, 0.5, 15, 25);
+    drawIcon("lg-bird", PG.BIRD, 1, 10, 21);
+    requestAnimationFrame(frame);
+  });
+});
+
+PG.attachTrail(document.getElementById("trail"));
+</script>
+</body>
+</html>

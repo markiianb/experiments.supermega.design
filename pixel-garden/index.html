@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="supermega-instrument-release" content="0.1.0-d889c4e04356" />
+<title>Pixel Garden Lab — SUPERMEGA</title>
+<meta name="description" content="Ten pixel-garden studies on one grid system — sprites grow from the ground up, and data decides what gets planted. By SUPERMEGA Design." />
+<meta property="og:title" content="Pixel Garden Lab — SUPERMEGA" />
+<meta property="og:description" content="Ten pixel-garden studies on one grid system. Sprites grow from the ground up; data decides what gets planted." />
+<meta property="og:image" content="https://experiments.supermega.design/pixel-garden/preview.jpg" />
+<meta property="og:url" content="https://experiments.supermega.design/pixel-garden/" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="stylesheet" href="../_kit/releases/0.1.0-d889c4e04356/instrument.css" />
+<style>
+  html, body { margin: 0; min-block-size: 100%; }
+  [data-system="instrument"] .pg-index {
+    max-inline-size: 1080px;
+    margin: 0 auto;
+    padding: var(--instrument-space-12) var(--instrument-space-6);
+  }
+  /* Copy sits on the sky scene, so it keeps its own ink regardless of polarity. */
+  [data-system="instrument"] .pg-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--instrument-space-4);
+    margin: var(--instrument-space-10) 0 0;
+    font-family: var(--instrument-font-mono);
+    font-size: var(--instrument-font-size-label);
+    letter-spacing: var(--instrument-letter-spacing-label);
+    color: rgba(255, 255, 255, 0.8);
+  }
+  [data-system="instrument"] .pg-footer > span {
+    padding: var(--instrument-space-2) var(--instrument-space-3);
+    background: rgba(16, 22, 26, 0.82);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
+  }
+  [data-system="instrument"] .pg-footer a {
+    color: #ffffff;
+    text-decoration: none;
+  }
+  [data-system="instrument"] .pg-footer a:hover { text-decoration: underline; }
+  [data-system="instrument"] .pg-masthead { display: block; margin: 0 0 var(--instrument-space-4); }
+  [data-system="instrument"] .pg-lede {
+    max-inline-size: 64ch;
+    margin: 0 0 var(--instrument-space-8);
+    color: #101418;
+    font-size: var(--instrument-font-size-reading);
+    line-height: var(--instrument-line-height-relaxed);
+  }
+  [data-system="instrument"] .pg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--instrument-space-6);
+    margin-block-start: var(--instrument-space-6);
+  }
+  [data-system="instrument"] .pg-index { position: relative; }
+  [data-system="instrument"] .pg-garden {
+    position: fixed;
+    inset: 0;
+    inline-size: 100vw;
+    block-size: 100vh;
+    pointer-events: none;
+    image-rendering: pixelated;
+  }
+  [data-system="instrument"] .pg-card {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    color: var(--instrument-color-text);
+    background: var(--instrument-color-surface);
+    box-shadow: var(--instrument-shadow-rule);
+    text-decoration: none;
+    transition: box-shadow var(--instrument-duration-fast) var(--instrument-ease-standard);
+  }
+  [data-system="instrument"] .pg-card:hover { box-shadow: var(--instrument-shadow-rule-strong); }
+  [data-system="instrument"] .pg-card:focus-visible { outline: 0; box-shadow: var(--instrument-shadow-focus); }
+  [data-system="instrument"] .pg-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--instrument-space-3);
+    min-block-size: var(--instrument-space-6);
+    padding-inline: var(--instrument-space-3);
+    background: var(--instrument-section-wash);
+    font-size: var(--instrument-font-size-label);
+    font-weight: var(--instrument-font-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--instrument-letter-spacing-label);
+  }
+  [data-system="instrument"] .pg-card-num {
+    margin-inline-end: var(--instrument-space-2);
+    color: var(--instrument-color-text-faint);
+  }
+  [data-system="instrument"] .pg-card-open {
+    color: var(--instrument-color-text-faint);
+    font-weight: var(--instrument-font-weight-regular);
+    text-transform: none;
+    transition: color var(--instrument-duration-fast) var(--instrument-ease-standard);
+  }
+  [data-system="instrument"] .pg-card:hover .pg-card-open { color: var(--instrument-color-text); }
+  [data-system="instrument"] .pg-card-body {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: var(--instrument-space-4);
+    align-items: center;
+    padding: var(--instrument-space-4);
+  }
+  [data-system="instrument"] .pg-card-body canvas {
+    inline-size: 88px;
+    block-size: 88px;
+    image-rendering: pixelated;
+    background: var(--instrument-color-surface-overlay);
+    box-shadow: var(--instrument-shadow-rule);
+  }
+  [data-system="instrument"] .pg-card-blurb {
+    color: var(--instrument-color-text-muted);
+    font-size: var(--instrument-font-size-small);
+    line-height: var(--instrument-line-height-normal);
+  }
+</style>
+</head>
+<body data-system="instrument" data-instrument-release="0.1.0-d889c4e04356" data-instrument-polarity="ink" data-instrument-grid="off" data-instrument-grain="off" data-instrument-density="normal" data-instrument-motion="system">
+<script>if(new URLSearchParams(location.search).get('instrument-embed')==='1')document.body.dataset.instrumentEmbed='true';</script>
+
+<canvas class="pg-garden" id="garden" aria-hidden="true"></canvas>
+
+<main class="pg-index">
+  <canvas class="pg-masthead" id="masthead" width="10" height="10" role="img" aria-label="Pixel Garden Lab"></canvas>
+  <p class="pg-lede">Ten studies on one pixel-grid system. Sprites grow from the
+    ground up, and data decides what gets planted. Hover a card to regrow it.</p>
+
+  <div class="pg-grid" id="grid"></div>
+
+  <p class="pg-footer">
+    <span>a study of <a href="https://config.floguo.com" target="_blank" rel="noopener">config.floguo.com</a></span>
+    <span>made by <a href="https://supermega.design" target="_blank" rel="noopener">SUPERMEGA Design</a></span>
+  </p>
+</main>
+
+<canvas id="trail" aria-hidden="true"
+  style="position:fixed;inset:0;pointer-events:none;z-index:9999;"></canvas>
+
+<div class="instrument-material-grid" aria-hidden="true"></div>
+<div class="instrument-material-grain" aria-hidden="true"></div>
+
+<script src="core/pixel-core.js"></script>
+<script src="core/sprites.js"></script>
+<script src="../_kit/releases/0.1.0-d889c4e04356/instrument-runtime.js"></script>
+<script src="../_system/adapters/adapter-core.js"></script>
+<script src="../_system/adapters/pixel-garden.js"></script>
+<script>
+"use strict";
+
+const EXPERIMENTS = [
+  { n: "00", file: "00-meadow.html", title: "Meadow",
+    blurb: "where it started — the floguo deconstruction as a supermega scene",
+    icon: "sunflower" },
+  { n: "01", file: "01-case-study-garden.html", title: "Case-Study Garden",
+    blurb: "one flower per shipped project. species is the service, height is the engagement",
+    icon: "poppy" },
+  { n: "02", file: "02-year-strip.html", title: "Year Strip",
+    blurb: "fifty-two weeks on one ground line — a year you can walk along",
+    icon: "tree" },
+  { n: "03", file: "03-404-wilted.html", title: "404 Wilted Garden",
+    blurb: "the lost page is a dead garden. your cursor is the watering can",
+    icon: "wiltedDaisy" },
+  { n: "04", file: "04-time-aware-hero.html", title: "Time-Aware Hero",
+    blurb: "one meadow, four times of day, picked by your clock",
+    icon: "moon" },
+  { n: "05", file: "05-og-generator.html", title: "OG Generator",
+    blurb: "a title in, a deterministic 1200×630 pixel scene out",
+    icon: "cornflower" },
+  { n: "06", file: "06-construction-hero.html", title: "Construction Hero",
+    blurb: "a crane raises the wordmark letter by letter. built, not faded in",
+    icon: "crane" },
+  { n: "07", file: "07-seed-trail.html", title: "Seed Trail",
+    blurb: "your cursor drops seeds. the garden remembers you next visit",
+    icon: "seedling" },
+  { n: "08", file: "08-loading-terrarium.html", title: "Loading Terrarium",
+    blurb: "growth as an honest progress bar — cells map to percent loaded",
+    icon: "tulip" },
+  { n: "09", file: "09-proposal-headers.html", title: "Proposal Headers",
+    blurb: "client-domain scenes: arcade, classroom, tool bench. png export",
+    icon: "lavender" },
+  { n: "10", file: "10-team-sprites.html", title: "Team Sprites",
+    blurb: "sprite portraits and open-role planters. the bench is growing",
+    icon: "daisy" },
+];
+
+/* small icon sprites that aren't flowers */
+const EXTRA_ICONS = {
+  tree: PG.TREE,
+  seedling: {
+    rows: ["F.F", ".E.", "FE.", ".EF", ".E."],
+    stemCol: 1, pal: { E: "#2e6b34", F: "#5cb87e" },
+  },
+  moon: {
+    rows: [
+      ".BAAA",
+      "BAAA.",
+      "BAA..",
+      "BAAA.",
+      ".BAAA",
+    ],
+    stemCol: 2, pal: { A: "#c9b86b", B: "#8f8148" },
+  },
+  crane: {
+    rows: [
+      "AAAAAAAA",
+      ".A....C.",
+      ".A....C.",
+      ".A...BBB",
+      ".A......",
+      ".A......",
+      "AAA.....",
+    ],
+    stemCol: 3, pal: { A: "#8a8a8a", B: "#b8742a", C: "#8a8a8a" },
+  },
+};
+
+function iconSprite(name) {
+  if (PG.FLOWERS[name]) return PG.FLOWERS[name];
+  if (name === "wiltedDaisy") {
+    return PG.recolor(PG.FLOWERS.daisy, (c) => {
+      // grey-brown wilt by rough luminance
+      const v = parseInt(c.slice(1), 16);
+      const lum = ((v >> 16 & 255) + (v >> 8 & 255) + (v & 255)) / 3;
+      const g = Math.round(120 + lum * 0.35);
+      return `rgb(${g},${g - 14},${g - 30})`;
+    });
+  }
+  return EXTRA_ICONS[name] ?? PG.FLOWERS.daisy;
+}
+
+/* Runs at end-of-body parse time (not on window load) so the instrument
+   bridge posts READY before load and again on load — the second post is
+   what survives the viewer's navigation-start handshake wipe. */
+(() => {
+
+  const INK = "#101418";   // wordmark ink over the sky scene
+
+  let configuration = { ...window.SUPERMEGA_INSTRUMENT_ADAPTERS.pixelGarden.defaults };
+
+  /* ---- masthead: PIXEL GARDEN LAB grows in ---- */
+  const mast = document.getElementById("masthead");
+  const mScale = window.innerWidth < 700 ? 1.5 : 2.5;
+  const text = "PIXEL GARDEN LAB";
+  const mw = PG.textWidth(text, mScale);
+  const mh = 5 * PG.GRID * mScale + 8;
+  mast.style.width = mw + "px";
+  mast.style.height = mh + "px";
+  const dpr = window.devicePixelRatio || 1;
+  mast.width = Math.round(mw * dpr);
+  mast.height = Math.round(mh * dpr);
+  const mctx = mast.getContext("2d");
+  mctx.imageSmoothingEnabled = false;
+  mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const growers = [];   // { ctx, w, h, cells, grower, soil }
+  let mastEntry;
+
+  function mastCells() {
+    return PG.textCells(text, 0, mh - 4, { scale: mScale, color: INK });
+  }
+  mastEntry = { ctx: mctx, w: mw, h: mh, cells: mastCells(), soil: false };
+  mastEntry.grower = new PG.Grower(mastEntry.cells, { duration: 1100, flicker: false });
+  growers.push(mastEntry);
+
+  /* ---- cards ---- */
+  const grid = document.getElementById("grid");
+  for (const ex of EXPERIMENTS) {
+    const a = document.createElement("a");
+    a.className = "pg-card";
+    a.href = document.body.dataset.instrumentEmbed === "true"
+      ? ex.file + "?instrument-embed=1"
+      : ex.file;
+    a.innerHTML = `<span class="pg-card-header"><span><span class="pg-card-num instrument-tabular">${ex.n}</span>${ex.title}</span><span class="pg-card-open">Open</span></span>
+      <span class="pg-card-body"><canvas width="88" height="88"></canvas><span class="pg-card-blurb">${ex.blurb}</span></span>`;
+    grid.appendChild(a);
+
+    const cv = a.querySelector("canvas");
+    const ictx = cv.getContext("2d");
+    ictx.imageSmoothingEnabled = false;
+    const sprite = iconSprite(ex.icon);
+    const rows = sprite.rows.length;
+    const scale = Math.min(2.2, 72 / (rows * PG.GRID));
+    const cells = PG.spriteCells(sprite, scale, 44, 84);
+    const entry = { ctx: ictx, w: 88, h: 88, cells, soil: true };
+    entry.grower = new PG.Grower(cells, {
+      bornAt: performance.now() + 250 + Math.random() * 900,
+      duration: configuration.grow, flicker: false,
+    });
+    growers.push(entry);
+    a.addEventListener("mouseenter", () => {
+      entry.grower = new PG.Grower(cells, { duration: Math.round(configuration.grow * 0.8), flicker: false });
+    });
+  }
+
+  /* ---- garden background: ground, grass, a field of flowers, drifting clouds ---- */
+  const garden = document.getElementById("garden");
+  const gctx = garden.getContext("2d");
+  let gardenStatic = null, gardenFlowers = [], gardenClouds = [], gw = 0, gh = 0;
+
+  function buildGarden() {
+    gw = window.innerWidth; gh = window.innerHeight;
+    garden.width = Math.round(gw * dpr);
+    garden.height = Math.round(gh * dpr);
+    gctx.imageSmoothingEnabled = false;
+    gctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const groundY = gh - 16;
+    const meadowY = PG.snap(gh - 176);
+
+    /* static sky, sun, meadow band, and ground — pre-rendered once per resize */
+    const off = document.createElement("canvas");
+    off.width = Math.round(gw * dpr);
+    off.height = Math.round(gh * dpr);
+    const c = off.getContext("2d");
+    c.imageSmoothingEnabled = false;
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    c.fillStyle = "#a9d6ef";
+    c.fillRect(0, 0, gw, gh);
+
+    /* pixel sun, top right, with a dotted ray ring */
+    const sunX = gw - 140, sunY = 120, R = 46;
+    for (let y = PG.snap(sunY - R); y <= sunY + R; y += PG.GRID) {
+      for (let x = PG.snap(sunX - R); x <= sunX + R; x += PG.GRID) {
+        const dx = (x - sunX) / R, dy = (y - sunY) / R;
+        const d = dx * dx + dy * dy;
+        if (d > 1) continue;
+        c.fillStyle = d < 0.45 ? "#ffd94a" : "#ffb23e";
+        c.fillRect(x, y, PG.PX, PG.PX);
+      }
+    }
+    c.fillStyle = "#ffb23e";
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      for (let k = 0; k < 3; k++) {
+        const rr = R + 10 + k * PG.GRID;
+        c.fillRect(PG.snap(sunX + Math.cos(a) * rr), PG.snap(sunY + Math.sin(a) * rr), PG.PX, PG.PX);
+      }
+    }
+
+    /* meadow band with sparse texture dots */
+    c.fillStyle = "#a2cd87";
+    for (let y = meadowY; y < groundY; y += PG.GRID) {
+      for (let x = 0; x < gw; x += PG.GRID) c.fillRect(x, y, PG.PX, PG.PX);
+    }
+    c.fillStyle = "#8bb96e";
+    const mrand = PG.rng(PG.fnv("pgl-meadow"));
+    for (let y = meadowY; y < groundY; y += PG.GRID) {
+      for (let x = 0; x < gw; x += PG.GRID) {
+        if (mrand() < 0.12) c.fillRect(x, y, PG.PX, PG.PX);
+      }
+    }
+
+    c.fillStyle = "#2f7d4f";
+    c.fillRect(0, groundY, gw, gh - groundY);
+    c.fillStyle = "#3d9a62";
+    const grass = PG.rng(PG.fnv("pgl-grass"));
+    for (let x = 0; x < gw; x += PG.GRID * 2) {
+      if (grass() < 0.4) c.fillRect(PG.snap(x), groundY - PG.GRID, PG.PX, PG.PX);
+    }
+    gardenStatic = off;
+
+    const names = Object.keys(PG.FLOWERS);
+    const count = Math.max(10, Math.min(28, Math.floor(gw / 70)));
+    const now = performance.now();
+    gardenFlowers = [];
+    for (let i = 0; i < count; i++) {
+      const r = PG.rng(PG.fnv("pgl-flower-" + i));
+      const slot = gw / count;
+      const x = PG.snap(slot * i + slot * (0.2 + r() * 0.6));
+      const sprite = PG.FLOWERS[names[Math.floor(r() * names.length)]];
+      const scale = 1.1 + r() * 0.9;
+      const cells = PG.spriteCells(sprite, scale, x, groundY);
+      gardenFlowers.push({
+        cells,
+        grower: new PG.Grower(cells, { bornAt: now + i * 90, duration: 900 + r() * 300, flicker: false }),
+      });
+    }
+
+    gardenClouds = [
+      { bx: 0.12, y: gh * 0.13, w: gw * 0.17, h: gh * 0.055, speed: 4 },
+      { bx: 0.48, y: gh * 0.24, w: gw * 0.13, h: gh * 0.045, speed: 6.5 },
+      { bx: 0.80, y: gh * 0.32, w: gw * 0.15, h: gh * 0.05, speed: 3 },
+    ];
+  }
+
+  function drawGarden(t) {
+    gctx.drawImage(gardenStatic, 0, 0, gw, gh);
+    for (const cl of gardenClouds) {
+      const span = gw + cl.w * 2;
+      const cx = (((cl.bx * gw - (cl.speed * t / 1000)) % span) + span) % span - cl.w;
+      const x0 = PG.snap(cx - cl.w), y0 = PG.snap(cl.y - cl.h);
+      for (let y = y0; y <= cl.y + cl.h; y += PG.GRID) {
+        for (let x = x0; x <= cx + cl.w; x += PG.GRID) {
+          const dx = (x - cx) / cl.w, dy = (y - cl.y) / cl.h;
+          const d = dx * dx + dy * dy;
+          if (d > 1) continue;
+          gctx.globalAlpha = 0.85 * (1 - 0.45 * d);
+          gctx.fillStyle = dy < -0.3 ? "#ffffff" : "#eef5fa";
+          gctx.fillRect(x, y, PG.PX, PG.PX);
+        }
+      }
+    }
+    gctx.globalAlpha = 1;
+    for (const f of gardenFlowers) f.grower.draw(gctx, t);
+  }
+
+  buildGarden();
+  let resizeTimer = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(buildGarden, 150);
+  });
+
+  /* ---- one master loop, pausable ---- */
+  let rafId = null;
+  function frame(t) {
+    drawGarden(t);
+    for (const g of growers) {
+      g.ctx.clearRect(0, 0, g.w, g.h);
+      if (g.soil) {
+        g.ctx.fillStyle = "#2f7d4f";
+        g.ctx.fillRect(0, 84, 88, 4);
+      }
+      g.grower.draw(g.ctx, t);
+    }
+    rafId = requestAnimationFrame(frame);
+  }
+  function start() { if (rafId === null) rafId = requestAnimationFrame(frame); }
+  function stop() { if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; } }
+  start();
+
+  /* ---- cursor seed trail ---- */
+  const trailCanvas = document.getElementById("trail");
+  let detachTrail = null;
+  function setTrail(on) {
+    if (on && !detachTrail) {
+      trailCanvas.style.display = "";
+      detachTrail = PG.attachTrail(trailCanvas);
+    } else if (!on && detachTrail) {
+      detachTrail();
+      detachTrail = null;
+      trailCanvas.style.display = "none";
+    }
+  }
+
+  /* ---- instrument adapter ---- */
+  function regrow(duration) {
+    mastEntry.cells = mastCells();
+    mastEntry.grower = new PG.Grower(mastEntry.cells, { duration: duration ?? 1100, flicker: false });
+    for (const g of growers) {
+      if (g === mastEntry) continue;
+      g.grower = new PG.Grower(g.cells, {
+        bornAt: performance.now() + Math.random() * 500,
+        duration: duration ?? configuration.grow, flicker: false,
+      });
+    }
+    for (const [i, f] of gardenFlowers.entries()) {
+      f.grower = new PG.Grower(f.cells, {
+        bornAt: performance.now() + i * 90,
+        duration: duration ?? Math.round(configuration.grow * 1.4), flicker: false,
+      });
+    }
+  }
+
+  const adapter = window.SUPERMEGA_INSTRUMENT_ADAPTERS.pixelGarden.create({
+    applyConfiguration: (next) => {
+      const trailChanged = next.trail !== configuration.trail;
+      configuration = { ...next };
+      if (trailChanged) setTrail(configuration.trail);
+    },
+    pause: () => { stop(); setTrail(false); return { paused: true }; },
+    reseedRenderer: () => { regrow(); return { reseeded: true }; },
+    resume: () => { start(); setTrail(configuration.trail); return { paused: false }; },
+  });
+  configuration = { ...adapter.getConfiguration() };
+  setTrail(configuration.trail);
+
+  window.PIXEL_GARDEN_ADAPTER = adapter;
+  if (window.parent !== window) {
+    window.PIXEL_GARDEN_BRIDGE = window.SUPERMEGA_INSTRUMENT_ADAPTERS.core.installBridge(adapter);
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>04 — time-aware hero · pixel garden lab</title>
+<style>
+  header.hero {
+    position: relative;
+    height: 420px;
+    border-bottom: 4px solid #1c1a17;
+  }
+  header.hero canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: #f6ead6;
+  }
+  .hero-copy {
+    position: absolute;
+    top: 36px;
+    left: 48px;
+    pointer-events: none;
+    color: #1c1a17;
+  }
+  header.hero.night .hero-copy { color: #f3edda; }
+  .hero-copy h1 {
+    font-size: 26px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .hero-copy p { margin-top: 6px; font-size: 12px; opacity: 0.7; }
+  .modes {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    display: flex;
+    gap: 6px;
+    z-index: 5;
+  }
+  .modes button {
+    font: 11px ui-monospace, "SF Mono", Menlo, monospace;
+    padding: 4px 9px;
+    background: #faf4e8;
+    color: #1c1a17;
+    border: 2px solid #1c1a17;
+    cursor: pointer;
+    text-transform: lowercase;
+  }
+  .modes button:hover { background: #f0e6cf; }
+  .modes button.active { background: #1c1a17; color: #faf4e8; }
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 56px 24px 120px;
+  }
+  main h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
+  main p { font-size: 14px; line-height: 1.7; margin-bottom: 12px; }
+  main p.small { font-size: 11px; opacity: 0.55; }
+</style>
+</head>
+<body>
+
+<header class="hero" id="hero">
+  <canvas id="scene" aria-hidden="true"></canvas>
+  <div class="hero-copy">
+    <h1>Supermega</h1>
+    <p id="copyline">one meadow, four times of day</p>
+  </div>
+  <div class="modes" id="modes" aria-label="time of day override"></div>
+</header>
+
+<main>
+  <h2>What this is</h2>
+  <p>The meadow scene from experiment 00, made aware of your clock. The page reads
+     the local hour and picks one of four palettes — <span id="clockline">…</span>.
+     Override with the buttons in the corner; every switch replays the grow-in.</p>
+  <p>Dawn lifts a soft sun from behind the left ridge. Day is the meadow you know.
+     Dusk drops the sun to the right and drags a long shadow off each stem. Night
+     closes the flowers into buds, hangs a moon, and lets the fireflies out.</p>
+  <p class="small">deterministic scene — same seed, same meadow, every load. no sample data on this page.</p>
+</main>
+
+<!-- Page-wide pixel cursor trail -->
+<canvas id="trail" aria-hidden="true"
+  style="position:fixed;inset:0;pointer-events:none;z-index:9999;"></canvas>
+
+<script src="core/pixel-core.js"></script>
+<script src="core/sprites.js"></script>
+<script>
+"use strict";
+/* Canvases painted synchronously during document parse can silently lose
+   their backing store in Chromium — all scene construction is deferred to
+   window load + one requestAnimationFrame. */
+window.addEventListener("load", () => requestAnimationFrame(() => {
+  const { GRID, PX, snap } = PG;
+
+  PG.labChrome({ title: "time-aware hero", n: "04" });
+
+  /* ---------- night bud sprites (closed flowers, local to this page) ---------- */
+  const BUDS = [
+    { // closed tulip
+      rows: [
+        ".A.",
+        "ABA",
+        "ABA",
+        ".A.",
+        ".E.",
+        "FE.",
+        ".E.",
+      ],
+      stemCol: 1,
+      pal: { A: "#8a4a6e", B: "#aa6a8c", E: "#1f4527", F: "#2c5c34" },
+    },
+    { // closed poppy, head nodding left
+      rows: [
+        "AA..",
+        "ABA.",
+        ".AA.",
+        "..E.",
+        "..E.",
+        ".FE.",
+        "..E.",
+      ],
+      stemCol: 2,
+      pal: { A: "#7c2532", B: "#9e3c48", E: "#1f4527", F: "#2c5c34" },
+    },
+    { // closed lavender spike
+      rows: [
+        ".A.",
+        ".B.",
+        ".A.",
+        ".B.",
+        ".E.",
+        ".E.",
+        "FE.",
+        ".E.",
+      ],
+      stemCol: 1,
+      pal: { A: "#4f3a7c", B: "#6c5594", E: "#1f4527", F: "#2c5c34" },
+    },
+  ];
+
+  /* ---------- the four palettes ---------- */
+  const MODES = {
+    dawn: {
+      skyBg: "#f9dee3", skyDot: "#e9a2ac",
+      blobs: [
+        { cx: 0.13, cy: 0.62, rx: 0.22, ry: 0.30, s: 1.1 },
+        { cx: 0.42, cy: 0.25, rx: 0.20, ry: 0.22, s: 0.7 },
+        { cx: 0.78, cy: 0.40, rx: 0.18, ry: 0.20, s: 0.6 },
+      ],
+      ridgeFar: "#cf9cb4", ridgeNear: "#a06f90",
+      meadow: "#9ac489", meadowDot: "#82ab70",
+      ground: "#2c6b46", grass: "#3d8a5e",
+      cloud: ["#fff3f5", "#f0c2cc"], cloudAlpha: 1,
+      sun: { x: 0.13, y: 0.54, r: 0.16, core: "#ffe2b8", edge: "#ff9f6a", rays: false },
+    },
+    day: {
+      skyBg: "#f6ead6", skyDot: "#ecc89d",
+      blobs: [
+        { cx: 0.30, cy: 0.28, rx: 0.20, ry: 0.24, s: 1.0 },
+        { cx: 0.58, cy: 0.48, rx: 0.22, ry: 0.20, s: 0.8 },
+        { cx: 0.82, cy: 0.30, rx: 0.16, ry: 0.24, s: 0.9 },
+        { cx: 0.12, cy: 0.55, rx: 0.14, ry: 0.16, s: 0.7 },
+      ],
+      ridgeFar: "#e0c5a0", ridgeNear: "#c99e74",
+      meadow: "#a2cd87", meadowDot: "#8bb96e",
+      ground: "#2f7d4f", grass: "#3d9a62",
+      cloud: ["#ffffff", "#f0e6d2"], cloudAlpha: 1,
+      sun: { x: 0.84, y: 0.20, r: 0.13, core: "#ffd94a", edge: "#ffb23e", rays: true },
+    },
+    dusk: {
+      skyBg: "#f7cf9a", skyDot: "#e08e44",
+      blobs: [
+        { cx: 0.88, cy: 0.62, rx: 0.24, ry: 0.32, s: 1.15 },
+        { cx: 0.55, cy: 0.30, rx: 0.22, ry: 0.22, s: 0.7 },
+        { cx: 0.16, cy: 0.45, rx: 0.18, ry: 0.20, s: 0.55 },
+      ],
+      ridgeFar: "#c8895a", ridgeNear: "#8a5536",
+      meadow: "#c4ad6e", meadowDot: "#a8924f",
+      ground: "#46371f", grass: "#665430",
+      cloud: ["#ffe2b0", "#eba360"], cloudAlpha: 0.9,
+      sun: { x: 0.88, y: 0.56, r: 0.17, core: "#ffe08a", edge: "#f08a32", rays: false },
+      shadows: { color: "#5c4a26" },
+    },
+    night: {
+      skyBg: "#0f1a30", skyDot: "#22365a",
+      blobs: [
+        { cx: 0.78, cy: 0.18, rx: 0.20, ry: 0.26, s: 0.9 },
+        { cx: 0.30, cy: 0.40, rx: 0.24, ry: 0.24, s: 0.6 },
+      ],
+      ridgeFar: "#1e2c4b", ridgeNear: "#15203a",
+      meadow: "#234633", meadowDot: "#1a3727",
+      ground: "#0e1c14", grass: "#1a3727",
+      cloud: ["#2b3e63", "#1e3050"], cloudAlpha: 0.7,
+      moon: { x: 0.78, y: 0.20, r: 0.11 },
+      stars: true,
+      fireflies: true,
+      buds: true,
+    },
+  };
+
+  /* ---------- scene state ---------- */
+  const canvas = document.getElementById("scene");
+  const hero = document.getElementById("hero");
+  let w = 0, h = 0, dpr = 1;
+  let staticCache = {};   // mode -> offscreen canvas
+  let flowers = [];       // PG.Grower[]
+  let clouds = [];
+  let stars = [];
+  let fireflies = [];
+  let mode = "day";
+
+  const hour = new Date().getHours();
+  const autoMode =
+    hour >= 5 && hour < 8 ? "dawn" :
+    hour < 17 ? "day" :
+    hour < 21 ? "dusk" : "night";
+
+  /* ---------- static layer pieces ---------- */
+  function drawSun(c, m) {
+    const s = m.sun;
+    const cx = snap(w * s.x), cy = snap(h * s.y);
+    const R = snap(Math.min(w, h) * s.r);
+    PG.fillEllipse(c, cx, cy, R, R, (dx, dy, d) =>
+      d < 0.45 ? s.core : s.edge);
+    if (s.rays) {
+      c.fillStyle = s.edge;
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        for (let k = 0; k < 3; k++) {
+          const rr = R + 10 + k * GRID;
+          c.fillRect(snap(cx + Math.cos(a) * rr), snap(cy + Math.sin(a) * rr), PX, PX);
+        }
+      }
+    }
+  }
+
+  const CRATERS = [
+    { x: -0.32, y: -0.18, r: 0.22 },
+    { x: 0.26, y: 0.18, r: 0.30 },
+    { x: 0.04, y: -0.46, r: 0.16 },
+    { x: -0.18, y: 0.42, r: 0.18 },
+  ];
+  function drawMoon(c, m) {
+    const cx = snap(w * m.moon.x), cy = snap(h * m.moon.y);
+    const R = snap(Math.min(w, h) * m.moon.r);
+    PG.fillEllipse(c, cx, cy, R, R, (dx, dy, d) => {
+      for (const cr of CRATERS) {
+        const ddx = (dx - cr.x) / cr.r, ddy = (dy - cr.y) / cr.r;
+        if (ddx * ddx + ddy * ddy < 1) return "#b6b09a";
+      }
+      return d > 0.82 ? "#d6cfba" : "#ece6d2";
+    });
+  }
+
+  function drawMountains(c, m) {
+    const meadowY = snap(h - 116);
+    const ridge = (baseY, amp, freq, phase, color) => {
+      c.fillStyle = color;
+      for (let x = 0; x < w; x += GRID) {
+        const t = x / w;
+        const yTop = snap(baseY
+          - amp * (0.6 * Math.sin(t * freq * Math.PI * 2 + phase)
+                 + 0.4 * Math.sin(t * freq * 2.3 * Math.PI * 2 + phase * 1.7)));
+        for (let y = yTop; y < meadowY; y += GRID) c.fillRect(x, y, PX, PX);
+      }
+    };
+    ridge(h * 0.58, h * 0.10, 1.1, 0.8, m.ridgeFar);
+    ridge(h * 0.70, h * 0.08, 1.7, 2.4, m.ridgeNear);
+  }
+
+  function drawMeadow(c, m) {
+    const meadowY = snap(h - 116);
+    const groundY = h - 16;
+    PG.fillGrid(c, 0, meadowY, w, groundY, m.meadow);
+    c.fillStyle = m.meadowDot;
+    const rand = PG.rng("supermega-meadow");
+    for (let y = meadowY; y < groundY; y += GRID) {
+      for (let x = 0; x < w; x += GRID) {
+        if (rand() < 0.12) c.fillRect(snap(x), snap(y), PX, PX);
+      }
+    }
+  }
+
+  function drawGround(c, m) {
+    const groundY = h - 16;
+    c.fillStyle = m.ground;
+    c.fillRect(0, groundY, w, h - groundY);
+    c.fillStyle = m.grass;
+    const rand = PG.rng("supermega-grass");
+    for (let x = 0; x < w; x += GRID * 2) {
+      if (rand() < 0.4) c.fillRect(snap(x), groundY - GRID, PX, PX);
+    }
+  }
+
+  function buildStatic(name) {
+    const m = MODES[name];
+    return PG.offscreen(w, h, (c) => {
+      c.drawImage(PG.halftone(w, h, {
+        bg: m.skyBg, dot: m.skyDot, blobs: m.blobs,
+      }), 0, 0, w, h);
+      if (m.sun) drawSun(c, m);
+      if (m.moon) drawMoon(c, m);
+      drawMountains(c, m);
+      drawMeadow(c, m);
+      drawGround(c, m);
+    });
+  }
+
+  /* ---------- flowers (and night buds, and dusk shadows) ---------- */
+  function buildFlowers(name) {
+    const m = MODES[name];
+    const groundY = h - 16;
+    const now = performance.now();
+    const count = Math.max(8, Math.min(26, Math.floor(w / 56)));
+    const out = [];
+    for (let i = 0; i < count; i++) {
+      const rand = PG.rng("supermega-flower-" + i);
+      const slot = w / count;
+      const x = snap(slot * i + slot * (0.25 + rand() * 0.5));
+      const speciesIdx = Math.floor(rand() * PG.FLOWER_LIST.length);
+      const scale = 0.75 + rand() * 0.55;
+      const sprite = m.buds
+        ? BUDS[speciesIdx % BUDS.length]
+        : PG.FLOWER_LIST[speciesIdx];
+      let cells = PG.spriteCells(sprite, scale, x, groundY);
+      if (m.shadows) {
+        // long shadow pixels stretching right from the base, drawn first
+        const cell = GRID * scale;
+        const len = Math.round(sprite.rows.length * cell * 1.15);
+        const size = Math.max(2, Math.round(PX * scale));
+        const shadow = [];
+        for (let sx = GRID; sx <= len; sx += GRID) {
+          shadow.push({ x: snap(x + sx), y: groundY - GRID, color: m.shadows.color, size });
+          if (sx <= len * 0.45) {
+            shadow.push({ x: snap(x + sx), y: groundY - GRID * 2, color: m.shadows.color, size });
+          }
+        }
+        cells = shadow.concat(cells);
+      }
+      out.push(new PG.Grower(cells, {
+        bornAt: now + 70 * i,
+        duration: 850 + rand() * 250,
+      }));
+    }
+    return out;
+  }
+
+  /* ---------- night extras ---------- */
+  function buildStars() {
+    const rand = PG.rng("smd-night-stars");
+    const m = MODES.night;
+    const mx = w * m.moon.x, my = h * m.moon.y;
+    const out = [];
+    let guard = 0;
+    while (out.length < 46 && guard++ < 400) {
+      const x = snap(rand() * w);
+      const y = snap(12 + rand() * h * 0.40);
+      if (Math.hypot(x - mx, y - my) < Math.min(w, h) * 0.16) continue;
+      out.push({
+        x, y,
+        phase: rand() * Math.PI * 2,
+        speed: 0.0015 + rand() * 0.0022,
+        plus: rand() < 0.14,
+      });
+    }
+    return out;
+  }
+
+  function buildFireflies() {
+    const rand = PG.rng("smd-fireflies");
+    const meadowY = h - 116;
+    const out = [];
+    for (let i = 0; i < 8; i++) {
+      out.push({
+        bx: 30 + rand() * (w - 60),
+        by: meadowY - 14 - rand() * 70,
+        ax: 22 + rand() * 34,
+        ay: 8 + rand() * 16,
+        sx: 0.0004 + rand() * 0.0005,
+        sy: 0.0009 + rand() * 0.0009,
+        ph: rand() * Math.PI * 2,
+        pulse: 0.002 + rand() * 0.002,
+      });
+    }
+    return out;
+  }
+
+  function drawStars(ctx, t) {
+    ctx.fillStyle = "#e8ecff";
+    for (const s of stars) {
+      const tw = PG.reducedMotion ? 0.8
+        : 0.35 + 0.55 * (0.5 + 0.5 * Math.sin(t * s.speed + s.phase));
+      ctx.globalAlpha = tw;
+      ctx.fillRect(s.x, s.y, PX, PX);
+      if (s.plus) {
+        ctx.globalAlpha = tw * 0.5;
+        ctx.fillRect(s.x - GRID, s.y, PX, PX);
+        ctx.fillRect(s.x + GRID, s.y, PX, PX);
+        ctx.fillRect(s.x, s.y - GRID, PX, PX);
+        ctx.fillRect(s.x, s.y + GRID, PX, PX);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawFireflies(ctx, t) {
+    ctx.fillStyle = "#ffe97a";
+    for (const f of fireflies) {
+      const x = PG.reducedMotion ? f.bx : f.bx + f.ax * Math.sin(t * f.sx + f.ph);
+      const y = PG.reducedMotion ? f.by : f.by + f.ay * Math.sin(t * f.sy + f.ph * 1.7);
+      const a = PG.reducedMotion ? 0.85
+        : 0.35 + 0.6 * (0.5 + 0.5 * Math.sin(t * f.pulse + f.ph * 3));
+      const sx = snap(x), sy = snap(y);
+      ctx.globalAlpha = a;
+      ctx.fillRect(sx, sy, PX, PX);
+      ctx.globalAlpha = a * 0.22;
+      ctx.fillRect(sx - GRID, sy, PX, PX);
+      ctx.fillRect(sx + GRID, sy, PX, PX);
+      ctx.fillRect(sx, sy - GRID, PX, PX);
+      ctx.fillRect(sx, sy + GRID, PX, PX);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /* ---------- mode switching ---------- */
+  const modesBox = document.getElementById("modes");
+  const ORDER = ["dawn", "day", "dusk", "night"];
+  for (const name of ORDER) {
+    const b = document.createElement("button");
+    b.textContent = name;
+    b.dataset.mode = name;
+    b.addEventListener("click", () => setMode(name));
+    modesBox.appendChild(b);
+  }
+
+  function setMode(name, replay = true) {
+    mode = name;
+    hero.classList.toggle("night", name === "night");
+    canvas.style.background = MODES[name].skyBg;
+    for (const b of modesBox.children) {
+      b.classList.toggle("active", b.dataset.mode === name);
+    }
+    if (w > 0) {
+      if (!staticCache[name]) staticCache[name] = buildStatic(name);
+      if (replay) flowers = buildFlowers(name);
+    }
+    document.getElementById("copyline").textContent =
+      "one meadow, four times of day — " + name;
+  }
+
+  const pad = (n) => String(n).padStart(2, "0");
+  const d = new Date();
+  document.getElementById("clockline").textContent =
+    "it is " + pad(d.getHours()) + ":" + pad(d.getMinutes()) +
+    " for you, so the scene opens at " + autoMode;
+
+  /* ---------- main loop ---------- */
+  function rebuild() {
+    staticCache = {};
+    staticCache[mode] = buildStatic(mode);
+    flowers = buildFlowers(mode);
+    clouds = PG.makeClouds(w, (h - 16) * 0.5, [
+      { baseX: 0.10, y: 0.18, rx: 0.20, ry: 0.11, speed: 4.5, alpha: 0.6 },
+      { baseX: 0.50, y: 0.40, rx: 0.15, ry: 0.09, speed: 7, alpha: 0.5 },
+      { baseX: 0.74, y: 0.10, rx: 0.24, ry: 0.13, speed: 3.5, alpha: 0.62 },
+      { baseX: 0.30, y: 0.58, rx: 0.12, ry: 0.07, speed: 9.5, alpha: 0.45 },
+    ]);
+    for (const cl of clouds) cl.baseAlpha = cl.alpha;
+    stars = buildStars();
+    fireflies = buildFireflies();
+  }
+
+  function frame(t) {
+    const width = canvas.offsetWidth, height = canvas.offsetHeight;
+    if (width < 10 || height < 10) { requestAnimationFrame(frame); return; }
+
+    if (width !== w || height !== h) {
+      w = width; h = height;
+      const fit = PG.fitCanvas(canvas);
+      dpr = fit.dpr;
+      rebuild();
+      if (!staticCache[mode]) staticCache[mode] = buildStatic(mode);
+    }
+
+    const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const m = MODES[mode];
+    ctx.drawImage(staticCache[mode], 0, 0, w, h);
+    if (m.stars) drawStars(ctx, t);
+    // drawClouds sets globalAlpha per blob from cl.alpha, so per-mode
+    // dimming has to be folded into each cloud's alpha, not the context
+    const ca = m.cloudAlpha ?? 1;
+    for (const cl of clouds) cl.alpha = cl.baseAlpha * ca;
+    PG.drawClouds(ctx, clouds, w, PG.reducedMotion ? 0 : t, m.cloud);
+    for (const fl of flowers) fl.draw(ctx, t);
+    if (m.fireflies) drawFireflies(ctx, t);
+
+    requestAnimationFrame(frame);
+  }
+
+  setMode(autoMode, false);
+  requestAnimationFrame(frame);
+  new ResizeObserver(() => { w = 0; h = 0; }).observe(canvas);
+
+  /* ---------- page-wide cursor trail ---------- */
+  PG.attachTrail(document.getElementById("trail"));
+}));
+</script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SUPERMEGA lab — 01 · case-study garden</title>
+<style>
+  .scene-wrap { position: relative; border-bottom: 3px solid #1c1a17; }
+  #scene { display: block; width: 100%; height: 420px; background: #f6ead6; }
+  .tooltip {
+    position: absolute; display: none; pointer-events: none; z-index: 5;
+    background: #1c1a17; color: #faf4e8; padding: 9px 12px;
+    box-shadow: 4px 4px 0 rgba(28, 26, 23, .22);
+    font-size: 12px; line-height: 1.5; white-space: nowrap;
+  }
+  .tooltip strong { display: block; font-size: 12px; letter-spacing: .07em;
+                    text-transform: uppercase; }
+  .tooltip span { opacity: .65; font-size: 11px; }
+  .caption { padding: 10px 24px 0; font-size: 11px; opacity: .6; line-height: 1.6; }
+  main { max-width: 640px; margin: 0 auto; padding: 56px 24px 120px; }
+  main h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em;
+            margin-bottom: 12px; }
+  main p { font-size: 14px; line-height: 1.8; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+
+<div class="scene-wrap">
+  <canvas id="scene"></canvas>
+  <div class="tooltip" id="tooltip"></div>
+</div>
+<p class="caption">what this is — the work section as a garden. one flower per
+project: species is the service, height is the engagement length, left to right
+is ship order. hover a flower for the project, click to open its case study.
+sample data.</p>
+
+<main>
+  <h2>a portfolio that grows</h2>
+  <p>every shipped project plants a flower. product work comes up as sunflowers,
+  web as poppies, brand as tulips, motion as cornflowers, advisory as lavender.
+  the longer the engagement, the taller the plant.</p>
+  <p>the bed replants itself in ship order on every visit — the newest project
+  is always the last one to come up.</p>
+</main>
+
+<canvas id="trail" aria-hidden="true"
+  style="position:fixed;inset:0;pointer-events:none;z-index:9999;"></canvas>
+
+<script src="core/pixel-core.js"></script>
+<script src="core/sprites.js"></script>
+<script>
+"use strict";
+PG.labChrome({ title: "case-study garden", n: "01" });
+
+/* ---------- sample data (labeled on the page) ---------- */
+const SPECIES = {
+  product: "sunflower", web: "poppy", brand: "tulip",
+  motion: "cornflower", advisory: "lavender", other: "daisy",
+};
+const PROJECTS = [
+  { name: "Daisy",           service: "product",  months: 7, shipped: "2024-11", slug: "daisy" },
+  { name: "Passion Pixels",  service: "web",      months: 3, shipped: "2025-02", slug: "passion-pixels" },
+  { name: "Northwind Atlas", service: "brand",    months: 2, shipped: "2025-04", slug: "northwind-atlas" },
+  { name: "Aitoolshub",      service: "product",  months: 5, shipped: "2025-06", slug: "aitoolshub" },
+  { name: "Cassette Club",   service: "motion",   months: 2, shipped: "2025-08", slug: "cassette-club" },
+  { name: "Ledgerline",      service: "advisory", months: 4, shipped: "2025-10", slug: "ledgerline" },
+  { name: "Marblekit",       service: "web",      months: 3, shipped: "2026-01", slug: "marblekit" },
+  { name: "Hum Robotics",    service: "other",    months: 1, shipped: "2026-04", slug: "hum-robotics" },
+].sort((a, b) => (a.shipped < b.shipped ? -1 : 1));   // oldest ships first
+
+const scene = document.getElementById("scene");
+const wrap = scene.parentElement;
+const tooltip = document.getElementById("tooltip");
+const reduced = PG.reducedMotion;
+
+let ctx = null, w = 0, h = 0;
+let staticLayer = null, clouds = [], flowers = [];
+let hovered = null, firstBuild = true;
+
+const groundY = () => h - 26;
+
+/* ---------- static layers: halftone sky, sun, hills, meadow, soil ---------- */
+function buildStatic() {
+  return PG.offscreen(w, h, (c) => {
+    c.drawImage(PG.halftone(w, h, {
+      bg: "#f6ead6", dot: "#ecc89d",
+      blobs: [
+        { cx: 0.24, cy: 0.26, rx: 0.20, ry: 0.24, s: 1.0 },
+        { cx: 0.55, cy: 0.44, rx: 0.22, ry: 0.20, s: 0.8 },
+        { cx: 0.86, cy: 0.50, rx: 0.14, ry: 0.20, s: 0.8 },
+      ],
+    }), 0, 0, w, h);
+
+    // sun, top right
+    const sx = PG.snap(w * 0.86), sy = PG.snap(h * 0.18);
+    const R = PG.snap(Math.min(w, h) * 0.12);
+    PG.fillEllipse(c, sx, sy, R, R,
+      (dx, dy, d) => (d < 0.45 ? "#ffd94a" : "#ffb23e"));
+    c.fillStyle = "#ffb23e";
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      for (let k = 0; k < 2; k++) {
+        const rr = R + 10 + k * PG.GRID;
+        c.fillRect(PG.snap(sx + Math.cos(a) * rr),
+                   PG.snap(sy + Math.sin(a) * rr), PG.PX, PG.PX);
+      }
+    }
+
+    // soft hills behind the meadow
+    const meadowY = PG.snap(h - 112);
+    PG.fillEllipse(c, w * 0.22, meadowY + 50, w * 0.42, 100,
+      (dx, dy, d) => (dy < 0 ? "#d9cf9e" : null));
+    PG.fillEllipse(c, w * 0.78, meadowY + 60, w * 0.5, 120,
+      (dx, dy, d) => (dy < 0 ? "#cbc188" : null));
+
+    // meadow band + soil
+    PG.fillGrid(c, 0, meadowY, w, groundY(), "#a2cd87");
+    const rand = PG.rng("smd-case-garden-texture");
+    c.fillStyle = "#8bb96e";
+    for (let y = meadowY; y < groundY(); y += PG.GRID) {
+      for (let x = 0; x < w; x += PG.GRID) {
+        if (rand() < 0.12) c.fillRect(x, y, PG.PX, PG.PX);
+      }
+    }
+    PG.fillGrid(c, 0, groundY(), w, h, "#6b4226");
+    c.fillStyle = "#46290f";
+    for (let y = PG.snap(groundY()); y < h; y += PG.GRID) {
+      for (let x = 0; x < w; x += PG.GRID) {
+        if (rand() < 0.18) c.fillRect(x, y, PG.PX, PG.PX);
+      }
+    }
+  });
+}
+
+/* ---------- plant the projects ---------- */
+function buildFlowers() {
+  const pad = Math.max(48, w * 0.05);
+  const slot = (w - pad * 2) / PROJECTS.length;
+  const now = performance.now();
+  const gy = groundY();
+  return PROJECTS.map((p, i) => {
+    const rand = PG.rng("smd-case-" + p.slug);
+    const x = PG.snap(pad + slot * i + slot * (0.32 + rand() * 0.36));
+    const scale = 0.7 + 0.7 * Math.min(1, (p.months - 1) / 6);
+    const sprite = PG.FLOWERS[SPECIES[p.service]];
+    const cells = PG.spriteCells(sprite, scale, x, gy);
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const cell of cells) {
+      x0 = Math.min(x0, cell.x); y0 = Math.min(y0, cell.y);
+      x1 = Math.max(x1, cell.x + cell.size); y1 = Math.max(y1, cell.y + cell.size);
+    }
+    const grower = firstBuild
+      ? new PG.Grower(cells, { bornAt: now + 350 + i * 260, duration: 850 + rand() * 250 })
+      : new PG.Grower(cells, { bornAt: now + i * 15, duration: 320 });
+    return { p, x, grower, box: { x0: x0 - 6, y0: y0 - 6, x1: x1 + 6, y1: y1 + 6 } };
+  });
+}
+
+function build() {
+  const fit = PG.fitCanvas(scene);
+  ctx = fit.ctx; w = fit.w; h = fit.h;
+  staticLayer = buildStatic();
+  clouds = PG.makeClouds(w, (h - 112) * 0.9, [
+    { baseX: 0.12, y: 0.16, rx: 0.16, ry: 0.10, speed: 4.5, alpha: 0.6 },
+    { baseX: 0.48, y: 0.36, rx: 0.12, ry: 0.08, speed: 7,   alpha: 0.5 },
+    { baseX: 0.70, y: 0.10, rx: 0.18, ry: 0.11, speed: 3.5, alpha: 0.6 },
+  ]);
+  flowers = buildFlowers();
+  firstBuild = false;
+}
+
+/* ---------- hover + tooltip (HTML overlay) ---------- */
+const mouse = { x: -999, y: -999 };
+scene.addEventListener("mousemove", (e) => {
+  const b = scene.getBoundingClientRect();
+  mouse.x = e.clientX - b.left;
+  mouse.y = e.clientY - b.top;
+  let hit = null;
+  for (const f of flowers) {
+    if (mouse.x >= f.box.x0 && mouse.x <= f.box.x1 &&
+        mouse.y >= f.box.y0 && mouse.y <= f.box.y1) hit = f;
+  }
+  hovered = hit;
+  scene.style.cursor = hit ? "pointer" : "default";
+  if (hit) {
+    const p = hit.p;
+    tooltip.innerHTML = `<strong>${p.name}</strong>` +
+      `<span>${p.service} &middot; shipped ${p.shipped} &middot; ${p.months} mo</span>`;
+    tooltip.style.display = "block";
+    const tw = tooltip.offsetWidth;
+    const left = Math.max(8, Math.min(w - tw - 8, mouse.x + 16));
+    const top = Math.max(8, mouse.y - tooltip.offsetHeight - 14);
+    tooltip.style.left = left + "px";
+    tooltip.style.top = top + "px";
+  } else {
+    tooltip.style.display = "none";
+  }
+});
+scene.addEventListener("mouseleave", () => {
+  hovered = null;
+  tooltip.style.display = "none";
+  scene.style.cursor = "default";
+});
+scene.addEventListener("click", () => {
+  if (hovered) window.location.href = "#case-" + hovered.p.slug;  // stub link
+});
+
+/* ---------- frame loop ---------- */
+function frame(t) {
+  if (scene.offsetWidth !== w || scene.offsetHeight !== h) {
+    if (scene.offsetWidth < 10) { requestAnimationFrame(frame); return; }
+    build();
+  }
+  ctx.clearRect(0, 0, w, h);
+  ctx.drawImage(staticLayer, 0, 0, w, h);
+  PG.drawClouds(ctx, clouds, w, reduced ? 0 : t);
+  for (const f of flowers) f.grower.draw(ctx, t);
+  if (hovered) {
+    // small ink ticks at the hovered flower's base
+    ctx.fillStyle = "#1c1a17";
+    const gy = PG.snap(groundY());
+    ctx.fillRect(hovered.x - PG.GRID * 3, gy, PG.PX, PG.PX);
+    ctx.fillRect(hovered.x + PG.GRID * 3, gy, PG.PX, PG.PX);
+  }
+  requestAnimationFrame(frame);
+}
+
+/* deferred construction: canvases painted during parse can lose their
+   backing store in Chromium — wait for load + one rAF */
+window.addEventListener("load", () => {
+  requestAnimationFrame(() => {
+    build();
+    requestAnimationFrame(frame);
+  });
+});
+
+PG.attachTrail(document.getElementById("trail"));
+
+window.__pg1 = {
+  anchors: () => {
+    const b = scene.getBoundingClientRect();
+    return flowers.map((f) => ({
+      x: b.left + (f.box.x0 + f.box.x1) / 2,
+      y: b.top + (f.box.y0 + f.box.y1) / 2,
+      name: f.p.name,
+    }));
+  },
+};
+</script>
+</body>
+</html>

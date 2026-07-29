@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>06 — construction hero</title>
+<style>
+  .hero { position: relative; height: 460px; border-bottom: 3px solid #1c1a17; }
+  .hero canvas { width: 100%; height: 100%; display: block; }
+  .hero .replay { position: absolute; right: 20px; bottom: 14px; font-size: 11px;
+                  color: #1c1a17; opacity: .55; cursor: pointer;
+                  text-decoration: underline; }
+  .hero .replay:hover { opacity: 1; }
+  .caption { font-size: 11px; opacity: .6; padding: 10px 24px; line-height: 1.6; }
+  main { max-width: 720px; margin: 0 auto; padding: 48px 24px 120px; }
+  main h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .08em;
+            margin-bottom: 14px; }
+  main p { font-size: 13px; line-height: 1.7; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <canvas id="scene" aria-hidden="true"></canvas>
+  <span class="replay" id="replay">replay</span>
+</div>
+<p class="caption">what this is — the wordmark assembled cell by cell. the trolley
+  rides the jib to the next letter, the cable drops, the letter builds from the
+  ground up. we build super interfaces; the grow-in is the construction.</p>
+
+<main>
+  <h2>Built, Not Faded In</h2>
+  <p>most wordmark reveals are opacity tricks. this one is labor: a crane, a
+    cable, and nine letters raised in order. the same expo ease the garden
+    flowers use turns out to read as construction the moment a hook is
+    attached to it.</p>
+  <p>the crane parks when the last letter is up, and the letters keep the
+    sparkle flicker — a building that hums after the crew goes home.</p>
+</main>
+
+<canvas id="trail" aria-hidden="true"
+  style="position:fixed;inset:0;pointer-events:none;z-index:9999;"></canvas>
+
+<script src="core/pixel-core.js"></script>
+<script src="core/sprites.js"></script>
+<script>
+"use strict";
+PG.labChrome({ title: "construction hero", n: "06" });
+PG.attachTrail(document.getElementById("trail"));
+
+(function () {
+  const C = PG.COLORS;
+  const GRID = PG.GRID, PX = PG.PX, snap = PG.snap;
+  const FAST = new URLSearchParams(location.search).has("fast") ? 0.25 : 1;
+  const WORD = "SUPERMEGA";
+  const SCALE = 3;
+
+  const canvas = document.getElementById("scene");
+  let w = 0, h = 0, ctx = null;
+  let sky = null;          // cached static layer
+  let letters = [];        // [{cells, cx, top, bottom, grower|null, done}]
+  let crane = null;        // geometry
+  let phase = "idle";      // move | lower | build | raise | park | done
+  let phaseStart = 0, current = 0;
+  let trolleyX = 0, trolleyFrom = 0;
+  let cableLen = 0;
+  let cloud = null;
+
+  const DUR = { move: 650 * FAST, lower: 280 * FAST, build: 750 * FAST,
+                raise: 280 * FAST, park: 900 * FAST };
+
+  function build() {
+    const fit = PG.fitCanvas(canvas);
+    ctx = fit.ctx; w = fit.w; h = fit.h;
+    const groundY = snap(h - 56);
+
+    // static layer: halftone sky + ground band
+    sky = PG.offscreen(w, h, (c) => {
+      c.drawImage(PG.halftone(w, h, {
+        bg: C.skyWarm, dot: C.skyDot,
+        blobs: [
+          { cx: 0.22, cy: 0.30, rx: 0.20, ry: 0.26, s: 0.9 },
+          { cx: 0.62, cy: 0.50, rx: 0.24, ry: 0.20, s: 0.7 },
+          { cx: 0.88, cy: 0.25, rx: 0.14, ry: 0.22, s: 0.8 },
+        ],
+      }), 0, 0, w, h);
+      c.fillStyle = "#c9b18a";                       // packed-dirt site
+      c.fillRect(0, groundY, w, h - groundY);
+      c.fillStyle = C.ink;                           // ground line
+      c.fillRect(0, groundY, w, 3);
+    });
+
+    // wordmark: one Grower per letter, anchored on the ground line
+    const scale = w < 900 ? 2 : w < 1100 ? 3 : 4;
+    const wordW = PG.textWidth(WORD, scale);
+    const x0 = snap((w - wordW) / 2 + 60);           // room for the tower at left
+    const letterH = 5 * GRID * scale;
+    letters = [];
+    let cx = x0;
+    for (const ch of WORD) {
+      const cells = PG.textCells(ch, cx, groundY, { scale, color: C.ink });
+      const glyphW = PG.textWidth(ch, scale, 0);
+      letters.push({
+        cells,
+        cx: cx + glyphW / 2,
+        top: groundY - letterH,
+        bottom: groundY,
+        grower: null,
+        done: false,
+      });
+      cx += PG.textWidth(ch, scale);
+    }
+
+    // crane geometry, ink silhouette left of the wordmark
+    const towerX = snap(x0 - 110);
+    const jibY = snap(groundY - letterH - 96);
+    crane = {
+      towerX, jibY, groundY,
+      towerW: GRID * 4,
+      jibEnd: snap(cx + 30),
+      jibStart: snap(towerX - 70),                   // counter-jib
+    };
+    trolleyX = trolleyFrom = towerX + GRID * 6;
+    cableLen = 0;
+
+    cloud = PG.makeClouds(w, groundY * 0.5, [
+      { baseX: 0.7, y: 0.35, rx: 0.13, ry: 0.10, speed: 3, alpha: 0.5 },
+    ]);
+
+    start();
+  }
+
+  function start() {
+    for (const L of letters) { L.grower = null; L.done = false; }
+    current = 0;
+    phase = PG.reducedMotion ? "done" : "move";
+    if (PG.reducedMotion) {
+      for (const L of letters) { L.done = true; }
+      trolleyX = crane.towerX + GRID * 6;
+    }
+    phaseStart = performance.now();
+    trolleyFrom = trolleyX;
+  }
+
+  function drawCrane(t) {
+    const { towerX, jibY, groundY, towerW, jibEnd, jibStart } = crane;
+    const ink = "#2a2622";
+
+    // tower: two legs + zigzag braces
+    PG.fillGrid(ctx, towerX, jibY, towerX + GRID, groundY, ink);
+    PG.fillGrid(ctx, towerX + towerW, jibY, towerX + towerW + GRID, groundY, ink);
+    const bay = GRID * 8;
+    for (let y = jibY; y < groundY - bay; y += bay) {
+      PG.pixelLine(ctx, towerX, y, towerX + towerW, y + bay, ink);
+      PG.pixelLine(ctx, towerX + towerW, y, towerX, y + bay, ink);
+    }
+    // cab + apex
+    PG.fillGrid(ctx, towerX - GRID, jibY - GRID * 3, towerX + towerW + GRID * 2, jibY, ink);
+    PG.pixelLine(ctx, towerX + towerW / 2, jibY - GRID * 3,
+                 towerX + towerW / 2, jibY - GRID * 9, ink);
+
+    // jib + counter-jib with top chord ties
+    PG.fillGrid(ctx, jibStart, jibY, jibEnd, jibY + GRID, ink);
+    const apexX = towerX + towerW / 2, apexY = jibY - GRID * 9;
+    for (const tx of [jibStart + GRID, (towerX + jibEnd) / 2, jibEnd - GRID * 2]) {
+      PG.pixelLine(ctx, apexX, apexY, snap(tx), jibY, ink);
+    }
+    // counterweight
+    PG.fillGrid(ctx, jibStart, jibY + GRID, jibStart + GRID * 4, jibY + GRID * 4, ink);
+
+    // trolley + cable + hook
+    const ty = jibY + GRID;
+    PG.fillGrid(ctx, snap(trolleyX - GRID), ty, snap(trolleyX + GRID * 2), ty + GRID * 2, ink);
+    const cableBottom = ty + GRID * 2 + cableLen;
+    PG.pixelLine(ctx, snap(trolleyX), ty + GRID * 2, snap(trolleyX), cableBottom, ink);
+    PG.fillGrid(ctx, snap(trolleyX - GRID), cableBottom, snap(trolleyX + GRID * 2),
+                cableBottom + GRID * 2, "#b8742a");  // hook block
+  }
+
+  function frame(t) {
+    if (canvas.offsetWidth !== w) build();
+    ctx.drawImage(sky, 0, 0, w, h);
+    PG.drawClouds(ctx, cloud, w, PG.reducedMotion ? 0 : t, ["#ffffff", "#f0e6d2"]);
+
+    const L = letters[current];
+    const p = Math.min(1, (t - phaseStart) / (DUR[phase] || 1));
+
+    if (phase === "move" && L) {
+      trolleyX = trolleyFrom + (L.cx - trolleyFrom) * PG.easeOutQuad(p);
+      cableLen = 24;
+      if (p >= 1) { phase = "lower"; phaseStart = t; }
+    } else if (phase === "lower" && L) {
+      const target = L.bottom - (crane.jibY + GRID * 3) - GRID * 2;
+      cableLen = 24 + (target - 24) * PG.easeOutQuad(p);
+      if (p >= 1) {
+        phase = "build"; phaseStart = t;
+        L.grower = new PG.Grower(L.cells, { bornAt: t, duration: DUR.build, flicker: false });
+      }
+    } else if (phase === "build" && L) {
+      // hook tracks the growth front up the letter
+      const eased = PG.easeExpoIn(L.grower.progress(t));
+      const frontY = L.bottom - eased * (L.bottom - L.top);
+      cableLen = Math.max(24, frontY - (crane.jibY + GRID * 3) - GRID * 2);
+      if (p >= 1) { L.done = true; phase = "raise"; phaseStart = t; }
+    } else if (phase === "raise") {
+      const from = cableLen;
+      cableLen = from + (24 - from) * PG.easeOutQuad(p);
+      if (p >= 1) {
+        current++;
+        if (current < letters.length) {
+          phase = "move"; phaseStart = t; trolleyFrom = trolleyX;
+        } else {
+          phase = "park"; phaseStart = t; trolleyFrom = trolleyX;
+        }
+      }
+    } else if (phase === "park") {
+      const home = crane.towerX + GRID * 6;
+      trolleyX = trolleyFrom + (home - trolleyFrom) * PG.easeOutQuad(p);
+      cableLen = 24;
+      if (p >= 1) phase = "done";
+    }
+
+    // letters: the active one grows; finished ones get a faint hum —
+    // at most one hidden cell per letter, and only some of the time
+    // (the stock 3-cell flicker is tuned for ~200-cell flowers and
+    // visibly corrupts an 18-cell glyph)
+    for (const Lt of letters) {
+      if (Lt.done) {
+        const tick = Math.floor(t / 160);
+        const roll = Math.abs((Math.imul(tick, 0x9e3779b1) ^ Lt.cells.length * 31 ^ snap(Lt.cx)) >>> 0);
+        const hide = PG.reducedMotion ? -1 :
+          (roll % (Lt.cells.length * 4) < Lt.cells.length ? roll % Lt.cells.length : -1);
+        for (let i = 0; i < Lt.cells.length; i++) {
+          if (i === hide) continue;
+          const cell = Lt.cells[i];
+          ctx.fillStyle = cell.color;
+          ctx.fillRect(cell.x, cell.y, cell.size, cell.size);
+        }
+      } else if (Lt.grower) {
+        Lt.grower.draw(ctx, t);
+      }
+    }
+
+    drawCrane(t);
+    requestAnimationFrame(frame);
+  }
+
+  document.getElementById("replay").addEventListener("click", start);
+  window.addEventListener("load", () => requestAnimationFrame((t) => {
+    build();
+    requestAnimationFrame(frame);
+  }));
+})();
+</script>
+</body>
+</html>

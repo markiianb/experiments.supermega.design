@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SUPERMEGA — Pixel Garden Lab</title>
+<style>
+  :root {
+    --paper: #faf4e8;
+    --ink: #1c1a17;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  header.hero {
+    position: relative;
+    height: 420px;
+    border-bottom: 4px solid var(--ink);
+  }
+  header.hero canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: #f6ead6;
+  }
+  .hero-copy {
+    position: absolute;
+    top: 40px;
+    left: 48px;
+    pointer-events: none;
+  }
+  .hero-copy h1 {
+    font-size: 28px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .hero-copy p {
+    margin-top: 8px;
+    font-size: 13px;
+    opacity: 0.7;
+  }
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 120px;
+  }
+  main h2 { font-size: 16px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 16px; }
+  main p { font-size: 14px; line-height: 1.7; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <canvas id="garden" aria-hidden="true"></canvas>
+  <div class="hero-copy">
+    <h1>Supermega</h1>
+    <p>Pixel garden — header effect research</p>
+  </div>
+</header>
+
+<main>
+  <h2>What this is</h2>
+  <p>A recreation study of the config.floguo.com header: a procedural pixel-art scene drawn on canvas with a 4px grid of 3×3 squares, halftone clouds, ASCII-sprite flowers that grow in with an expo ease and sparkle flicker, drifting clouds, and hidden hover easter eggs.</p>
+  <p>Move the mouse anywhere to see the pixel cursor trail: positions quantized to a 6px grid, cycling color palette, alpha ramp toward the head, and a tail-first collapse after 80ms of idle.</p>
+  <p>Hover around the sky in the header — a few easter eggs are hiding there.</p>
+</main>
+
+<!-- Page-wide pixel cursor trail -->
+<canvas id="trail" aria-hidden="true"
+  style="position:fixed;inset:0;pointer-events:none;z-index:9999;"></canvas>
+
+<script>
+"use strict";
+
+/* ============================================================
+   Shared helpers
+   ============================================================ */
+const GRID = 4;              // scene grid step
+const PX = 3;                // drawn square size (1px gap = dot matrix look)
+const snap = v => GRID * Math.round(v / GRID);
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// deterministic PRNG (FNV-1a seed + LCG), same trick as the original
+function fnv(s) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x1000193); }
+  return h >>> 0;
+}
+function rng(seed) {
+  let n = seed >>> 0;
+  return () => (n = (Math.imul(1664525, n) + 0x3c6ef35f) >>> 0) / 0x100000000;
+}
+
+/* ============================================================
+   Flower sprites — ASCII rows, letters map to a palette.
+   "." = empty. stemCol anchors the sprite to its ground x.
+   ============================================================ */
+const SPRITES = [
+  { // sunflower
+    rows: [
+      "....AABAA....",
+      "..AABBBBBAA..",
+      ".ABBACCCABBA.",
+      ".ABACCCCCABA.",
+      "ABBACCDCCABBA",
+      "ABACCDDDCCABA",
+      "ABBACCDCCABBA",
+      ".ABACCCCCABA.",
+      ".ABBACCCABBA.",
+      "..AABBBBBAA..",
+      "....AABAA....",
+      "......E......",
+      "....FGE......",
+      "......EGF....",
+      "......E......",
+    ],
+    stemCol: 6,
+    pal: { A:"#d8920f", B:"#f5b81e", C:"#6b3f17", D:"#46280c", E:"#2e6b34", F:"#3d8a42", G:"#2e6b34" },
+  },
+  { // poppy
+    rows: [
+      "..AABAA..",
+      ".ABBBBBA.",
+      "ABBCCCBBA",
+      "ABCCDCCBA",
+      "ABCCCCCBA",
+      ".ABBBBBA.",
+      "..AABAA..",
+      "....E....",
+      "...FEF...",
+      "....E....",
+      "...FE....",
+      "....E....",
+    ],
+    stemCol: 4,
+    pal: { A:"#b81f2e", B:"#e23b47", C:"#8f1322", D:"#1c1a17", E:"#2e6b34", F:"#3d8a42" },
+  },
+  { // tulip
+    rows: [
+      ".A...A.",
+      ".AA.AA.",
+      ".ABABA.",
+      ".ABBBA.",
+      ".ABBBA.",
+      "..ABA..",
+      "...E...",
+      "..FEF..",
+      "...E...",
+      "..FE...",
+      "...EF..",
+      "...E...",
+    ],
+    stemCol: 3,
+    pal: { A:"#c33d8d", B:"#ea6db4", E:"#2e6b34", F:"#3d8a42" },
+  },
+  { // daisy
+    rows: [
+      "...A.A...",
+      "..A.A.A..",
+      ".A.ABA.A.",
+      "..ABBBA..",
+      "A.ABCBA.A",
+      "..ABBBA..",
+      ".A.ABA.A.",
+      "..A.A.A..",
+      "...A.A...",
+      "....E....",
+      "...FE....",
+      "....EF...",
+      "....E....",
+    ],
+    stemCol: 4,
+    pal: { A:"#f3ede0", B:"#fbf8ef", C:"#f0a51c", E:"#2e6b34", F:"#3d8a42" },
+  },
+  { // cornflower
+    rows: [
+      "..A.A.A..",
+      ".AABABAA.",
+      "..ABBBA..",
+      ".AABCBAA.",
+      "..ABBBA..",
+      ".AABABAA.",
+      "..A.A.A..",
+      "....E....",
+      "...FEF...",
+      "....E....",
+      "....E....",
+    ],
+    stemCol: 4,
+    pal: { A:"#2d5fb8", B:"#4f83e0", C:"#1c356b", E:"#2e6b34", F:"#3d8a42" },
+  },
+  { // lavender stalk
+    rows: [
+      "...A...",
+      "..ABA..",
+      "..ABA..",
+      ".ABBA..",
+      ".ABBA..",
+      "..ABA..",
+      "..ABA..",
+      "...E...",
+      "..FEF..",
+      "...E...",
+      "..FE...",
+      "...E...",
+      "...E...",
+    ],
+    stemCol: 3,
+    pal: { A:"#6c4ab0", B:"#9a78d8", E:"#2e6b34", F:"#3d8a42" },
+  },
+];
+
+// expand a sprite into draw cells, bottom-to-top so growth starts at the stem
+function spriteCells(sprite, scale, groundX, groundY) {
+  const cell = GRID * scale;
+  const rows = sprite.rows;
+  const perRow = rows.map(() => []);
+  for (let r = 0; r < rows.length; r++) {
+    for (let c = 0; c < rows[r].length; c++) {
+      const ch = rows[r][c];
+      if (ch === "." || ch === " ") continue;
+      const color = sprite.pal[ch];
+      if (!color) continue;
+      perRow[r].push({
+        x: groundX + (c - sprite.stemCol) * cell,
+        y: groundY - (rows.length - r) * cell,
+        color,
+        size: Math.max(2, Math.round(PX * scale)),
+      });
+    }
+  }
+  const out = [];
+  for (let r = rows.length - 1; r >= 0; r--) out.push(...perRow[r]);
+  return out;
+}
+
+/* ============================================================
+   Easter eggs — fade in when the cursor is near
+   ============================================================ */
+function eggBolt(ctx, x, y) { // lightning bolt
+  ctx.fillStyle = "#f0a51c";
+  [[3,0],[2,1],[3,1],[1,2],[2,2],[3,2],[4,2],[2,3],[3,3],[4,3],[3,4],[2,5],[1,6]]
+    .forEach(([c, r]) => ctx.fillRect(x + (c - 2) * GRID, y + (r - 3) * GRID, PX, PX));
+}
+function eggStar(ctx, x, y) {
+  ctx.fillStyle = "#ffd700";
+  [[2,0],[1,1],[2,1],[3,1],[0,2],[1,2],[2,2],[3,2],[4,2],[1,3],[3,3],[0,4],[4,4]]
+    .forEach(([c, r]) => ctx.fillRect(x + (c - 2) * GRID, y + (r - 2) * GRID, PX, PX));
+}
+function eggHeart(ctx, x, y) {
+  ctx.fillStyle = "#e23b47";
+  [[1,0],[3,0],[0,1],[1,1],[2,1],[3,1],[4,1],[0,2],[1,2],[2,2],[3,2],[4,2],[1,3],[2,3],[3,3],[2,4]]
+    .forEach(([c, r]) => ctx.fillRect(x + (c - 2) * GRID, y + (r - 2) * GRID, PX, PX));
+}
+function eggS(ctx, x, y) { // pixel "S" for Supermega
+  ctx.fillStyle = "#1c1a17";
+  [[1,0],[2,0],[3,0],[0,1],[1,2],[2,2],[3,3],[0,4],[1,4],[2,4]]
+    .forEach(([c, r]) => ctx.fillRect(x + (c - 2) * GRID, y + (r - 2) * GRID, PX, PX));
+}
+
+/* ============================================================
+   Header scene
+   ============================================================ */
+(function gardenScene() {
+  const canvas = document.getElementById("garden");
+  const dpr = window.devicePixelRatio || 1;
+  let w = 0, h = 0;
+  let halftone = null;     // offscreen sky
+  let flowers = [];
+  let clouds = [];
+  const mouse = { x: -999, y: -999 };
+
+  const eggs = [
+    { rx: 0.20, ry: 0.30, r: 40, alpha: 0, draw: eggBolt },
+    { rx: 0.46, ry: 0.16, r: 36, alpha: 0, draw: eggStar },
+    { rx: 0.66, ry: 0.34, r: 36, alpha: 0, draw: eggHeart },
+    { rx: 0.90, ry: 0.20, r: 36, alpha: 0, draw: eggS },
+  ];
+
+  canvas.addEventListener("mousemove", e => {
+    const b = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - b.left;
+    mouse.y = e.clientY - b.top;
+  });
+  canvas.addEventListener("mouseleave", () => { mouse.x = -999; mouse.y = -999; });
+
+  // --- offscreen halftone sky: dot radius follows a sum of gaussian blobs
+  function buildHalftone(width, height) {
+    const off = document.createElement("canvas");
+    off.width = Math.round(width * dpr);
+    off.height = Math.round(height * dpr);
+    const c = off.getContext("2d");
+    c.scale(dpr, dpr);
+    c.fillStyle = "#f6ead6";              // warm paper sky
+    c.fillRect(0, 0, width, height);
+    c.fillStyle = "#ecc89d";              // halftone dot color
+    const blobs = [
+      { cx: 0.30, cy: 0.28, rx: 0.20, ry: 0.24, s: 1.0 },
+      { cx: 0.58, cy: 0.48, rx: 0.22, ry: 0.20, s: 0.8 },
+      { cx: 0.82, cy: 0.30, rx: 0.16, ry: 0.24, s: 0.9 },
+      { cx: 0.12, cy: 0.55, rx: 0.14, ry: 0.16, s: 0.7 },
+      { cx: 0.95, cy: 0.60, rx: 0.10, ry: 0.16, s: 0.75 },
+    ];
+    for (let x = 4; x < width; x += 8) {
+      for (let y = 4; y < height; y += 8) {
+        let f = 0;
+        for (const b of blobs) {
+          const dx = (x / width - b.cx) / b.rx;
+          const dy = (y / height - b.cy) / b.ry;
+          f += b.s * Math.exp(-(2.5 * (dx * dx + dy * dy)));
+        }
+        if (f < 0.12) continue;
+        c.beginPath();
+        c.arc(x, y, Math.min(1.8, 1.8 * f), 0, Math.PI * 2);
+        c.fill();
+      }
+    }
+    return off;
+  }
+
+  // --- sun: two-tone pixel disc with ray ticks
+  function drawSun(ctx, width, height) {
+    const cx = snap(width * 0.84), cy = snap(height * 0.20);
+    const R = snap(Math.min(width, height) * 0.13);
+    for (let y = snap(cy - R); y <= cy + R; y += GRID) {
+      for (let x = snap(cx - R); x <= cx + R; x += GRID) {
+        const dx = (x - cx) / R, dy = (y - cy) / R;
+        const d = dx * dx + dy * dy;
+        if (d > 1) continue;
+        ctx.fillStyle = d < 0.45 ? "#ffd94a" : "#ffb23e";
+        ctx.fillRect(x, y, PX, PX);
+      }
+    }
+    ctx.fillStyle = "#ffb23e";
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      for (let k = 0; k < 3; k++) {
+        const rr = R + 10 + k * GRID;
+        ctx.fillRect(snap(cx + Math.cos(a) * rr), snap(cy + Math.sin(a) * rr), PX, PX);
+      }
+    }
+  }
+
+  // --- mountains: two ridges of pixel columns, stopping at the meadow
+  function drawMountains(ctx, width, height) {
+    const meadowY = snap(height - 116);
+    const ridge = (baseY, amp, freq, phase, color) => {
+      ctx.fillStyle = color;
+      for (let x = 0; x < width; x += GRID) {
+        const t = x / width;
+        const yTop = snap(baseY
+          - amp * (0.6 * Math.sin(t * freq * Math.PI * 2 + phase)
+                 + 0.4 * Math.sin(t * freq * 2.3 * Math.PI * 2 + phase * 1.7)));
+        for (let y = yTop; y < meadowY; y += GRID) ctx.fillRect(x, y, PX, PX);
+      }
+    };
+    ridge(height * 0.58, height * 0.10, 1.1, 0.8, "#e0c5a0"); // far, hazy
+    ridge(height * 0.70, height * 0.08, 1.7, 2.4, "#c99e74"); // near, warmer
+  }
+
+  // --- light meadow band behind the flowers
+  function drawMeadow(ctx, width, height) {
+    const meadowY = snap(height - 116);
+    const groundY = height - 16;
+    ctx.fillStyle = "#a2cd87";
+    for (let y = meadowY; y < groundY; y += GRID) {
+      for (let x = 0; x < width; x += GRID) ctx.fillRect(x, y, PX, PX);
+    }
+    // sparse darker texture dots
+    ctx.fillStyle = "#8bb96e";
+    const rand = rng(fnv("supermega-meadow"));
+    for (let y = meadowY; y < groundY; y += GRID) {
+      for (let x = 0; x < width; x += GRID) {
+        if (rand() < 0.12) ctx.fillRect(x, y, PX, PX);
+      }
+    }
+  }
+
+  // --- drifting lobed pixel clouds
+  function buildClouds(width, height) {
+    const skyH = (height - 16) * 0.5;
+    const lobes = (rx, ry) => [
+      { ox: 0,          oy: 0,          rx: rx * 0.65, ry: ry        },
+      { ox: rx * 0.52,  oy: -ry * 0.35, rx: rx * 0.55, ry: ry * 0.8  },
+      { ox: -rx * 0.5,  oy: -ry * 0.25, rx: rx * 0.48, ry: ry * 0.75 },
+      { ox: rx * 0.88,  oy: ry * 0.12,  rx: rx * 0.34, ry: ry * 0.6  },
+      { ox: -rx * 0.82, oy: ry * 0.1,   rx: rx * 0.3,  ry: ry * 0.55 },
+    ];
+    return [
+      { baseX: 0.10, y: skyH * 0.18, lobes: lobes(width * 0.20, skyH * 0.11), speed: 4.5, alpha: 0.6  },
+      { baseX: 0.50, y: skyH * 0.40, lobes: lobes(width * 0.15, skyH * 0.09), speed: 7,   alpha: 0.5  },
+      { baseX: 0.74, y: skyH * 0.10, lobes: lobes(width * 0.24, skyH * 0.13), speed: 3.5, alpha: 0.62 },
+      { baseX: 0.30, y: skyH * 0.58, lobes: lobes(width * 0.12, skyH * 0.07), speed: 9.5, alpha: 0.45 },
+    ];
+  }
+
+  function drawClouds(ctx, width, t) {
+    const span = width + 400;
+    for (const cl of clouds) {
+      const drift = (cl.speed * t / 1000) % span;
+      const cx = (((cl.baseX * width - drift) % span) + span) % span;
+      for (const lo of cl.lobes) {
+        const lx = cx + lo.ox, ly = cl.y + lo.oy;
+        const x0 = snap(lx - lo.rx), y0 = snap(ly - lo.ry);
+        for (let y = y0; y <= ly + lo.ry; y += GRID) {
+          for (let x = x0; x <= lx + lo.rx; x += GRID) {
+            const dx = (x - lx) / lo.rx, dy = (y - ly) / lo.ry;
+            const d = dx * dx + dy * dy;
+            if (d > 1) continue;
+            ctx.globalAlpha = cl.alpha * (1 - 0.55 * d);
+            ctx.fillStyle = dy < -0.3 ? "#ffffff" : "#f0e6d2";
+            ctx.fillRect(x, y, PX, PX);
+          }
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // --- plant the meadow
+  function buildFlowers(width, height) {
+    const groundY = height - 16;
+    const now = performance.now();
+    const count = Math.max(8, Math.min(26, Math.floor(width / 56)));
+    const out = [];
+    for (let i = 0; i < count; i++) {
+      const rand = rng(fnv("supermega-flower-" + i));
+      const slot = width / count;
+      const x = snap(slot * i + slot * (0.25 + rand() * 0.5));
+      const sprite = SPRITES[Math.floor(rand() * SPRITES.length)];
+      const scale = 0.75 + rand() * 0.55;
+      out.push({
+        cells: spriteCells(sprite, scale, x, groundY),
+        bornAt: now + 80 * i,
+        duration: 900 + rand() * 250,
+        flickerFrame: 0,
+        flickerTick: 0,
+        hidden: new Set(),
+      });
+    }
+    return out;
+  }
+
+  function drawFlowers(ctx, t) {
+    for (const fl of flowers) {
+      const age = t - fl.bornAt;
+      if (age < 0) continue;
+      const n = Math.min(1, age / fl.duration);
+      const eased = reducedMotion ? 1 : (n === 0 ? 0 : Math.pow(2, 12 * n - 12)); // expo-in
+      const visible = Math.floor(eased * fl.cells.length);
+
+      // sparkle flicker once fully grown: hide 3 pseudo-random cells per 100ms
+      if (!reducedMotion && eased >= 1 && t - fl.flickerTick > 100) {
+        fl.flickerTick = t;
+        fl.flickerFrame++;
+        fl.hidden.clear();
+        const base = 7919 * fl.flickerFrame;
+        for (let k = 0; k < 3; k++) {
+          fl.hidden.add(Math.abs((base * (k + 1) * 0x9e3779b1) >>> 0) % visible);
+        }
+      }
+
+      for (let i = 0; i < visible; i++) {
+        if (fl.hidden.has(i)) continue;
+        const cell = fl.cells[i];
+        const fromFront = visible - 1 - i;
+        ctx.globalAlpha = fromFront < 12 ? Math.pow((fromFront + 1) / 13, 0.4) : 1;
+        ctx.fillStyle = cell.color;
+        ctx.fillRect(cell.x, cell.y, cell.size, cell.size);
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // --- ground with grass ticks
+  function drawGround(ctx, width, height) {
+    const groundY = height - 16;
+    ctx.fillStyle = "#2f7d4f";
+    ctx.fillRect(0, groundY, width, height - groundY);
+    ctx.fillStyle = "#3d9a62";
+    const rand = rng(fnv("supermega-grass"));
+    for (let x = 0; x < width; x += GRID * 2) {
+      if (rand() < 0.4) ctx.fillRect(snap(x), groundY - GRID, PX, PX);
+    }
+  }
+
+  // all static layers pre-rendered once per resize: sky, sun, mountains, meadow, ground
+  function buildStatic(width, height) {
+    const off = document.createElement("canvas");
+    off.width = Math.round(width * dpr);
+    off.height = Math.round(height * dpr);
+    const c = off.getContext("2d");
+    c.imageSmoothingEnabled = false;
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.drawImage(buildHalftone(width, height), 0, 0, width, height);
+    drawSun(c, width, height);
+    drawMountains(c, width, height);
+    drawMeadow(c, width, height);
+    drawGround(c, width, height);
+    return off;
+  }
+
+  function frame(t) {
+    const width = canvas.offsetWidth, height = canvas.offsetHeight;
+    if (width < 10 || height < 10) { requestAnimationFrame(frame); return; }
+
+    if (width !== w || height !== h) {
+      w = width; h = height;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      halftone = buildStatic(w, h);
+      flowers = buildFlowers(w, h);
+      clouds = buildClouds(w, h);
+    }
+
+    const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    ctx.drawImage(halftone, 0, 0, w, h);
+    drawClouds(ctx, w, reducedMotion ? 0 : t);
+    drawFlowers(ctx, t);
+
+    // easter eggs near the cursor
+    for (const egg of eggs) {
+      const ex = egg.rx * w, ey = egg.ry * h;
+      const near = Math.hypot(mouse.x - ex, mouse.y - ey) < egg.r ? 1 : 0;
+      egg.alpha += (near - egg.alpha) * 0.07;
+      if (egg.alpha > 0.01) {
+        ctx.globalAlpha = egg.alpha;
+        egg.draw(ctx, snap(ex), snap(ey));
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  new ResizeObserver(() => { w = 0; h = 0; }).observe(canvas);
+})();
+
+/* ============================================================
+   Pixel cursor trail — page-wide
+   ============================================================ */
+(function pixelCursor() {
+  if (!window.matchMedia("(pointer: fine)").matches || reducedMotion) return;
+
+  const canvas = document.getElementById("trail");
+  let w = window.innerWidth, h = window.innerHeight;
+  canvas.width = w; canvas.height = h;
+
+  const STEP = 6, SIZE = 5, MAX = 40;
+  const PALETTE = [
+    "#f5b81e", "#e23b47", "#6c4ab0", "#2d5fb8",
+    "#f0a51c", "#ea6db4", "#3d9a62", "#ffd94a",
+    "#c33d8d", "#4f83e0", "#2f7d4f", "#b81f2e",
+  ];
+  const q = v => STEP * Math.floor(v / STEP);
+
+  const head = { x: -100, y: -100 };
+  let trail = [];
+  let lastCell = { x: -1, y: -1 };
+  let colorIdx = 0;
+  let lastMove = Infinity;       // when the mouse last moved
+  let collapseStart = 0;         // when the collapse began
+  let collapseFrom = 0;          // trail length at collapse start
+  let keep = Infinity;
+
+  window.addEventListener("mousemove", e => {
+    head.x = e.clientX; head.y = e.clientY;
+    lastMove = performance.now();
+    collapseStart = 0;
+    keep = Infinity;
+    const cx = q(e.clientX), cy = q(e.clientY);
+    if (cx !== lastCell.x || cy !== lastCell.y) {
+      lastCell = { x: cx, y: cy };
+      trail.push({ x: cx, y: cy, color: PALETTE[colorIdx % PALETTE.length] });
+      colorIdx++;
+      if (trail.length > MAX) trail.shift();
+    }
+  });
+  window.addEventListener("resize", () => {
+    w = window.innerWidth; h = window.innerHeight;
+    canvas.width = w; canvas.height = h;
+  });
+
+  (function loop(t) {
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, w, h);
+
+    // idle > 80ms: collapse the tail with an ease-out over 500ms
+    if (t - lastMove > 80 && trail.length > 0) {
+      if (collapseStart === 0) { collapseStart = t; collapseFrom = trail.length; }
+      const e = Math.min(1, (t - collapseStart) / 500);
+      keep = Math.min(keep, Math.floor((1 - e * e) * collapseFrom));
+      while (trail.length > keep) trail.shift();
+    }
+
+    const n = trail.length;
+    for (let i = 0; i < n; i++) {
+      ctx.globalAlpha = 0.25 + 0.65 * (n <= 1 ? 1 : i / (n - 1));
+      ctx.fillStyle = trail[i].color;
+      ctx.fillRect(q(trail[i].x), q(trail[i].y), SIZE, SIZE);
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#1c1a17";
+    ctx.fillRect(q(head.x), q(head.y), SIZE, SIZE);
+
+    requestAnimationFrame(loop);
+  })(performance.now());
+})();
+</script>
+</body>
+</html>
