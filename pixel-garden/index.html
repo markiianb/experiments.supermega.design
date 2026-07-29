@@ -22,6 +22,8 @@
   /* Copy sits on the sky scene, so it keeps its own ink regardless of polarity. */
   [data-system="instrument"] .pg-footer {
     display: flex;
+    flex-wrap: wrap;
+    row-gap: var(--instrument-space-2);
     align-items: center;
     justify-content: space-between;
     gap: var(--instrument-space-4);
@@ -244,8 +246,9 @@ function iconSprite(name) {
 
   /* ---- masthead: PIXEL GARDEN LAB grows in ---- */
   const mast = document.getElementById("masthead");
-  const mScale = window.innerWidth < 700 ? 1.5 : 2.5;
   const text = "PIXEL GARDEN LAB";
+  const availableWidth = Math.min(1080, window.innerWidth) - 48;
+  const mScale = Math.max(0.9, Math.min(2.5, availableWidth / PG.textWidth(text, 1)));
   const mw = PG.textWidth(text, mScale);
   const mh = 5 * PG.GRID * mScale + 8;
   mast.style.width = mw + "px";
@@ -323,7 +326,8 @@ function iconSprite(name) {
     c.fillRect(0, 0, gw, gh);
 
     /* pixel sun, top right, with a dotted ray ring */
-    const sunX = gw - 140, sunY = 120, R = 46;
+    const small = gw < 700;
+    const sunX = gw - (small ? 70 : 140), sunY = small ? 64 : 120, R = small ? 30 : 46;
     for (let y = PG.snap(sunY - R); y <= sunY + R; y += PG.GRID) {
       for (let x = PG.snap(sunX - R); x <= sunX + R; x += PG.GRID) {
         const dx = (x - sunX) / R, dy = (y - sunY) / R;
