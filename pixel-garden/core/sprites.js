@@ -274,7 +274,7 @@
     if (!document.querySelector('link[rel="icon"]')) {
       const icon = document.createElement("link");
       icon.rel = "icon";
-      icon.href = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23f61515'/%3E%3C/svg%3E";
+      icon.href = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2' y='2' width='12' height='12' fill='%23f61515'/%3E%3C/svg%3E";
       document.head.appendChild(icon);
     }
     /* Embedded in the workbench the viewer supplies the header — skip the bar. */
