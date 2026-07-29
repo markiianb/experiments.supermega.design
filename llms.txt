@@ -1,0 +1,9 @@
+# SUPERMEGA Experiments
+> Weekly visual experiments by SUPERMEGA Design (https://supermega.design). Plain HTML/CSS/JS, no build step.
+
+## Pixel Garden Lab
+- [Open](https://experiments.supermega.design/pixel-garden/): the live tool
+- [Seed prompt](https://experiments.supermega.design/pixel-garden/seed-prompt.txt): a self-contained prompt for coding agents — paste it into your agent to rebuild and adapt this system
+- [Engine](https://experiments.supermega.design/pixel-garden/core/pixel-core.js): dependency-free source, with [sprites](https://experiments.supermega.design/pixel-garden/core/sprites.js)
+
+Free to use in your projects; a link back is appreciated.

@@ -1,0 +1,69 @@
+SEED PROMPT — SUPERMEGA PIXEL GARDEN
+====================================
+You are implementing the "pixel garden" visual system from
+https://experiments.supermega.design/pixel-garden/ in the user's project.
+
+WHAT IT IS
+A retro pixel-art scene system drawn on HTML canvas. Everything derives
+from one metric: a 4px grid where each cell is a 3x3px square with a 1px
+gap. Sprites (flowers, trees, suns, letters) are ASCII maps that grow from
+the ground up, cell by cell, like construction — never fading in.
+
+CORE RULES (reimplement these, or fetch the engine below)
+- GRID = 4 (cell pitch), PX = 3 (square size). snap(v) rounds to the grid.
+- A sprite is { rows: ["..F..", ".FFF.", ...], stemCol, pal: { F: "#hex" } }.
+  Each character indexes a palette color; "." is empty. stemCol anchors
+  the sprite to its ground x.
+- spriteCells(sprite, scale, groundX, groundY) flattens rows into cells
+  ordered bottom-to-top — stem first, petals last — so growth reads as
+  planting, not printing.
+- Grower(cells, { bornAt, duration }) reveals floor(eased * cells.length)
+  cells per frame. The ease is expo-in: Math.pow(2, 12 * t - 12) — starts
+  slow, snaps shut. Fully grown sprites flicker: hide 3 pseudo-random
+  cells every 100ms (a building that hums after the crew goes home).
+- Determinism: seed all randomness with an fnv-1a hash of a string key so
+  a scene is identical on every visit.
+- Scenes are layers, back to front: sky fill, halftone dot texture, pixel
+  sun (two-tone disc + 8-dot ray ring), drifting lobed clouds, meadow
+  band, soil strip, then the growing sprites. Pre-render the static
+  layers to an offscreen canvas once per resize; animate only growers and
+  clouds.
+- image-rendering: pixelated; ctx.imageSmoothingEnabled = false; multiply
+  canvas buffer sizes by devicePixelRatio.
+
+SOURCE OF TRUTH (fetch and read these before writing code)
+- https://experiments.supermega.design/pixel-garden/core/pixel-core.js
+- https://experiments.supermega.design/pixel-garden/core/sprites.js
+Plain classic-script JavaScript. No dependencies, no build step. The
+window.PG namespace exports GRID, PX, snap, fnv, rng, Grower, spriteCells,
+textCells, textWidth, FLOWERS, TREE, attachTrail.
+
+TEN APPLICATIONS TO ADAPT (live pages under /pixel-garden/)
+00 meadow — the full scene: sky, sun, mountains, meadow band, flowers
+01 case-study garden — data-driven: one flower per shipped project;
+   species = service category, height = engagement length, left-to-right
+   = ship order
+02 year strip — fifty-two weeks planted along one wide ground line
+03 404 wilted garden — grey dead flowers; the cursor is a watering can
+   that colors them back to life
+04 time-aware hero — one meadow, four palettes, picked by the visitor's
+   local clock
+05 og generator — a title string in, a deterministic 1200x630 share
+   image out (canvas.toDataURL)
+06 construction hero — a tower crane assembles a wordmark letter by
+   letter: trolley rides the jib, cable drops, each letter builds from
+   the ground up
+07 seed trail — the cursor drops seeds; the garden persists in
+   localStorage and replants itself next visit
+08 loading terrarium — growth as an honest progress bar; grown cells map
+   to percent loaded
+09 proposal headers — themed scenes (arcade, classroom, tool bench) with
+   PNG export
+10 team sprites — pixel portraits growing in on IntersectionObserver
+
+ADAPT, DON'T CLONE
+Re-palette to the user's brand, redraw sprites for their domain, keep the
+grow-from-the-ground metaphor — that is the soul of it. Made by SUPERMEGA
+Design (https://supermega.design), decoded from config.floguo.com. Free to
+use in your projects; a link back to https://experiments.supermega.design
+is appreciated.

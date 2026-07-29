@@ -53,6 +53,50 @@
     margin: 0 auto;
     padding: var(--instrument-space-12) var(--instrument-space-6);
   }
+  [data-system="instrument"] .pg-seed {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    margin-block-start: var(--instrument-space-8);
+    color: var(--instrument-color-text);
+    background: var(--instrument-color-surface);
+    box-shadow: var(--instrument-shadow-rule);
+  }
+  [data-system="instrument"] .pg-seed-copy {
+    border: 0;
+    padding: 2px var(--instrument-space-2);
+    background: #f61515;
+    color: #ffffff;
+    font: inherit;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  [data-system="instrument"] .pg-seed-copy:hover { background: #ff3131; }
+  [data-system="instrument"] .pg-seed-body {
+    padding: var(--instrument-space-4);
+    color: var(--instrument-color-text-muted);
+    font-size: var(--instrument-font-size-small);
+    line-height: var(--instrument-line-height-normal);
+  }
+  [data-system="instrument"] .pg-seed-body a { color: var(--instrument-color-text); }
+  [data-system="instrument"] .pg-seed-details { margin-block-start: var(--instrument-space-3); }
+  [data-system="instrument"] .pg-seed-details summary {
+    cursor: pointer;
+    color: var(--instrument-color-text);
+    font-family: var(--instrument-font-mono);
+    font-size: var(--instrument-font-size-label);
+    text-transform: uppercase;
+    letter-spacing: var(--instrument-letter-spacing-label);
+  }
+  [data-system="instrument"] .pg-seed-details pre {
+    margin-block-start: var(--instrument-space-3);
+    padding: var(--instrument-space-3);
+    overflow-x: auto;
+    background: var(--instrument-color-field);
+    font-family: var(--instrument-font-mono);
+    font-size: var(--instrument-font-size-label);
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
   /* Copy sits on the sky scene, so it keeps its own ink regardless of polarity. */
   [data-system="instrument"] .pg-footer {
     display: flex;
@@ -176,6 +220,21 @@
     ground up, and data decides what gets planted. Hover a card to regrow it.</p>
 
   <div class="pg-grid" id="grid"></div>
+
+  <section class="pg-seed" id="seed">
+    <span class="pg-card-header"><span>Seed Prompt — plant this in your project</span><button class="pg-seed-copy" id="seed-copy" type="button">Copy</button></span>
+    <div class="pg-seed-body">
+      <p>This whole lab runs on one small engine. The seed prompt below is written
+        for coding agents — paste it into Claude Code, Cursor, or whatever you
+        build with, and it carries the full spec: the 4px grid, the grow-from-the-ground
+        algorithm, live source links, and all ten mechanics. Your agent reads it and
+        grows a garden of your own. Free to use; <a href="seed-prompt.txt">raw .txt</a>.</p>
+      <details class="pg-seed-details">
+        <summary>Read the prompt</summary>
+        <pre id="seed-text">Loading…</pre>
+      </details>
+    </div>
+  </section>
 
   <p class="pg-footer">
     <span>a study of <a href="https://config.floguo.com" target="_blank" rel="noopener">config.floguo.com</a></span>
@@ -526,6 +585,24 @@ function iconSprite(name) {
   });
   configuration = { ...adapter.getConfiguration() };
   setTrail(configuration.trail);
+
+  /* ---- seed prompt: load the canonical .txt, copy on click ---- */
+  const seedText = document.getElementById("seed-text");
+  const seedCopy = document.getElementById("seed-copy");
+  fetch("seed-prompt.txt")
+    .then((r) => (r.ok ? r.text() : Promise.reject()))
+    .then((t) => { seedText.textContent = t; })
+    .catch(() => { seedText.textContent = "Open seed-prompt.txt next to this page."; });
+  seedCopy.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(seedText.textContent);
+      seedCopy.textContent = "Copied";
+    } catch {
+      seedCopy.textContent = "Select + copy below";
+      document.querySelector(".pg-seed-details").open = true;
+    }
+    setTimeout(() => { seedCopy.textContent = "Copy"; }, 2000);
+  });
 
   window.PIXEL_GARDEN_ADAPTER = adapter;
   if (window.parent !== window) {
