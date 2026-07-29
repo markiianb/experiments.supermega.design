@@ -18,13 +18,17 @@ CORE RULES (reimplement these, or fetch the engine below)
   so set groundY to the top of your soil strip.
 - spriteCells(sprite, scale, groundX, groundY) flattens rows into cells
   ordered bottom-to-top — stem first, petals last — so growth reads as
-  planting, not printing.
+  planting, not printing. Non-integer scales are fine: cell = GRID *
+  scale, square = max(2, round(PX * scale)).
 - Grower(cells, { bornAt, duration }) reveals floor(eased * cells.length)
   cells per frame. Ease is expo-in WITH CLAMPS AT BOTH ENDS:
   t <= 0 ? 0 : t >= 1 ? 1 : Math.pow(2, 12 * t - 12), and clamp the input
-  with Math.min(1, age / duration). Unclamped it indexes past the cell
-  array and crashes. Fully grown sprites flicker: hide 3 pseudo-random
-  cells every 100ms (a building that hums after the crew goes home).
+  with Math.min(1, age / duration). Unclamped it reads past the cell
+  array and throws (TypeError on .color of undefined).
+- Post-growth flicker — hide 3 pseudo-random cells every 100ms — is tuned
+  for ~200-cell flowers. It visibly corrupts small glyphs: for wordmark
+  letters use flicker: false, or at most ONE hidden cell per glyph
+  (06-construction-hero.html does exactly this).
 - Respect prefers-reduced-motion: render everything fully grown, skip
   the flicker and any cursor trails. A grow-in animation is exactly the
   case that needs this.
@@ -36,17 +40,31 @@ CORE RULES (reimplement these, or fetch the engine below)
   (two-tone disc + an 8-ray ring, 3 dots per ray), background ridges /
   mountains, meadow band, soil strip. Then every frame draw: the static
   canvas, the drifting lobed clouds ON TOP of it, then the growing
-  sprites. Clouds come after the ground layers, not before.
+  sprites. Clouds come after the ground layers, not before. If you add
+  HTML copy over the scene, keep opaque panels off the cloud lanes (an
+  opaque box carves a hard rectangle out of a drifting cloud) — ground
+  panels on the soil, or make them translucent.
 - Dithered fills are a HUE trick, not a value trick. 3x3 squares on a
   4px grid cover 56%, so 44% of the background mixes through every
   dithered mass. That separation survives only when layers differ in hue
   (green meadow on cream sky). On a low-hue-contrast brand palette
   (monochrome browns, all-blue, etc.) large dithered grounds collapse
-  into mud — fill big ground masses SOLID and lay sparse pixel grain on
-  top; keep the dot-matrix texture for sky, sun, clouds, and sprites.
-- Scale responsively: tie sprite scale, band heights, and ridge
-  amplitude to viewport width (and min(width, height) for ridges), or
-  phones get viewport-sized plants.
+  into mud — fill big ground masses SOLID (plain ctx.fillRect; every
+  engine helper — fillGrid, fillEllipse, pixelLine, drawClouds — is a
+  56% screen, none of them fills solid) and lay sparse pixel grain on
+  top. Keep the dot-matrix texture for sky, sun, clouds, and sprites.
+  Two palette-stretching moves: (1) a 50% checkerboard of palette color
+  A over a SOLID field of palette color B makes a true intermediate
+  brand value with no background bleed — how four colors cover six
+  layers; (2) grain must move AWAY in value from nearby sprite ink
+  (light grain around dark glyphs), or on the shared 4px lattice it
+  reads as broken pieces of the letterforms.
+- Scale responsively. Don't hardcode breakpoints: pick the wordmark /
+  sprite scale by trying [4, 3, 2.5, 2, 1.5, 1] and keeping the largest
+  that fits the viewport. Key ridge amplitude and any crane headroom to
+  the SKY HEIGHT they occupy (canvas height minus ground bands), not to
+  min(width, height) — tall narrow phones otherwise get a flat horizon
+  under acres of empty sky.
 - image-rendering: pixelated; ctx.imageSmoothingEnabled = false; multiply
   canvas buffer sizes by devicePixelRatio.
 
@@ -56,14 +74,19 @@ pixel-core.js's text helpers depend on)
 - https://experiments.supermega.design/pixel-garden/core/pixel-core.js
 - https://experiments.supermega.design/pixel-garden/core/sprites.js
 Plain classic-script JavaScript. No dependencies, no build step. Key
-exports on window.PG: GRID, PX, snap, fnv, rng, Grower, Ungrower,
-spriteCells, textCells, textWidth, recolor, FONT, FLOWERS, TREE,
-attachTrail, reducedMotion — plus more; read the files rather than
-trusting any list.
+exports on window.PG: GRID, PX, snap, fnv, rng (functions), Grower,
+Ungrower (classes), spriteCells, textCells, textWidth, recolor,
+attachTrail (functions), FONT, FLOWERS, TREE (data), reducedMotion
+(boolean) — plus more; read the files rather than trusting any list.
+BRAND WARNING — three engine defaults are lab-branded, not neutral:
+attachTrail defaults to a 12-hue saturated trail palette (pass your own
+colors), drawClouds defaults to white/cream cloud colors (pass yours),
+and labChrome injects the lab's own red/cream chrome plus a relative
+font fetch — never call labChrome in your project.
 
 TEN APPLICATIONS TO ADAPT — live at
 https://experiments.supermega.design/pixel-garden/NN-slug.html
-(exact filenames below; there are no directory-style URLs)
+(these are exact filenames, not directories)
 00-meadow.html — the full scene: sky, sun, mountains, meadow, flowers
 01-case-study-garden.html — data-driven: one flower per shipped project;
    species = service category, height = engagement length, order = ship date
@@ -74,7 +97,8 @@ https://experiments.supermega.design/pixel-garden/NN-slug.html
 05-og-generator.html — a title string in, a deterministic 1200x630 share
    image out (canvas.toDataURL)
 06-construction-hero.html — a tower crane assembles a wordmark letter by
-   letter: trolley rides the jib, cable drops, letters build from the ground
+   letter: trolley rides the jib, cable drops, letters build from the
+   ground (the hook tracks the growth front; read the phase machine)
 07-seed-trail.html — the cursor drops seeds; the garden persists in
    localStorage and replants itself next visit
 08-loading-terrarium.html — growth as an honest progress bar; grown
