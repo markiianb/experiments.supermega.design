@@ -51,10 +51,13 @@ CORE RULES (reimplement these, or fetch the engine below)
   (~18 deg, camera right) and pitch (~12 deg, camera above), pivoting at
   the slab center; scale the 128-space so the slab spans ~68% of the
   short viewport side; light grey ground (#e9e9ec). Every leaf is a BOX
-  standing on the base plane and popping TOWARD the viewer with a
-  SEEDED RANDOM HEIGHT: elevation = base(~8) + rng(cell)*pop(~40),
-  biased slightly taller for deeper cells — the random heights are what
-  make the mosaic bristle like the reference instead of reading flat.
+  standing on the base plane, and ELEVATION IS TERRACED: each
+  subdivision level stacks on its parent, so a leaf at depth d spans
+  z = 0 .. base(~1.5) + (d+1)*step(~3.5) in buffer units. Coarse cells
+  are low tiles; the fine glyph cells form a raised plateau — the
+  letter grows FRONTALLY out of the slab as resolution rises, which is
+  the whole point of the animation. (Not random heights, not a flat
+  slab — deterministic stacking.)
   Faces: front = leaf color, top +14 lightness, bottom -18, left +7,
   right -12. Decide face visibility from the ROTATED OUTWARD NORMAL
   (dot toward viewer), never from projected winding — winding sign

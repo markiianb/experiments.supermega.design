@@ -118,15 +118,12 @@
     return `hsl(${m[1]}, ${m[2]}%, ${l}%)`;
   }
 
-  // Seeded per-cell elevation: base thickness + a random pop toward the
-  // viewer, gently biased so deeper (finer) cells bristle a little more —
-  // the reference's boxes pop forward at random heights.
-  function leafElevation(leaf, seed, extrude, pop, perDepth, maxN) {
-    const key = (Math.imul(leaf.x | 0, 40503) ^ Math.imul(leaf.y | 0, 88651)
-      ^ Math.imul(leaf.w | 0, 63689) ^ ((seed | 0) + 0x9E37)) >>> 0;
-    const rng = mulberry32(key);
-    const depthBias = 0.55 + 0.45 * Math.min(1, leaf.depth / (maxN || 7));
-    return extrude + rng() * (pop || 0) * depthBias + (perDepth || 0) * leaf.depth;
+  // Terraced elevation — the reference's geometry: every subdivision level
+  // STACKS on its parent, so a leaf at depth d is a pillar of height
+  // base + (d+1)·step. As the timeline raises maxDepth, the glyph grows
+  // frontally, terrace by terrace.
+  function leafElevation(leaf, extrude, step) {
+    return (extrude || 0) + (leaf.depth + 1) * (step || 0);
   }
 
   // Orthographic camera: yaw around the vertical axis, then pitch around the
@@ -204,18 +201,18 @@
   }
 
   // Draw the scene: the pale back board (a thin box behind the base plane),
-  // then every leaf as a 3D pillar popping toward the viewer.
-  function drawBlocks(ctx, leaves, layout, seed, palette, extrude, perDepth, boardColor, pop, maxN, yaw, pitch) {
+  // then every leaf as a terraced pillar growing toward the viewer.
+  function drawBlocks(ctx, leaves, layout, seed, palette, extrude, boardColor, step, yaw, pitch) {
     const project = makeCamera(yaw, pitch, layout);
     const board = boardColor || '#ccd0dd';
     drawBox(ctx, project, 0, 0, BUFFER, BUFFER, -14, 0, {
       front: board, top: shade(boardShade(board), +8), bottom: shade(boardShade(board), -8),
       left: shade(boardShade(board), +4), right: shade(boardShade(board), -6), back: board,
     });
-    const elev = (leaf) => leafElevation(leaf, seed, extrude, pop, perDepth, maxN) * 0.22;
+    const elev = (leaf) => Math.max(0.6, leafElevation(leaf, extrude, step));
     for (const leaf of paintOrder(leaves, project, elev)) {
       const color = leafColor(leaf, seed, palette);
-      drawBox(ctx, project, leaf.x, leaf.y, leaf.w, leaf.h, 0, Math.max(0.6, elev(leaf)), {
+      drawBox(ctx, project, leaf.x, leaf.y, leaf.w, leaf.h, 0, elev(leaf), {
         front: color,
         top: shade(color, +14),
         bottom: shade(color, -18),
@@ -297,9 +294,8 @@
     fps: 12,
     skin: 'blocks',
     palette: 'spectrum',
-    extrude: 8,
-    pop: 40,
-    perDepth: 0,
+    extrude: 1.5,
+    step: 3.5,
     yaw: 20,
     pitch: 12,
     ground: '#e9e9ec',
@@ -351,7 +347,7 @@
       ctx.translate(-width / 2, -height / 2);
       if (config.skin === 'wireframe') drawWireframe(ctx, leaves, layout, config.ink);
       else drawBlocks(ctx, leaves, layout, config.seed, config.palette, config.extrude,
-        config.perDepth, config.board, config.pop, config.maxN, config.yaw, config.pitch);
+        config.board, config.step, config.yaw, config.pitch);
       ctx.restore();
     }
 
@@ -377,7 +373,7 @@
       play() { paused = false; },
       setConfig(partial, opts) {
         const softKeys = ['threshold', 'mode', 'maxN', 'timeline', 'manualDepth', 'speed',
-          'fps', 'skin', 'palette', 'extrude', 'pop', 'perDepth', 'yaw', 'pitch',
+          'fps', 'skin', 'palette', 'extrude', 'step', 'yaw', 'pitch',
           'ground', 'board', 'ink', 'seed', 'viewX', 'viewY', 'zoom'];
         const needsRebuild = Object.keys(partial).some((k) =>
           softKeys.indexOf(k) === -1 &&

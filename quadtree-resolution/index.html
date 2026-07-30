@@ -56,9 +56,8 @@
       <div class="instrument-renderer-section">Blocks</div>
       <div class="instrument-group">
         <div class="instrument-row"><span class="instrument-row-label">Skin</span><div class="instrument-row-control instrument-renderer-choice" id="f-skin"><button class="instrument-action" data-skin="blocks" aria-pressed="true" type="button">Blocks</button><button class="instrument-action" data-skin="wireframe" aria-pressed="false" type="button" title="The published Q source's own skin">Wireframe</button></div><span></span></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-extrude">Base</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-extrude" min="0" max="60" step="1" value="8"></div><output class="instrument-row-value instrument-tabular" id="v-extrude" for="s-extrude">8</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-pop">Pop</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-pop" min="0" max="120" step="1" value="40"></div><output class="instrument-row-value instrument-tabular" id="v-pop" for="s-pop">40</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-perdepth">Depth lift</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-perdepth" min="0" max="6" step="0.5" value="0"></div><output class="instrument-row-value instrument-tabular" id="v-perdepth" for="s-perdepth">0.0</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-extrude">Base</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-extrude" min="0" max="12" step="0.5" value="1.5"></div><output class="instrument-row-value instrument-tabular" id="v-extrude" for="s-extrude">1.5</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-step">Step</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-step" min="0" max="10" step="0.25" value="3.5"></div><output class="instrument-row-value instrument-tabular" id="v-step" for="s-step">3.50</output></div>
       </div>
 
       <div class="instrument-renderer-section">View</div>
@@ -114,8 +113,8 @@
   const PRESETS = {
     faithful: {},
     wireQ: { text: 'Q', skin: 'wireframe', timeline: true, speed: 1, seed: 17 },
-    redSM: { text: 'SM', palette: 'red', extrude: 34, perDepth: 1, timeline: false, manualDepth: 6, seed: 88 },
-    paperMono: { text: '3', palette: 'paper', extrude: 18, timeline: false, manualDepth: 5, mode: 'true', seed: 7 },
+    redSM: { text: 'SM', palette: 'red', step: 5, timeline: false, manualDepth: 6, seed: 88 },
+    paperMono: { text: '3', palette: 'paper', step: 2.5, timeline: false, manualDepth: 5, mode: 'true', seed: 7 },
   };
 
   function engineConfig(c) {
@@ -132,8 +131,7 @@
       skin: c.skin,
       palette: c.palette,
       extrude: c.extrude,
-      pop: c.pop,
-      perDepth: c.perDepth,
+      step: c.step,
       yaw: c.yaw,
       pitch: c.pitch,
       ground: GROUNDS[c.palette],
@@ -171,9 +169,8 @@
       's-maxn': [c.maxN, 'v-maxn', (v) => v],
       's-speed': [c.speed, 'v-speed', (v) => Number(v).toFixed(2)],
       's-manual': [c.manualDepth, 'v-manual', (v) => Number(v).toFixed(1)],
-      's-extrude': [c.extrude, 'v-extrude', (v) => v],
-      's-pop': [c.pop, 'v-pop', (v) => v],
-      's-perdepth': [c.perDepth, 'v-perdepth', (v) => Number(v).toFixed(1)],
+      's-extrude': [c.extrude, 'v-extrude', (v) => Number(v).toFixed(1)],
+      's-step': [c.step, 'v-step', (v) => Number(v).toFixed(2)],
       's-yaw': [c.yaw, 'v-yaw', (v) => Math.round(v)],
       's-pitch': [c.pitch, 'v-pitch', (v) => Math.round(v)],
       's-zoom': [c.zoom, 'v-zoom', (v) => Number(v).toFixed(2)],
@@ -249,7 +246,7 @@
   }));
   const rangeBindings = {
     's-threshold': 'threshold', 's-maxn': 'maxN', 's-speed': 'speed', 's-manual': 'manualDepth',
-    's-extrude': 'extrude', 's-pop': 'pop', 's-perdepth': 'perDepth',
+    's-extrude': 'extrude', 's-step': 'step',
     's-yaw': 'yaw', 's-pitch': 'pitch', 's-zoom': 'zoom',
   };
   Object.entries(rangeBindings).forEach(([id, key]) => $(id).addEventListener('input', (event) => adapter.configure({ [key]: Number(event.target.value) })));
