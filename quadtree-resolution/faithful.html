@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quadtree Resolution — faithful cut</title>
+<style>
+  :root { color-scheme: light; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: #e9e9ec; overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: pointer; }
+  .chip, .title, .credit {
+    font: 11px/1.5 "SF Mono", ui-monospace, Menlo, monospace;
+    color: #777; position: fixed; z-index: 2; letter-spacing: 0.04em;
+  }
+  .chip { top: 16px; left: 16px; }
+  .chip b { color: #222; font-weight: 500; }
+  .title { top: 12%, right: 8%; top: 12%; right: 8%; text-align: left; }
+  .title .name { font: 700 26px/1.2 "Helvetica Neue", Helvetica, Arial, sans-serif; color: #111; }
+  .credit { bottom: 14px; left: 16px; right: 16px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .credit a { color: #555; text-decoration: none; border-bottom: 1px solid #bbb; }
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+
+<div class="chip">seed <b id="seed"></b> — click to reroll the colors</div>
+
+<div class="title">
+  Algorithms from A to Z<br>
+  <span class="name">Q — QuadTree</span><br>
+  "resolution"
+</div>
+
+<div class="credit">
+  <span>study — faithful cut: verbatim splitter (corner-pixel deviation and all), maxDepth 0→7→0 on the 10.5s loop, 12fps</span>
+  <span>after <a href="https://x.com/kitasenjudesign/status/2071943484953837837">Kitasenju Design</a>
+  · <a href="https://github.com/kitasenjudesign/algorithms-from-a-to-z">source</a> · block skin measured from the video · rebuild by SUPERMEGA</span>
+</div>
+
+<script src="quad-core.js"></script>
+<script>
+  const canvas = document.getElementById('stage');
+  const seedEl = document.getElementById('seed');
+  const handle = QuadEngine.run(canvas, {
+    seed: 17,
+    text: 'A',
+    threshold: 0.03,
+    mode: 'faithful',
+    maxN: 7,
+    timeline: true,
+    fps: 12,
+    skin: 'blocks',
+    palette: 'spectrum',
+    extrude: 26,
+    ground: '#e9e9ec',
+  });
+  seedEl.textContent = handle.config.seed;
+  canvas.addEventListener('click', () => { seedEl.textContent = handle.reseed(); });
+  addEventListener('resize', () => handle.resize());
+</script>
+</body>
+</html>

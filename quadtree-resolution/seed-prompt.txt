@@ -1,0 +1,87 @@
+SEED PROMPT — SUPERMEGA QUADTREE RESOLUTION
+===========================================
+You are implementing the "quadtree resolution" visual system from
+https://experiments.supermega.design/quadtree-resolution/ in the user's
+project. It is a study of Kitasenju Design's "resolution" post — Q: QuadTree
+from "Algorithms from A to Z"
+(github.com/kitasenjudesign/algorithms-from-a-to-z); credit them when you
+ship it.
+
+WHAT IT IS
+A letterform whose resolution breathes. A hidden low-res render of a glyph
+is carved by a quadtree: where a region is uniform it stays one big cell,
+where the glyph's edges live it splits into fine cells. The maximum split
+depth is ANIMATED — 0 up to 7 and back — so the letter dissolves into a
+single flat slab (maxDepth 0 = one leaf; the 2x2 moment is depth 1 on the
+way up) and re-resolves, on a loop. Every leaf cell is drawn as an
+extruded colored block on a light grey ground; coarse cells wear pastels,
+fine cells full-spectrum chaos. Deliberately 12fps.
+
+CORE RULES (reimplement these, or fetch the engine below)
+- MASK. Render the glyph white-on-black on a hidden 128x128 canvas
+  (bold sans at ~86% of height, shrink-to-fit, centered both axes:
+  textAlign center + textBaseline middle). Work on the grayscale
+  (r+g+b)/3 of that buffer. Antialiased edges are the signal — do not
+  threshold the buffer.
+- SPLIT. Recursive quadtree from (0,0,128,128), depth 0:
+  leaf when deviation < threshold (0.03) OR depth >= maxDepth
+  (also stop when a half-cell would fall below 1px);
+  otherwise recurse into the four equal quadrants at depth+1.
+- THE DEVIATION QUIRK (faithful mode — the reference's own bug): their
+  deviation loop sums |regionMean - cornerPixel| — the region's CORNER
+  pixel (x,y), not each sampled pixel — so deviation collapses to
+  |mean - corner|. It works because glyph edges make the corner disagree
+  with the mean, but it is blind wherever corner == mean. Reproduce it
+  verbatim as the default; offer true mean-absolute-deviation as an
+  option if you like.
+- TIMELINE. maxDepth is a FLOAT driven by this loop (rebuild the tree
+  every frame against the current value; depth >= maxDepth with integer
+  depth vs tweening float is what makes resolution rise smoothly):
+    t in [0,1):   0
+    t in [1,3):   linear 0 -> 7
+    t in [3,8.5): 7
+    t in [8.5,9.5): linear 7 -> 0
+    t in [9.5,10.5): 0, then loop.
+  Run at 12fps (accumulate on requestAnimationFrame). Accumulate
+  timeline seconds per tick (t += speed/fps) so a speed change alters
+  the rate from the current phase instead of teleporting it.
+- BLOCKS (measured from the video — the published Q source draws white
+  stroke rects+ellipses on black instead; ship that as an alt skin if
+  you want the repo look). Scale the 128-space to a centered square
+  (~68% of the short viewport side), light grey ground (#e9e9ec).
+  First paint a pale back board: the slab square offset up-right by
+  ~1.7x the extrusion along (0.85, -0.55), pale grey-blue (#ccd0dd).
+  Then each leaf as a box: front face flat at its base rect; top face =
+  quad from the front top edge back along (0.85,-0.55)*extrusion,
+  LIGHTENED ~+14 lightness; right face same along the right edge,
+  DARKENED ~-12. Extrusion ~26px. Draw order: lower-left cells FIRST
+  (ascending x-y, ties lower first) so up-right neighbours' front faces
+  occlude interior bevels — bevels then survive only on the slab's
+  top/right edges and at resolution steps, which is the video's look.
+- COLORS. Each leaf's color is a PURE FUNCTION of (cellX, cellY, cellW,
+  seed): hash them into a seeded PRNG (mulberry32), then draw hue, sat,
+  light in that fixed order from one stream — hue = rng*360, with coarse
+  cells (w >= 32 of 128) pastel (sat ~55-80, light ~62-80)
+  and finer cells saturated (sat ~70-95, light ~45-70). Stable colors:
+  a cell keeps its color while it exists, and one integer seed
+  reproduces the exact mosaic.
+
+GOTCHAS (each cost a review finding — don't relearn them)
+- If a control panel always sends the full config, decide rebuild-vs-
+  repaint by DIFFING VALUES, not key presence.
+- Presets applied as overlays must carry the full key set (or spread
+  over the schema defaults first).
+- Sanitize any URL-borne config: clamp numbers, whitelist enums.
+- If you add drag-pan + wheel-zoom, re-baseline an in-flight drag after
+  a zoom (the zoom rewrites the pan to anchor the cursor; a stale drag
+  baseline yanks it back), and verify pan by PIXEL-DIFF, not by state.
+- Respect prefers-reduced-motion: freeze the timeline at full depth.
+
+LIVE REFERENCES
+- Tool (instrument with panel): https://experiments.supermega.design/quadtree-resolution/
+- Faithful cut (reference constants): https://experiments.supermega.design/quadtree-resolution/faithful.html
+- Engine (dependency-free, classic script, seeded):
+  https://experiments.supermega.design/quadtree-resolution/quad-core.js
+
+Free to use; a link back to supermega.design is appreciated. Credit
+Kitasenju Design when you present the look as theirs — it is.

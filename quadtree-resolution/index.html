@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="supermega-instrument-release" content="0.1.0-f0feb3fed659" />
+<title>SUPERMEGA — Quadtree Resolution</title>
+<link rel="stylesheet" href="../_kit/releases/0.1.0-f0feb3fed659/instrument.css" />
+<link rel="stylesheet" href="../_system/experiment-host.css" />
+<style>
+  .hero{position:fixed;inset:0;overflow:hidden;background:#e9e9ec}
+  .hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+</style>
+</head>
+<body data-system="instrument" data-instrument-release="0.1.0-f0feb3fed659" data-instrument-polarity="ink" data-instrument-grid="off" data-instrument-grain="off" data-instrument-density="normal" data-instrument-motion="system" data-controls="visible">
+  <script>if(new URLSearchParams(location.search).get('instrument-embed')==='1')document.body.dataset.instrumentEmbed='true';</script>
+  <section class="hero instrument-renderer-surface">
+    <canvas id="stage"></canvas>
+  </section>
+  <header class="instrument-renderer-chrome">
+    <div class="instrument-renderer-chrome-zone"><span class="instrument-identity-mark" aria-hidden="true"></span>SUPERMEGA / QUADTREE RESOLUTION</div>
+    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--middle"><span>STUDY</span><span>KITASENJU DESIGN</span></div>
+    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">EX-QUAD-01</span><button class="instrument-action" id="toggle" type="button">Controls</button></div>
+  </header>
+  <div class="instrument-renderer-hud instrument-renderer-hud--top">The letter resolves — cells split where the glyph disagrees with itself · drag to pan, scroll to zoom</div>
+  <div class="instrument-renderer-hud instrument-renderer-hud--bottom" id="stat">A · TIMELINE · SEED 17 · LIVE</div>
+  <div class="instrument-renderer-credit">Quadtree resolution / Study of Kitasenju Design's Algorithms from A to Z: Q — QuadTree · <a href="faithful.html">faithful cut</a></div>
+
+  <aside class="instrument-renderer-panel" id="panel" aria-label="Quadtree Resolution controls">
+    <section class="instrument-panel">
+      <header class="instrument-panel-header">
+        <h2 class="instrument-panel-title" id="quad-controls-title">Quadtree Resolution</h2>
+        <div class="instrument-panel-actions"><button class="instrument-action" id="b-defaults" type="button" title="Restore configuration defaults">Defaults</button><button class="instrument-action" id="b-hide" type="button">Hide</button></div>
+      </header>
+      <p class="instrument-renderer-panel-lede">Type a glyph, breathe the resolution, reroll the mosaic.</p>
+
+      <div class="instrument-renderer-section">Mask</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><label class="instrument-row-label" for="f-text">Text</label><div class="instrument-row-control"><input class="instrument-control instrument-text-field" type="text" id="f-text" maxlength="12" spellcheck="false" autocomplete="off" value="A"></div><span class="instrument-row-value instrument-tabular" id="v-text">1</span></div>
+      </div>
+
+      <div class="instrument-renderer-section">Splitter</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><label class="instrument-row-label" for="s-threshold">Threshold</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-threshold" min="0" max="64" step="0.5" value="0"></div><output class="instrument-row-value instrument-tabular" id="v-threshold" for="s-threshold">0.03</output></div>
+        <div class="instrument-row"><span class="instrument-row-label">Deviation</span><div class="instrument-row-control instrument-renderer-choice" id="f-mode"><button class="instrument-action" data-mode="faithful" aria-pressed="true" type="button" title="Their corner-pixel quirk, verbatim">Faithful</button><button class="instrument-action" data-mode="true" aria-pressed="false" type="button" title="True mean absolute deviation">True</button></div><span></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-maxn">Max depth</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-maxn" min="1" max="7" step="1" value="7"></div><output class="instrument-row-value instrument-tabular" id="v-maxn" for="s-maxn">7</output></div>
+      </div>
+
+      <div class="instrument-renderer-section">Resolution</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><span class="instrument-row-label">Timeline</span><div class="instrument-row-control instrument-renderer-choice" id="f-timeline"><button class="instrument-action" data-tl="on" aria-pressed="true" type="button">Loop</button><button class="instrument-action" data-tl="off" aria-pressed="false" type="button">Manual</button></div><span></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-speed">Speed</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-speed" min="0.25" max="3" step="0.05" value="1"></div><output class="instrument-row-value instrument-tabular" id="v-speed" for="s-speed">1.00</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-manual">Depth</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-manual" min="0" max="7" step="0.1" value="7"></div><output class="instrument-row-value instrument-tabular" id="v-manual" for="s-manual">7.0</output></div>
+      </div>
+
+      <div class="instrument-renderer-section">Blocks</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><span class="instrument-row-label">Skin</span><div class="instrument-row-control instrument-renderer-choice" id="f-skin"><button class="instrument-action" data-skin="blocks" aria-pressed="true" type="button">Blocks</button><button class="instrument-action" data-skin="wireframe" aria-pressed="false" type="button" title="The published Q source's own skin">Wireframe</button></div><span></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-extrude">Extrude</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-extrude" min="0" max="60" step="1" value="26"></div><output class="instrument-row-value instrument-tabular" id="v-extrude" for="s-extrude">26</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-perdepth">Depth lift</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-perdepth" min="0" max="6" step="0.5" value="0"></div><output class="instrument-row-value instrument-tabular" id="v-perdepth" for="s-perdepth">0.0</output></div>
+      </div>
+
+      <div class="instrument-renderer-section">View</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><label class="instrument-row-label" for="s-zoom">Zoom</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-zoom" min="0.25" max="4" step="0.05" value="1"></div><output class="instrument-row-value instrument-tabular" id="v-zoom" for="s-zoom">1.00</output></div>
+        <div class="instrument-row"><span class="instrument-row-label">Frame</span><div class="instrument-row-control instrument-renderer-actions"><button class="instrument-action" id="b-resetview" type="button" title="Recenter and reset zoom">Reset view</button></div><span class="instrument-row-value instrument-tabular" id="v-pan">0, 0</span></div>
+      </div>
+
+      <div class="instrument-renderer-section">Look</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><span class="instrument-row-label">Colour</span><div class="instrument-row-control instrument-renderer-swatches" id="f-palette"><button class="instrument-swatch instrument-renderer-swatch" type="button" data-palette="spectrum" aria-label="Full spectrum (the video)" aria-pressed="true" style="background:linear-gradient(135deg,#e9d24a,#9a8fe8 40%,#7a34c8 70%,#8b5cf6)"></button><button class="instrument-swatch instrument-renderer-swatch" type="button" data-palette="paper" aria-label="Soft paper tints" aria-pressed="false" style="background:#e8ddc8"></button><button class="instrument-swatch instrument-renderer-swatch" type="button" data-palette="red" aria-label="SUPERMEGA reds" aria-pressed="false" style="background:#F61515"></button><button class="instrument-swatch instrument-renderer-swatch" type="button" data-palette="mono" aria-label="Greys" aria-pressed="false" style="background:linear-gradient(135deg,#ddd,#666)"></button></div><span></span></div>
+        <div class="instrument-row"><span class="instrument-row-label">Presets</span><div class="instrument-row-control instrument-renderer-actions" data-preset-row><button class="instrument-action" data-preset="faithful" type="button">Faithful A</button><button class="instrument-action" data-preset="wireQ" type="button">Wire Q</button></div><span></span></div>
+        <div class="instrument-row"><span class="instrument-row-label"></span><div class="instrument-row-control instrument-renderer-actions" data-preset-row><button class="instrument-action" data-preset="redSM" type="button">Red SM</button><button class="instrument-action" data-preset="paperMono" type="button">Paper 3</button></div><span></span></div>
+      </div>
+
+      <div class="instrument-renderer-section">Seed</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><label class="instrument-row-label" for="f-seed">Seed</label><div class="instrument-row-control"><input class="instrument-control instrument-text-field" type="number" id="f-seed" min="0" max="4294967295" step="1" value="17"></div><span class="instrument-row-value"><button class="instrument-action" id="b-dice" type="button" title="Roll a new seed">Dice</button></span></div>
+        <div class="instrument-row"><span class="instrument-row-label">Field</span><div class="instrument-row-control instrument-renderer-actions"><button class="instrument-action" id="b-pause" type="button">Pause</button><button class="instrument-action" id="b-copy" type="button" title="Copy this exact configuration">Copy config</button></div><span></span></div>
+        <div class="instrument-row"><span class="instrument-row-label">Artifact</span><div class="instrument-row-control"><button class="instrument-action" id="b-export" type="button">Export PNG</button></div><span class="instrument-row-value instrument-tabular">PNG</span></div>
+      </div>
+      <div class="instrument-status" id="adapter-status" role="status" data-instrument-tone="active"><span class="instrument-status-mark" aria-hidden="true"></span><span>Adapter</span><span class="instrument-status-value instrument-tabular">READY</span></div>
+    </section>
+  </aside>
+
+  <div class="instrument-mode-dock instrument-renderer-dock" role="toolbar" aria-label="Material controls"><button class="instrument-action" type="button" data-instrument-coordinate="ink" aria-pressed="true">Ink</button><button class="instrument-action" type="button" data-instrument-coordinate="light" aria-pressed="false">Light</button><button class="instrument-action" type="button" data-instrument-coordinate="grid" aria-pressed="false">Grid</button><button class="instrument-action" type="button" data-instrument-coordinate="grain" aria-pressed="false">Grain</button></div>
+  <div class="instrument-material-grid" aria-hidden="true"></div><div class="instrument-material-grain" aria-hidden="true"></div>
+
+<script src="../_kit/releases/0.1.0-f0feb3fed659/instrument-runtime.js"></script>
+<script src="../_system/adapters/adapter-core.js"></script>
+<script src="../_system/adapters/quadtree-resolution.js"></script>
+<script src="quad-core.js"></script>
+
+<script>
+/* =============================================================================
+   Quadtree Resolution — the resolving letterform as an instrument.
+   Study of Kitasenju Design's "resolution" (Q: QuadTree, Algorithms from A to
+   Z — github.com/kitasenjudesign/algorithms-from-a-to-z, src/mojis/17_q/).
+   The splitter (corner-pixel deviation quirk included) and the maxDepth
+   timeline are theirs, verbatim; the extruded-block skin is measured from the
+   video; the seeding, palettes and this instrument are ours. See NOTES.md.
+   ========================================================================== */
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const canvas = $('stage');
+  const panel = $('panel');
+
+  const GROUNDS = { spectrum: '#e9e9ec', paper: '#F3EFE7', red: '#101014', mono: '#e9e9ec' };
+  const BOARDS = { spectrum: '#ccd0dd', paper: '#ddd5c2', red: '#232327', mono: '#c9c9cd' };
+
+  const PRESETS = {
+    faithful: {},
+    wireQ: { text: 'Q', skin: 'wireframe', timeline: true, speed: 1, seed: 17 },
+    redSM: { text: 'SM', palette: 'red', extrude: 34, perDepth: 1, timeline: false, manualDepth: 6, seed: 88 },
+    paperMono: { text: '3', palette: 'paper', extrude: 18, timeline: false, manualDepth: 5, mode: 'true', seed: 7 },
+  };
+
+  function engineConfig(c) {
+    return {
+      seed: c.seed,
+      text: c.text,
+      threshold: c.threshold === 0 ? 0.03 : c.threshold,
+      mode: c.mode,
+      maxN: c.maxN,
+      timeline: c.timeline,
+      manualDepth: c.manualDepth,
+      speed: c.speed,
+      fps: 12,
+      skin: c.skin,
+      palette: c.palette,
+      extrude: c.extrude,
+      perDepth: c.perDepth,
+      ground: GROUNDS[c.palette],
+      board: BOARDS[c.palette],
+      ink: '#ffffff',
+      viewX: c.viewX,
+      viewY: c.viewY,
+      zoom: c.zoom,
+    };
+  }
+
+  let handle = null;
+  let pausedFlag = false;
+
+  const setV = (id, v) => { const e = $(id); if (e) e.textContent = v; };
+  const syncStat = (c) => setV('stat',
+    `${c.text.toUpperCase()} · ${c.timeline ? 'TIMELINE' : 'DEPTH ' + c.manualDepth.toFixed(1)} · SEED ${c.seed} · ${pausedFlag ? 'HELD' : 'LIVE'}`);
+  const syncGround = (c) => {
+    document.querySelector('.hero').style.background =
+      c.skin === 'wireframe' ? '#000000' : GROUNDS[c.palette];
+  };
+  const setPressed = (selector, match) => document.querySelectorAll(selector).forEach((element) => {
+    element.setAttribute('aria-pressed', String(match(element)));
+  });
+
+  const syncControls = (c) => {
+    $('f-text').value = c.text; setV('v-text', String(c.text.length));
+    $('f-seed').value = c.seed;
+    setPressed('#f-mode [data-mode]', (el) => el.dataset.mode === c.mode);
+    setPressed('#f-skin [data-skin]', (el) => el.dataset.skin === c.skin);
+    setPressed('#f-palette [data-palette]', (el) => el.dataset.palette === c.palette);
+    setPressed('#f-timeline [data-tl]', (el) => (el.dataset.tl === 'on') === c.timeline);
+    const ranges = {
+      's-threshold': [c.threshold, 'v-threshold', (v) => (v <= 0.03 ? '0.03' : Number(v).toFixed(1))],
+      's-maxn': [c.maxN, 'v-maxn', (v) => v],
+      's-speed': [c.speed, 'v-speed', (v) => Number(v).toFixed(2)],
+      's-manual': [c.manualDepth, 'v-manual', (v) => Number(v).toFixed(1)],
+      's-extrude': [c.extrude, 'v-extrude', (v) => v],
+      's-perdepth': [c.perDepth, 'v-perdepth', (v) => Number(v).toFixed(1)],
+      's-zoom': [c.zoom, 'v-zoom', (v) => Number(v).toFixed(2)],
+    };
+    Object.entries(ranges).forEach(([id, [value, output, fmt]]) => {
+      $(id).value = value;
+      setV(output, fmt(value));
+    });
+    setV('v-pan', `${c.viewX}, ${c.viewY}`);
+  };
+
+  const applyConfiguration = (configuration) => {
+    if (!handle) handle = QuadEngine.run(canvas, engineConfig(configuration));
+    else handle.setConfig(engineConfig(configuration));
+    syncControls(configuration);
+    syncGround(configuration);
+    syncStat(configuration);
+  };
+
+  const setControlsVisible = (visible) => {
+    panel.classList.toggle('hidden', !visible);
+    document.body.dataset.controls = visible ? 'visible' : 'hidden';
+    $('toggle').setAttribute('aria-pressed', String(visible));
+    return { visible };
+  };
+
+  const createArtifact = () => {
+    if (handle) handle.paintOnce();
+    const c = adapter.getConfiguration();
+    return {
+      dataUrl: canvas.toDataURL('image/png'),
+      filename: `quadtree-resolution-${c.text}-${c.seed}.png`,
+      height: canvas.height,
+      mime: 'image/png',
+      width: canvas.width,
+    };
+  };
+
+  const adapter = window.SUPERMEGA_INSTRUMENT_ADAPTERS.quadtreeResolution.create({
+    applyConfiguration,
+    createArtifact,
+    hideControls: () => setControlsVisible(false),
+    nextSeed: () => ({ seed: Math.floor(Math.random() * 0xFFFFFFFF) }),
+    pause: () => {
+      pausedFlag = true;
+      if (handle) handle.pause();
+      $('b-pause').textContent = 'Play';
+      syncStat(adapter.getConfiguration());
+      return { paused: true };
+    },
+    resume: () => {
+      pausedFlag = false;
+      if (handle) handle.play();
+      $('b-pause').textContent = 'Pause';
+      syncStat(adapter.getConfiguration());
+      return { paused: false };
+    },
+    showControls: () => setControlsVisible(true),
+  });
+  const rangeContract = window.SUPERMEGA_INSTRUMENT_ADAPTERS.core.installRangeContract(document);
+
+  applyConfiguration(adapter.getConfiguration());
+
+  /* ---------- wiring ---------- */
+  $('f-text').addEventListener('change', (event) => adapter.configure({ text: event.target.value }));
+  $('f-seed').addEventListener('change', (event) => adapter.configure({ seed: Number(event.target.value) }));
+  $('f-mode').querySelectorAll('[data-mode]').forEach((button) => button.addEventListener('click', () => adapter.configure({ mode: button.dataset.mode })));
+  $('f-skin').querySelectorAll('[data-skin]').forEach((button) => button.addEventListener('click', () => adapter.configure({ skin: button.dataset.skin })));
+  $('f-palette').querySelectorAll('[data-palette]').forEach((button) => button.addEventListener('click', () => adapter.configure({ palette: button.dataset.palette })));
+  $('f-timeline').querySelectorAll('[data-tl]').forEach((button) => button.addEventListener('click', () => adapter.configure({ timeline: button.dataset.tl === 'on' })));
+  document.querySelectorAll('[data-preset-row] [data-preset]').forEach((button) => button.addEventListener('click', () => {
+    adapter.configure({ ...adapter.getSchema().defaults, ...PRESETS[button.dataset.preset] });
+  }));
+  const rangeBindings = {
+    's-threshold': 'threshold', 's-maxn': 'maxN', 's-speed': 'speed', 's-manual': 'manualDepth',
+    's-extrude': 'extrude', 's-perdepth': 'perDepth', 's-zoom': 'zoom',
+  };
+  Object.entries(rangeBindings).forEach(([id, key]) => $(id).addEventListener('input', (event) => adapter.configure({ [key]: Number(event.target.value) })));
+
+  $('b-resetview').addEventListener('click', () => adapter.configure({ viewX: 0, viewY: 0, zoom: 1 }));
+
+  /* drag to pan */
+  let dragFrom = null;
+  canvas.addEventListener('pointerdown', (event) => {
+    const c = adapter.getConfiguration();
+    dragFrom = { px: event.clientX, py: event.clientY, viewX: c.viewX, viewY: c.viewY };
+    canvas.setPointerCapture(event.pointerId);
+    canvas.style.cursor = 'grabbing';
+  });
+  canvas.addEventListener('pointermove', (event) => {
+    if (!dragFrom) return;
+    adapter.configure({
+      viewX: dragFrom.viewX + (event.clientX - dragFrom.px),
+      viewY: dragFrom.viewY + (event.clientY - dragFrom.py),
+    });
+  });
+  const endDrag = () => { dragFrom = null; canvas.style.cursor = 'grab'; };
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+  canvas.style.cursor = 'grab';
+
+  /* scroll to zoom, anchored to the cursor */
+  canvas.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    const c = adapter.getConfiguration();
+    const next = Math.min(4, Math.max(0.25, c.zoom * Math.exp(-event.deltaY * 0.0015)));
+    if (next === c.zoom) return;
+    const rect = canvas.getBoundingClientRect();
+    const cx = rect.width / 2, cy = rect.height / 2;
+    const sx = event.clientX - rect.left, sy = event.clientY - rect.top;
+    const ratio = next / c.zoom;
+    const applied = adapter.configure({
+      zoom: next,
+      viewX: sx - cx - ratio * (sx - cx - c.viewX),
+      viewY: sy - cy - ratio * (sy - cy - c.viewY),
+    });
+    // re-baseline an in-flight drag so the next pointermove doesn't yank the
+    // view back to its pre-zoom anchor
+    if (dragFrom) dragFrom = { px: event.clientX, py: event.clientY, viewX: applied.viewX, viewY: applied.viewY };
+  }, { passive: false });
+
+  $('b-dice').addEventListener('click', () => adapter.execute('randomize'));
+  $('b-pause').addEventListener('click', () => adapter.execute(pausedFlag ? 'resume' : 'pause'));
+  $('b-defaults').addEventListener('click', () => adapter.execute('reset-configuration'));
+  $('quad-controls-title').addEventListener('dblclick', () => adapter.execute('reset-configuration'));
+  $('b-copy').addEventListener('click', async () => {
+    const result = adapter.execute('copy-config');
+    if (!result.ok) return;
+    try { await navigator.clipboard.writeText(JSON.stringify(result.value.serialized)); } catch (_) { /* clipboard blocked */ }
+  });
+  $('b-export').addEventListener('click', () => {
+    const result = adapter.execute('create-artifact');
+    if (!result.ok) return;
+    const anchor = document.createElement('a');
+    anchor.href = result.value.dataUrl;
+    anchor.download = result.value.filename;
+    anchor.click();
+  });
+  $('b-hide').addEventListener('click', () => adapter.execute('hide-controls'));
+  $('toggle').addEventListener('click', () => adapter.execute(panel.classList.contains('hidden') ? 'show-controls' : 'hide-controls'));
+  addEventListener('resize', () => handle && handle.resize());
+  addEventListener('keydown', (event) => {
+    const editable = event.target instanceof HTMLElement && (event.target.matches('input, select, textarea') || event.target.isContentEditable);
+    if (editable) return;
+    if (event.key === 'h' || event.key === 'H') adapter.execute(panel.classList.contains('hidden') ? 'show-controls' : 'hide-controls');
+    if (event.key === 'v' || event.key === 'V') adapter.execute('randomize');
+    if (event.key === 'e' || event.key === 'E') $('b-export').click();
+    if (event.key === ' ') { event.preventDefault(); adapter.execute(pausedFlag ? 'resume' : 'pause'); }
+  });
+
+  const instrumentState = window.SUPERMEGA_INSTRUMENT.createState();
+  instrumentState.appearance.grain = false;
+  instrumentState.shell.overviewVisible = false;
+  window.QUADTREE_RESOLUTION_MATERIALS = window.SUPERMEGA_INSTRUMENT.enhance(document.body, instrumentState);
+  window.QUADTREE_RESOLUTION_ADAPTER = adapter;
+  window.QUADTREE_RESOLUTION_RANGE_CONTRACT = rangeContract;
+  if (window.parent !== window) window.QUADTREE_RESOLUTION_BRIDGE = window.SUPERMEGA_INSTRUMENT_ADAPTERS.core.installBridge(adapter);
+
+  const q = new URLSearchParams(location.search);
+  const queryConfiguration = {};
+  if (q.get('text')) queryConfiguration.text = q.get('text');
+  if (q.get('seed')) queryConfiguration.seed = Number(q.get('seed'));
+  if (q.get('palette')) queryConfiguration.palette = q.get('palette');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    queryConfiguration.timeline = false;
+    queryConfiguration.manualDepth = 7;
+  }
+  if (Object.keys(queryConfiguration).length) adapter.configure(queryConfiguration);
+})();
+</script>
+</body>
+</html>
