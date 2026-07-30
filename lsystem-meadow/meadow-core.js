@@ -222,6 +222,10 @@
     fps: 20,
     growth: false,
     growthSpeed: 6,
+    // view transform (presentation only — never touches the seeded geometry)
+    viewX: 0,
+    viewY: 0,
+    zoom: 1,
   };
 
   function run(canvas, userConfig) {
@@ -259,7 +263,13 @@
       ctx.strokeStyle = config.ink;
       const sway = Math.sin(frame * config.swaySpeed) * config.swayAmp;
       const cap = config.growth ? Math.floor(frame * config.growthSpeed) : Infinity;
+      const zoom = config.zoom || 1;
+      ctx.save();
+      ctx.translate(width / 2 + (config.viewX || 0), height / 2 + (config.viewY || 0));
+      ctx.scale(zoom, zoom);
+      ctx.translate(-width / 2, -height / 2);
       for (const t of trees) drawTree(ctx, t, sway, cap);
+      ctx.restore();
     }
 
     function loop(now) {
@@ -283,7 +293,7 @@
       play() { paused = false; },
       get paused() { return paused; },
       setConfig(partial, opts) {
-        const softKeys = ['ink', 'background', 'swayAmp', 'swaySpeed', 'fps', 'growth', 'growthSpeed'];
+        const softKeys = ['ink', 'background', 'swayAmp', 'swaySpeed', 'fps', 'growth', 'growthSpeed', 'viewX', 'viewY', 'zoom'];
         // Rebuild only when a structural key actually changes value — callers
         // (like the instrument panel) pass the full config on every tweak.
         const needsRebuild = Object.keys(partial).some((k) =>

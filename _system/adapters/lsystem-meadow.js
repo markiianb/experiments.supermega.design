@@ -21,8 +21,11 @@
 		symmetric: true,
 		tempo: 0.02,
 		text: "L",
+		viewX: 0,
+		viewY: 0,
 		weeping: true,
 		wind: true,
+		zoom: 1,
 	};
 	const schema = {
 		id: "supermega.instrument.configuration/lsystem-meadow/v1",
@@ -44,8 +47,11 @@
 			symmetric: { type: "boolean", label: "Symmetric", group: "species" },
 			tempo: { type: "number", label: "Tempo", group: "motion", minimum: 0, maximum: 0.1, step: 0.002 },
 			text: { type: "string", label: "Text", group: "mask", maximumLength: 24 },
+			viewX: { type: "number", label: "Pan X", group: "view", minimum: -4000, maximum: 4000, step: 1 },
+			viewY: { type: "number", label: "Pan Y", group: "view", minimum: -4000, maximum: 4000, step: 1 },
 			weeping: { type: "boolean", label: "Weeping", group: "species" },
 			wind: { type: "boolean", label: "Wind", group: "species" },
+			zoom: { type: "number", label: "Zoom", group: "view", minimum: 0.25, maximum: 4, step: 0.05 },
 		},
 		defaults,
 	};
@@ -73,6 +79,9 @@
 			sway: number(input.sway, defaults.sway, 0, 0.6),
 			tempo: number(input.tempo, defaults.tempo, 0, 0.1),
 			text,
+			viewX: Math.round(number(input.viewX, defaults.viewX, -4000, 4000)),
+			viewY: Math.round(number(input.viewY, defaults.viewY, -4000, 4000)),
+			zoom: number(input.zoom, defaults.zoom, 0.25, 4),
 		};
 		for (const key of speciesKeys) next[key] = boolean(input[key], defaults[key]);
 		// An empty species selection means "all species" — heal the config so the

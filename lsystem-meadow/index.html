@@ -22,7 +22,7 @@
     <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--middle"><span>STUDY</span><span>KITASENJU DESIGN</span></div>
     <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">EX-LSYS-01</span><button class="instrument-action" id="toggle" type="button">Controls</button></div>
   </header>
-  <div class="instrument-renderer-hud instrument-renderer-hud--top">Type a mask — the letter is the flowerbed</div>
+  <div class="instrument-renderer-hud instrument-renderer-hud--top">Type a mask — the letter is the flowerbed · drag to pan, scroll to zoom</div>
   <div class="instrument-renderer-hud instrument-renderer-hud--bottom" id="stat">L · 100 PLANTS · SEED 1968 · LIVE</div>
   <div class="instrument-renderer-credit">L-system meadow / Study of Kitasenju Design's Algorithms from A to Z — 1968, Aristid Lindenmayer · <a href="faithful.html">faithful cut</a></div>
 
@@ -59,6 +59,12 @@
         <div class="instrument-row"><label class="instrument-row-label" for="s-tempo">Tempo</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-tempo" min="0" max="0.1" step="0.002" value="0.02"></div><output class="instrument-row-value instrument-tabular" id="v-tempo" for="s-tempo">0.020</output></div>
         <div class="instrument-row"><span class="instrument-row-label">Grow in</span><div class="instrument-row-control instrument-renderer-choice" id="f-grow"><button class="instrument-action" data-grow="off" aria-pressed="true" type="button">Off</button><button class="instrument-action" data-grow="on" aria-pressed="false" type="button">On</button></div><span></span></div>
         <div class="instrument-row"><label class="instrument-row-label" for="s-growspeed">Grow speed</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-growspeed" min="1" max="40" step="1" value="6"></div><output class="instrument-row-value instrument-tabular" id="v-growspeed" for="s-growspeed">6</output></div>
+      </div>
+
+      <div class="instrument-renderer-section">View</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><label class="instrument-row-label" for="s-zoom">Zoom</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-zoom" min="0.25" max="4" step="0.05" value="1"></div><output class="instrument-row-value instrument-tabular" id="v-zoom" for="s-zoom">1.00</output></div>
+        <div class="instrument-row"><span class="instrument-row-label">Frame</span><div class="instrument-row-control instrument-renderer-actions"><button class="instrument-action" id="b-resetview" type="button" title="Recenter and reset zoom">Reset view</button></div><span class="instrument-row-value instrument-tabular" id="v-pan">0, 0</span></div>
       </div>
 
       <div class="instrument-renderer-section">Look</div>
@@ -166,7 +172,9 @@
       's-sway': [c.sway, 'v-sway', (v) => Number(v).toFixed(2)],
       's-tempo': [c.tempo, 'v-tempo', (v) => Number(v).toFixed(3)],
       's-growspeed': [c.growSpeed, 'v-growspeed', (v) => v],
+      's-zoom': [c.zoom, 'v-zoom', (v) => Number(v).toFixed(2)],
     };
+    setV('v-pan', `${c.viewX}, ${c.viewY}`);
     Object.entries(ranges).forEach(([id, [value, output, fmt]]) => {
       $(id).value = value;
       setV(output, fmt(value));
@@ -239,9 +247,49 @@
   }));
   const rangeBindings = {
     's-plants': 'plants', 's-angle': 'angle', 's-iters': 'iterations', 's-decay': 'decay',
-    's-sway': 'sway', 's-tempo': 'tempo', 's-growspeed': 'growSpeed',
+    's-sway': 'sway', 's-tempo': 'tempo', 's-growspeed': 'growSpeed', 's-zoom': 'zoom',
   };
   Object.entries(rangeBindings).forEach(([id, key]) => $(id).addEventListener('input', (event) => adapter.configure({ [key]: Number(event.target.value) })));
+
+  $('b-resetview').addEventListener('click', () => adapter.configure({ viewX: 0, viewY: 0, zoom: 1 }));
+
+  /* drag to pan */
+  let dragFrom = null;
+  canvas.addEventListener('pointerdown', (event) => {
+    const c = adapter.getConfiguration();
+    dragFrom = { px: event.clientX, py: event.clientY, viewX: c.viewX, viewY: c.viewY };
+    canvas.setPointerCapture(event.pointerId);
+    canvas.style.cursor = 'grabbing';
+  });
+  canvas.addEventListener('pointermove', (event) => {
+    if (!dragFrom) return;
+    adapter.configure({
+      viewX: dragFrom.viewX + (event.clientX - dragFrom.px),
+      viewY: dragFrom.viewY + (event.clientY - dragFrom.py),
+    });
+  });
+  const endDrag = () => { dragFrom = null; canvas.style.cursor = 'grab'; };
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+  canvas.style.cursor = 'grab';
+
+  /* scroll to zoom, anchored to the cursor */
+  canvas.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    const c = adapter.getConfiguration();
+    const next = Math.min(4, Math.max(0.25, c.zoom * Math.exp(-event.deltaY * 0.0015)));
+    if (next === c.zoom) return;
+    // keep the world point under the cursor fixed while the scale changes
+    const rect = canvas.getBoundingClientRect();
+    const cx = rect.width / 2, cy = rect.height / 2;
+    const sx = event.clientX - rect.left, sy = event.clientY - rect.top;
+    const ratio = next / c.zoom;
+    adapter.configure({
+      zoom: next,
+      viewX: sx - cx - ratio * (sx - cx - c.viewX),
+      viewY: sy - cy - ratio * (sy - cy - c.viewY),
+    });
+  }, { passive: false });
 
   $('b-dice').addEventListener('click', () => adapter.execute('randomize'));
   $('b-pause').addEventListener('click', () => adapter.execute(pausedFlag ? 'resume' : 'pause'));
