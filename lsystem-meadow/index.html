@@ -1,340 +1,293 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>L-System Meadow — instrument</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="supermega-instrument-release" content="0.1.0-f0feb3fed659" />
+<title>SUPERMEGA — L-System Meadow</title>
+<link rel="stylesheet" href="../_kit/releases/0.1.0-f0feb3fed659/instrument.css" />
+<link rel="stylesheet" href="../_system/experiment-host.css" />
 <style>
-  :root { color-scheme: dark; }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { height: 100%; background: #000; overflow: hidden;
-    font: 11px/1.5 "SF Mono", ui-monospace, Menlo, monospace; color: #999; }
-  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
-
-  #panel {
-    position: fixed; top: 0; right: 0; bottom: 0; width: 248px; z-index: 3;
-    background: rgba(10,10,10,0.92); border-left: 1px solid #222;
-    padding: 14px 16px 18px; overflow-y: auto; letter-spacing: 0.03em;
-    backdrop-filter: blur(6px); transition: transform 0.25s ease;
-  }
-  #panel.hidden { transform: translateX(100%); }
-  #paneltoggle {
-    position: fixed; top: 12px; right: 12px; z-index: 4;
-    background: #111; color: #bbb; border: 1px solid #333; padding: 4px 9px;
-    font: inherit; cursor: pointer;
-  }
-  h1 { font: 700 13px/1.3 inherit; color: #eee; margin-bottom: 2px; padding-right: 64px; }
-  .sub { color: #555; margin-bottom: 14px; }
-  .sec { border-top: 1px solid #1d1d1d; padding: 10px 0; }
-  .sec .label { color: #666; text-transform: uppercase; font-size: 9px;
-    letter-spacing: 0.12em; margin-bottom: 7px; }
-  .row { display: flex; align-items: center; justify-content: space-between;
-    gap: 8px; margin-bottom: 6px; }
-  .row span.k { color: #999; }
-  .row output { color: #ddd; min-width: 34px; text-align: right; }
-  input[type="range"] { flex: 1; accent-color: #F61515; height: 14px; }
-  input[type="text"], input[type="number"] {
-    width: 100%; background: #0d0d0d; border: 1px solid #2a2a2a; color: #ddd;
-    font: inherit; padding: 4px 6px; outline: none;
-  }
-  input[type="number"] { width: 90px; }
-  input[type="color"] { width: 26px; height: 20px; border: 1px solid #2a2a2a;
-    background: none; padding: 0; }
-  input[type="checkbox"] { accent-color: #F61515; }
-  .species { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; }
-  .species label { display: flex; gap: 6px; align-items: center; color: #999;
-    cursor: pointer; }
-  button {
-    background: #111; color: #ccc; border: 1px solid #333; font: inherit;
-    padding: 5px 8px; cursor: pointer; letter-spacing: 0.03em;
-  }
-  button:hover { border-color: #666; color: #fff; }
-  button.primary { background: #F61515; border-color: #F61515; color: #fff; }
-  .btnrow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
-  .presets button { flex: 1 1 45%; }
-  .credit { border-top: 1px solid #1d1d1d; padding-top: 10px; margin-top: 4px;
-    color: #555; }
-  .credit a { color: #888; text-decoration: none; border-bottom: 1px solid #333; }
-  #toast { position: fixed; left: 16px; bottom: 14px; z-index: 4; color: #888;
-    opacity: 0; transition: opacity 0.3s; }
-  #toast.show { opacity: 1; }
+  .hero{position:fixed;inset:0;overflow:hidden;background:#000;cursor:crosshair}
+  .hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 </style>
 </head>
-<body>
-<canvas id="stage"></canvas>
-<button id="paneltoggle">panel</button>
-<div id="toast"></div>
+<body data-system="instrument" data-instrument-release="0.1.0-f0feb3fed659" data-instrument-polarity="light" data-instrument-grid="off" data-instrument-grain="off" data-instrument-density="normal" data-instrument-motion="system" data-controls="visible">
+  <script>if(new URLSearchParams(location.search).get('instrument-embed')==='1')document.body.dataset.instrumentEmbed='true';</script>
+  <section class="hero instrument-renderer-surface">
+    <canvas id="stage"></canvas>
+  </section>
+  <header class="instrument-renderer-chrome">
+    <div class="instrument-renderer-chrome-zone"><span class="instrument-identity-mark" aria-hidden="true"></span>SUPERMEGA / L-SYSTEM MEADOW</div>
+    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--middle"><span>STUDY</span><span>KITASENJU DESIGN</span></div>
+    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">EX-LSYS-01</span><button class="instrument-action" id="toggle" type="button">Controls</button></div>
+  </header>
+  <div class="instrument-renderer-hud instrument-renderer-hud--top">Type a mask — the letter is the flowerbed</div>
+  <div class="instrument-renderer-hud instrument-renderer-hud--bottom" id="stat">L · 100 PLANTS · SEED 1968 · LIVE</div>
+  <div class="instrument-renderer-credit">L-system meadow / Study of Kitasenju Design's Algorithms from A to Z — 1968, Aristid Lindenmayer · <a href="faithful.html">faithful cut</a></div>
 
-<div id="panel">
-  <h1>L-System Meadow</h1>
-  <div class="sub">an instrument on the Kitasenju study engine</div>
+  <aside class="instrument-renderer-panel" id="panel" aria-label="L-System Meadow controls">
+    <section class="instrument-panel">
+      <header class="instrument-panel-header">
+        <h2 class="instrument-panel-title" id="meadow-controls-title">L-System Meadow</h2>
+        <div class="instrument-panel-actions"><button class="instrument-action" id="b-defaults" type="button" title="Restore configuration defaults">Defaults</button><button class="instrument-action" id="b-hide" type="button">Hide</button></div>
+      </header>
+      <p class="instrument-renderer-panel-lede">Plant a letterform, mix the species, grow a meadow.</p>
 
-  <div class="sec">
-    <div class="label">Mask</div>
-    <div class="row"><input type="text" id="maskText" value="L" spellcheck="false"></div>
-    <div class="row"><span class="k">plants</span>
-      <input type="range" id="treeCount" min="10" max="400" step="5" value="100"><output id="treeCountOut"></output></div>
-  </div>
+      <div class="instrument-renderer-section">Mask</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><label class="instrument-row-label" for="f-text">Text</label><div class="instrument-row-control"><input class="instrument-control instrument-text-field" type="text" id="f-text" maxlength="24" spellcheck="false" autocomplete="off" value="L"></div><span class="instrument-row-value instrument-tabular" id="v-text">1</span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-plants">Plants</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-plants" min="10" max="400" step="5" value="100"></div><output class="instrument-row-value instrument-tabular" id="v-plants" for="s-plants">100</output></div>
+      </div>
 
-  <div class="sec">
-    <div class="label">Species</div>
-    <div class="species" id="speciesBox"></div>
-  </div>
+      <div class="instrument-renderer-section">Species</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><span class="instrument-row-label">Mix</span><div class="instrument-row-control instrument-renderer-choice" data-species-row><button class="instrument-action" data-sp="symmetric" aria-pressed="true" type="button">Symm</button><button class="instrument-action" data-sp="broadleaf" aria-pressed="true" type="button">Broad</button><button class="instrument-action" data-sp="wind" aria-pressed="true" type="button">Wind</button><button class="instrument-action" data-sp="weeping" aria-pressed="true" type="button">Weep</button></div><span></span></div>
+        <div class="instrument-row"><span class="instrument-row-label"></span><div class="instrument-row-control instrument-renderer-choice" data-species-row><button class="instrument-action" data-sp="pine" aria-pressed="true" type="button">Pine</button><button class="instrument-action" data-sp="dead" aria-pressed="true" type="button">Dead</button><button class="instrument-action" data-sp="bamboo" aria-pressed="true" type="button">Bamb</button></div><span></span></div>
+      </div>
 
-  <div class="sec">
-    <div class="label">Growth Rules</div>
-    <div class="row"><span class="k">angle ×</span>
-      <input type="range" id="angleScale" min="0.4" max="2" step="0.05" value="1"><output id="angleScaleOut"></output></div>
-    <div class="row"><span class="k">iterations ±</span>
-      <input type="range" id="iterDelta" min="-2" max="2" step="1" value="0"><output id="iterDeltaOut"></output></div>
-    <div class="row"><span class="k">decay</span>
-      <input type="range" id="decay" min="0.45" max="0.9" step="0.01" value="0"><output id="decayOut"></output></div>
-    <div class="row"><span class="k" style="color:#555">decay 0.45 = auto (0.60–0.75 per plant)</span></div>
-  </div>
+      <div class="instrument-renderer-section">Growth rules</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><label class="instrument-row-label" for="s-angle">Angle ×</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-angle" min="0.4" max="2" step="0.05" value="1"></div><output class="instrument-row-value instrument-tabular" id="v-angle" for="s-angle">1.00</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-iters">Iterations ±</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-iters" min="-2" max="2" step="1" value="0"></div><output class="instrument-row-value instrument-tabular" id="v-iters" for="s-iters">0</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-decay">Decay</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-decay" min="0.45" max="0.9" step="0.01" value="0.45"></div><output class="instrument-row-value instrument-tabular" id="v-decay" for="s-decay">AUTO</output></div>
+      </div>
 
-  <div class="sec">
-    <div class="label">Motion</div>
-    <div class="row"><span class="k">sway amp</span>
-      <input type="range" id="swayAmp" min="0" max="0.6" step="0.01" value="0.2"><output id="swayAmpOut"></output></div>
-    <div class="row"><span class="k">sway speed</span>
-      <input type="range" id="swaySpeed" min="0" max="0.1" step="0.002" value="0.02"><output id="swaySpeedOut"></output></div>
-    <div class="row"><span class="k">grow in</span><input type="checkbox" id="growth"></div>
-    <div class="row"><span class="k">grow speed</span>
-      <input type="range" id="growthSpeed" min="1" max="40" step="1" value="6"><output id="growthSpeedOut"></output></div>
-  </div>
+      <div class="instrument-renderer-section">Motion</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><label class="instrument-row-label" for="s-sway">Sway</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-sway" min="0" max="0.6" step="0.01" value="0.2"></div><output class="instrument-row-value instrument-tabular" id="v-sway" for="s-sway">0.20</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-tempo">Tempo</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-tempo" min="0" max="0.1" step="0.002" value="0.02"></div><output class="instrument-row-value instrument-tabular" id="v-tempo" for="s-tempo">0.020</output></div>
+        <div class="instrument-row"><span class="instrument-row-label">Grow in</span><div class="instrument-row-control instrument-renderer-choice" id="f-grow"><button class="instrument-action" data-grow="off" aria-pressed="true" type="button">Off</button><button class="instrument-action" data-grow="on" aria-pressed="false" type="button">On</button></div><span></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-growspeed">Grow speed</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-growspeed" min="1" max="40" step="1" value="6"></div><output class="instrument-row-value instrument-tabular" id="v-growspeed" for="s-growspeed">6</output></div>
+      </div>
 
-  <div class="sec">
-    <div class="label">Ink</div>
-    <div class="row"><span class="k">ink / ground</span>
-      <span><input type="color" id="ink" value="#dcdcdc">
-      <input type="color" id="background" value="#000000"></span></div>
-    <div class="btnrow presets">
-      <button data-preset="faithful">faithful L</button>
-      <button data-preset="red">red meadow</button>
-      <button data-preset="paper">paper</button>
-      <button data-preset="wordmark">wordmark</button>
-    </div>
-  </div>
+      <div class="instrument-renderer-section">Look</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><span class="instrument-row-label">Colour</span><div class="instrument-row-control instrument-renderer-swatches" id="f-palette"><button class="instrument-swatch instrument-renderer-swatch" type="button" data-palette="faithful" aria-label="White on black (faithful)" aria-pressed="true" style="background:#dcdcdc"></button><button class="instrument-swatch instrument-renderer-swatch" type="button" data-palette="red" aria-label="SUPERMEGA red on black" aria-pressed="false" style="background:#F61515"></button><button class="instrument-swatch instrument-renderer-swatch" type="button" data-palette="paper" aria-label="Ink on paper" aria-pressed="false" style="background:#F3EFE7"></button><button class="instrument-swatch instrument-renderer-swatch" type="button" data-palette="red-paper" aria-label="Red on paper" aria-pressed="false" style="background:linear-gradient(135deg,#F61515 50%,#F3EFE7 50%)"></button></div><span></span></div>
+        <div class="instrument-row"><span class="instrument-row-label">Presets</span><div class="instrument-row-control instrument-renderer-actions" data-preset-row><button class="instrument-action" data-preset="faithful" type="button">Faithful L</button><button class="instrument-action" data-preset="redMeadow" type="button">Red meadow</button></div><span></span></div>
+        <div class="instrument-row"><span class="instrument-row-label"></span><div class="instrument-row-control instrument-renderer-actions" data-preset-row><button class="instrument-action" data-preset="paper" type="button">Paper</button><button class="instrument-action" data-preset="wordmark" type="button">Wordmark</button></div><span></span></div>
+      </div>
 
-  <div class="sec">
-    <div class="label">Seed</div>
-    <div class="row">
-      <input type="number" id="seed" value="1968" min="0" step="1">
-      <button id="randomize">dice</button>
-    </div>
-    <div class="btnrow">
-      <button id="pause">pause</button>
-      <button id="replay">replay</button>
-      <button id="copylink">copy link</button>
-      <button id="exportpng" class="primary">PNG</button>
-    </div>
-  </div>
+      <div class="instrument-renderer-section">Seed</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><label class="instrument-row-label" for="f-seed">Seed</label><div class="instrument-row-control"><input class="instrument-control instrument-text-field" type="number" id="f-seed" min="0" max="4294967295" step="1" value="1968"></div><span class="instrument-row-value"><button class="instrument-action" id="b-dice" type="button" title="Roll a new seed">Dice</button></span></div>
+        <div class="instrument-row"><span class="instrument-row-label">Field</span><div class="instrument-row-control instrument-renderer-actions"><button class="instrument-action" id="b-pause" type="button">Pause</button><button class="instrument-action" id="b-copy" type="button" title="Copy this exact meadow's configuration">Copy config</button></div><span></span></div>
+        <div class="instrument-row"><span class="instrument-row-label">Artifact</span><div class="instrument-row-control"><button class="instrument-action" id="b-export" type="button">Export PNG</button></div><span class="instrument-row-value instrument-tabular">PNG</span></div>
+      </div>
+      <div class="instrument-status" id="adapter-status" role="status" data-instrument-tone="active"><span class="instrument-status-mark" aria-hidden="true"></span><span>Adapter</span><span class="instrument-status-value instrument-tabular">READY</span></div>
+    </section>
+  </aside>
 
-  <div class="credit">
-    study of <a href="https://x.com/kitasenjudesign/status/2082479558906015959">Kitasenju Design</a> —
-    Algorithms from A to Z: L-system
-    (<a href="https://github.com/kitasenjudesign/algorithms-from-a-to-z">source</a>).
-    L-systems: 1968, Aristid Lindenmayer. Engine rules faithful; instrument ours.
-    <a href="faithful.html">faithful cut →</a>
-  </div>
-</div>
+  <div class="instrument-mode-dock instrument-renderer-dock" role="toolbar" aria-label="Material controls"><button class="instrument-action" type="button" data-instrument-coordinate="ink" aria-pressed="false">Ink</button><button class="instrument-action" type="button" data-instrument-coordinate="light" aria-pressed="true">Light</button><button class="instrument-action" type="button" data-instrument-coordinate="grid" aria-pressed="false">Grid</button><button class="instrument-action" type="button" data-instrument-coordinate="grain" aria-pressed="false">Grain</button></div>
+  <div class="instrument-material-grid" aria-hidden="true"></div><div class="instrument-material-grain" aria-hidden="true"></div>
 
+<script src="../_kit/releases/0.1.0-f0feb3fed659/instrument-runtime.js"></script>
+<script src="../_system/adapters/adapter-core.js"></script>
+<script src="../_system/adapters/lsystem-meadow.js"></script>
 <script src="meadow-core.js"></script>
+
 <script>
+/* =============================================================================
+   L-System Meadow — the letterform meadow as an instrument.
+   Study of Kitasenju Design's "Algorithms from A to Z: L — L-system"
+   (github.com/kitasenjudesign/algorithms-from-a-to-z); 1968, Aristid
+   Lindenmayer. The engine (meadow-core.js) carries the original's seven
+   species rule tables verbatim; the seeded PRNG, mask text, and this
+   instrument are ours. Full teardown in NOTES.md.
+   ========================================================================== */
+(function () {
   const $ = (id) => document.getElementById(id);
   const canvas = $('stage');
-  const SPECIES = MeadowEngine.SPECIES_NAMES;
+  const panel = $('panel');
+  const SPECIES = window.SUPERMEGA_INSTRUMENT_ADAPTERS.lsystemMeadow.speciesKeys;
 
-  // --- state ----------------------------------------------------------------
-  const state = {
-    maskText: 'L', treeCount: 100, species: SPECIES.slice(),
-    angleScale: 1, iterDelta: 0, decay: null,
-    swayAmp: 0.2, swaySpeed: 0.02, growth: false, growthSpeed: 6,
-    ink: '#dcdcdc', background: '#000000', seed: 1968,
+  const PALETTES = {
+    faithful: { ink: 'rgb(220,220,220)', ground: '#000000' },
+    red: { ink: '#F61515', ground: '#000000' },
+    paper: { ink: '#1a1a1a', ground: '#F3EFE7' },
+    'red-paper': { ink: '#F61515', ground: '#F3EFE7' },
   };
 
-  // Every preset carries the FULL key set — presets are applied as overlays
-  // onto current state, so a missing key would leak the previous value.
   const PRESETS = {
-    faithful: { maskText: 'L', treeCount: 100, species: SPECIES.slice(), angleScale: 1,
-      iterDelta: 0, decay: null, swayAmp: 0.2, swaySpeed: 0.02, growth: false,
-      growthSpeed: 6, ink: '#dcdcdc', background: '#000000', seed: 1968 },
-    red: { maskText: 'L', treeCount: 180, species: ['broadleaf', 'wind', 'weeping', 'dead'],
-      angleScale: 1.1, iterDelta: 0, decay: null, swayAmp: 0.26, swaySpeed: 0.024, growth: true,
-      growthSpeed: 8, ink: '#F61515', background: '#000000', seed: 15 },
-    paper: { maskText: 'L', treeCount: 140, species: ['symmetric', 'pine', 'bamboo'],
-      angleScale: 0.9, iterDelta: 0, decay: null, swayAmp: 0.12, swaySpeed: 0.016, growth: false,
-      growthSpeed: 6, ink: '#1a1a1a', background: '#F3EFE7', seed: 7 },
-    wordmark: { maskText: 'SM', treeCount: 260, species: SPECIES.slice(), angleScale: 1,
-      iterDelta: -1, decay: null, swayAmp: 0.2, swaySpeed: 0.02, growth: true,
-      growthSpeed: 12, ink: '#dcdcdc', background: '#000000', seed: 88 },
+    faithful: {}, // adapter defaults ARE the faithful cut
+    redMeadow: { plants: 180, symmetric: false, pine: false, bamboo: false, angle: 1.1,
+      sway: 0.26, tempo: 0.024, grow: true, growSpeed: 8, palette: 'red', seed: 15 },
+    paper: { plants: 140, broadleaf: false, wind: false, weeping: false, dead: false,
+      angle: 0.9, sway: 0.12, tempo: 0.016, palette: 'paper', seed: 7 },
+    wordmark: { text: 'SM', plants: 260, iterations: -1, grow: true, growSpeed: 12, seed: 88 },
   };
 
-  function engineConfig() {
+  function engineConfig(c) {
+    const pool = SPECIES.filter((key) => c[key]);
     return {
-      seed: state.seed >>> 0,
-      maskText: state.maskText || 'L',
-      treeCount: state.treeCount,
-      species: state.species.length ? state.species : null,
+      seed: c.seed,
+      maskText: c.text,
+      treeCount: c.plants,
+      species: pool.length === SPECIES.length ? null : pool,
       mods: {
-        angleScale: state.angleScale,
-        iterDelta: state.iterDelta,
-        decay: state.decay,
+        angleScale: c.angle,
+        iterDelta: c.iterations,
+        decay: c.decay <= 0.45 ? null : c.decay,
       },
-      ink: state.ink, background: state.background,
-      swayAmp: state.swayAmp, swaySpeed: state.swaySpeed,
-      fps: 20, growth: state.growth, growthSpeed: state.growthSpeed,
+      ink: PALETTES[c.palette].ink,
+      background: PALETTES[c.palette].ground,
+      swayAmp: c.sway,
+      swaySpeed: c.tempo,
+      fps: 20,
+      growth: c.grow,
+      growthSpeed: c.growSpeed,
     };
   }
 
-  // --- url hash round-trip --------------------------------------------------
-  function encodeHash() {
-    const c = Object.assign({}, state, { decay: state.decay === null ? 'auto' : state.decay });
-    location.replace('#' + encodeURIComponent(JSON.stringify(c)));
-  }
-  function decodeHash() {
-    if (location.hash.length < 2) return;
-    try {
-      const c = JSON.parse(decodeURIComponent(location.hash.slice(1)));
-      if (c.decay === 'auto') c.decay = null;
-      // Whitelist + type-check every key so a wrong-shape hash degrades to
-      // defaults per key instead of throwing at boot.
-      const num = (v, min, max, fallback) => {
-        v = Number(v);
-        return Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback;
-      };
-      const s = state;
-      if (typeof c.maskText === 'string' && c.maskText.trim()) s.maskText = c.maskText.slice(0, 24);
-      s.treeCount = num(c.treeCount, 1, 400, s.treeCount);
-      if (Array.isArray(c.species)) {
-        const valid = c.species.filter((x) => SPECIES.includes(x));
-        if (valid.length) s.species = valid;
-      }
-      s.angleScale = num(c.angleScale, 0.4, 2, s.angleScale);
-      s.iterDelta = Math.round(num(c.iterDelta, -2, 2, s.iterDelta));
-      s.decay = (c.decay === null || c.decay === undefined) ? s.decay
-        : (Number.isFinite(Number(c.decay)) ? num(c.decay, 0.45, 0.9, null) : s.decay);
-      if (c.decay === null) s.decay = null;
-      s.swayAmp = num(c.swayAmp, 0, 0.6, s.swayAmp);
-      s.swaySpeed = num(c.swaySpeed, 0, 0.1, s.swaySpeed);
-      if (typeof c.growth === 'boolean') s.growth = c.growth;
-      s.growthSpeed = num(c.growthSpeed, 1, 40, s.growthSpeed);
-      if (/^#[0-9a-fA-F]{6}$/.test(c.ink || '')) s.ink = c.ink;
-      if (/^#[0-9a-fA-F]{6}$/.test(c.background || '')) s.background = c.background;
-      s.seed = Math.round(num(c.seed, 0, 0xFFFFFFFF, s.seed));
-    } catch (_) { /* malformed hash: keep defaults */ }
-  }
-
-  // --- panel wiring ---------------------------------------------------------
-  const speciesBox = $('speciesBox');
-  for (const name of SPECIES) {
-    const label = document.createElement('label');
-    const cb = document.createElement('input');
-    cb.type = 'checkbox'; cb.value = name;
-    cb.addEventListener('change', () => {
-      let picked = [...speciesBox.querySelectorAll('input:checked')].map((x) => x.value);
-      if (!picked.length) {
-        // empty selection means "all species" in the engine — reflect that in
-        // the panel instead of showing zero boxes checked
-        picked = SPECIES.slice();
-        for (const box of speciesBox.querySelectorAll('input')) box.checked = true;
-      }
-      state.species = picked;
-      apply();
-    });
-    label.append(cb, document.createTextNode(name));
-    speciesBox.append(label);
-  }
-
-  const sliders = [
-    ['treeCount', (v) => v, parseInt],
-    ['angleScale', (v) => v.toFixed(2), parseFloat],
-    ['iterDelta', (v) => (v > 0 ? '+' + v : v), parseInt],
-    ['decay', (v) => (v <= 0.45 ? 'auto' : v.toFixed(2)), parseFloat],
-    ['swayAmp', (v) => v.toFixed(2), parseFloat],
-    ['swaySpeed', (v) => v.toFixed(3), parseFloat],
-    ['growthSpeed', (v) => v, parseInt],
-  ];
-  for (const [id, fmt, parse] of sliders) {
-    $(id).addEventListener('input', () => {
-      let v = parse($(id).value);
-      if (id === 'decay') v = (v <= 0.45 ? null : v);
-      state[id] = v;
-      $(id + 'Out').textContent = fmt(parse($(id).value));
-      apply();
-    });
-  }
-  $('maskText').addEventListener('change', () => { state.maskText = $('maskText').value || 'L'; apply(); });
-  $('seed').addEventListener('change', () => { state.seed = parseInt($('seed').value) || 0; apply(); });
-  $('ink').addEventListener('input', () => { state.ink = $('ink').value; apply(); });
-  $('background').addEventListener('input', () => { state.background = $('background').value; apply(); });
-  $('growth').addEventListener('change', () => { state.growth = $('growth').checked; apply(true); });
-
-  function syncPanel() {
-    $('maskText').value = state.maskText;
-    $('seed').value = state.seed;
-    $('ink').value = state.ink;
-    $('background').value = state.background;
-    $('growth').checked = state.growth;
-    for (const [id, fmt, parse] of sliders) {
-      const v = (id === 'decay' && state.decay === null) ? 0.45 : state[id];
-      $(id).value = v;
-      $(id + 'Out').textContent = fmt(parse(String($(id).value)));
-    }
-    for (const cb of speciesBox.querySelectorAll('input')) {
-      cb.checked = state.species.includes(cb.value);
-    }
-  }
-
-  // --- engine ---------------------------------------------------------------
   let handle = null;
-  function apply(rebuild) {
-    encodeHash();
-    if (!handle) return;
-    handle.setConfig(engineConfig(), { rebuild: !!rebuild });
-  }
+  let pausedFlag = false;
 
-  decodeHash();
-  syncPanel();
-  handle = MeadowEngine.run(canvas, engineConfig());
-  encodeHash();
+  const setV = (id, v) => { const e = $(id); if (e) e.textContent = v; };
+  const syncStat = (c) => setV('stat',
+    `${c.text.toUpperCase()} · ${c.plants} PLANTS · SEED ${c.seed} · ${pausedFlag ? 'HELD' : 'LIVE'}`);
+  const syncGround = (c) => {
+    document.querySelector('.hero').style.background = PALETTES[c.palette].ground;
+  };
+  const setPressed = (selector, match) => document.querySelectorAll(selector).forEach((element) => {
+    element.setAttribute('aria-pressed', String(match(element)));
+  });
 
-  // --- actions --------------------------------------------------------------
-  function toast(msg) {
-    const t = $('toast');
-    t.textContent = msg; t.classList.add('show');
-    clearTimeout(toast._id); toast._id = setTimeout(() => t.classList.remove('show'), 1600);
-  }
-  $('randomize').addEventListener('click', () => {
-    state.seed = Math.floor(Math.random() * 0xFFFFFFFF);
-    $('seed').value = state.seed;
-    apply();
-  });
-  $('replay').addEventListener('click', () => apply(true));
-  $('pause').addEventListener('click', () => {
-    if (handle.paused) { handle.play(); $('pause').textContent = 'pause'; }
-    else { handle.pause(); $('pause').textContent = 'play'; }
-  });
-  $('copylink').addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(location.href); toast('link copied — same link, same meadow'); }
-    catch (_) { toast('copy blocked — grab the URL bar'); }
-  });
-  $('exportpng').addEventListener('click', () => {
-    const a = document.createElement('a');
-    a.download = `lsystem-meadow-${state.maskText}-${state.seed}.png`;
-    a.href = canvas.toDataURL('image/png');
-    a.click();
-    toast('PNG saved');
-  });
-  $('paneltoggle').addEventListener('click', () => $('panel').classList.toggle('hidden'));
-  document.querySelectorAll('[data-preset]').forEach((b) => {
-    b.addEventListener('click', () => {
-      Object.assign(state, JSON.parse(JSON.stringify(PRESETS[b.dataset.preset])));
-      syncPanel();
-      apply(true);
+  const syncControls = (c) => {
+    $('f-text').value = c.text; setV('v-text', String(c.text.length));
+    $('f-seed').value = c.seed;
+    setPressed('#f-species [data-sp]', (el) => c[el.dataset.sp]);
+    setPressed('#f-palette [data-palette]', (el) => el.dataset.palette === c.palette);
+    setPressed('#f-grow [data-grow]', (el) => (el.dataset.grow === 'on') === c.grow);
+    const ranges = {
+      's-plants': [c.plants, 'v-plants', (v) => v],
+      's-angle': [c.angle, 'v-angle', (v) => Number(v).toFixed(2)],
+      's-iters': [c.iterations, 'v-iters', (v) => (v > 0 ? '+' + v : String(v))],
+      's-decay': [c.decay, 'v-decay', (v) => (v <= 0.45 ? 'AUTO' : Number(v).toFixed(2))],
+      's-sway': [c.sway, 'v-sway', (v) => Number(v).toFixed(2)],
+      's-tempo': [c.tempo, 'v-tempo', (v) => Number(v).toFixed(3)],
+      's-growspeed': [c.growSpeed, 'v-growspeed', (v) => v],
+    };
+    Object.entries(ranges).forEach(([id, [value, output, fmt]]) => {
+      $(id).value = value;
+      setV(output, fmt(value));
     });
+  };
+
+  const applyConfiguration = (configuration) => {
+    if (!handle) handle = MeadowEngine.run(canvas, engineConfig(configuration));
+    else handle.setConfig(engineConfig(configuration));
+    syncControls(configuration);
+    syncGround(configuration);
+    syncStat(configuration);
+  };
+
+  const setControlsVisible = (visible) => {
+    panel.classList.toggle('hidden', !visible);
+    document.body.dataset.controls = visible ? 'visible' : 'hidden';
+    $('toggle').setAttribute('aria-pressed', String(visible));
+    return { visible };
+  };
+
+  const createArtifact = () => {
+    if (handle) handle.paintOnce();
+    const c = adapter.getConfiguration();
+    return {
+      dataUrl: canvas.toDataURL('image/png'),
+      filename: `lsystem-meadow-${c.text}-${c.seed}.png`,
+      height: canvas.height,
+      mime: 'image/png',
+      width: canvas.width,
+    };
+  };
+
+  const adapter = window.SUPERMEGA_INSTRUMENT_ADAPTERS.lsystemMeadow.create({
+    applyConfiguration,
+    createArtifact,
+    hideControls: () => setControlsVisible(false),
+    nextSeed: () => ({ seed: Math.floor(Math.random() * 0xFFFFFFFF) }),
+    pause: () => {
+      pausedFlag = true;
+      if (handle) handle.pause();
+      $('b-pause').textContent = 'Play';
+      syncStat(adapter.getConfiguration());
+      return { paused: true };
+    },
+    resume: () => {
+      pausedFlag = false;
+      if (handle) handle.play();
+      $('b-pause').textContent = 'Pause';
+      syncStat(adapter.getConfiguration());
+      return { paused: false };
+    },
+    showControls: () => setControlsVisible(true),
   });
-  addEventListener('resize', () => handle.resize());
+  const rangeContract = window.SUPERMEGA_INSTRUMENT_ADAPTERS.core.installRangeContract(document);
+
+  applyConfiguration(adapter.getConfiguration());
+
+  /* ---------- wiring ---------- */
+  $('f-text').addEventListener('change', (event) => adapter.configure({ text: event.target.value }));
+  $('f-seed').addEventListener('change', (event) => adapter.configure({ seed: Number(event.target.value) }));
+  document.querySelectorAll('[data-species-row] [data-sp]').forEach((button) => button.addEventListener('click', () => {
+    const key = button.dataset.sp;
+    adapter.configure({ [key]: !adapter.getConfiguration()[key] });
+  }));
+  $('f-palette').querySelectorAll('[data-palette]').forEach((button) => button.addEventListener('click', () => adapter.configure({ palette: button.dataset.palette })));
+  $('f-grow').querySelectorAll('[data-grow]').forEach((button) => button.addEventListener('click', () => adapter.configure({ grow: button.dataset.grow === 'on' })));
+  document.querySelectorAll('[data-preset-row] [data-preset]').forEach((button) => button.addEventListener('click', () => {
+    adapter.configure({ ...adapter.getSchema().defaults, ...PRESETS[button.dataset.preset] });
+  }));
+  const rangeBindings = {
+    's-plants': 'plants', 's-angle': 'angle', 's-iters': 'iterations', 's-decay': 'decay',
+    's-sway': 'sway', 's-tempo': 'tempo', 's-growspeed': 'growSpeed',
+  };
+  Object.entries(rangeBindings).forEach(([id, key]) => $(id).addEventListener('input', (event) => adapter.configure({ [key]: Number(event.target.value) })));
+
+  $('b-dice').addEventListener('click', () => adapter.execute('randomize'));
+  $('b-pause').addEventListener('click', () => adapter.execute(pausedFlag ? 'resume' : 'pause'));
+  $('b-defaults').addEventListener('click', () => adapter.execute('reset-configuration'));
+  $('meadow-controls-title').addEventListener('dblclick', () => adapter.execute('reset-configuration'));
+  $('b-copy').addEventListener('click', async () => {
+    const result = adapter.execute('copy-config');
+    if (!result.ok) return;
+    try { await navigator.clipboard.writeText(JSON.stringify(result.value.serialized)); } catch (_) { /* clipboard blocked */ }
+  });
+  $('b-export').addEventListener('click', () => {
+    const result = adapter.execute('create-artifact');
+    if (!result.ok) return;
+    const anchor = document.createElement('a');
+    anchor.href = result.value.dataUrl;
+    anchor.download = result.value.filename;
+    anchor.click();
+  });
+  $('b-hide').addEventListener('click', () => adapter.execute('hide-controls'));
+  $('toggle').addEventListener('click', () => adapter.execute(panel.classList.contains('hidden') ? 'show-controls' : 'hide-controls'));
+  addEventListener('resize', () => handle && handle.resize());
+  addEventListener('keydown', (event) => {
+    const editable = event.target instanceof HTMLElement && (event.target.matches('input, select, textarea') || event.target.isContentEditable);
+    if (editable) return;
+    if (event.key === 'h' || event.key === 'H') adapter.execute(panel.classList.contains('hidden') ? 'show-controls' : 'hide-controls');
+    if (event.key === 'v' || event.key === 'V') adapter.execute('randomize');
+    if (event.key === 'e' || event.key === 'E') $('b-export').click();
+    if (event.key === ' ') { event.preventDefault(); adapter.execute(pausedFlag ? 'resume' : 'pause'); }
+  });
+
+  const instrumentState = window.SUPERMEGA_INSTRUMENT.createState();
+  instrumentState.appearance.grain = false;
+  instrumentState.shell.overviewVisible = false;
+  window.LSYSTEM_MEADOW_MATERIALS = window.SUPERMEGA_INSTRUMENT.enhance(document.body, instrumentState);
+  window.LSYSTEM_MEADOW_ADAPTER = adapter;
+  window.LSYSTEM_MEADOW_RANGE_CONTRACT = rangeContract;
+  if (window.parent !== window) window.LSYSTEM_MEADOW_BRIDGE = window.SUPERMEGA_INSTRUMENT_ADAPTERS.core.installBridge(adapter);
+
+  const q = new URLSearchParams(location.search);
+  const queryConfiguration = {};
+  if (q.get('text')) queryConfiguration.text = q.get('text');
+  if (q.get('seed')) queryConfiguration.seed = Number(q.get('seed'));
+  if (q.get('palette')) queryConfiguration.palette = q.get('palette');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { queryConfiguration.sway = 0; queryConfiguration.grow = false; }
+  if (Object.keys(queryConfiguration).length) adapter.configure(queryConfiguration);
+})();
 </script>
 </body>
 </html>
