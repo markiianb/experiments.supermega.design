@@ -45,19 +45,23 @@ CORE RULES (reimplement these, or fetch the engine below)
   Run at 12fps (accumulate on requestAnimationFrame). Accumulate
   timeline seconds per tick (t += speed/fps) so a speed change alters
   the rate from the current phase instead of teleporting it.
-- BLOCKS (measured from the video — the published Q source draws white
-  stroke rects+ellipses on black instead; ship that as an alt skin if
-  you want the repo look). Scale the 128-space to a centered square
-  (~68% of the short viewport side), light grey ground (#e9e9ec).
-  First paint a pale back board: the slab square offset up-right by
-  ~1.7x the extrusion along (0.85, -0.55), pale grey-blue (#ccd0dd).
-  Then each leaf as a box: front face flat at its base rect; top face =
-  quad from the front top edge back along (0.85,-0.55)*extrusion,
-  LIGHTENED ~+14 lightness; right face same along the right edge,
-  DARKENED ~-12. Extrusion ~26px. Draw order: lower-left cells FIRST
-  (ascending x-y, ties lower first) so up-right neighbours' front faces
-  occlude interior bevels — bevels then survive only on the slab's
-  top/right edges and at resolution steps, which is the video's look.
+- BLOCKS — TRUE 3D (measured from the video; the published Q source
+  draws white stroke rects+ellipses on black instead — ship that as an
+  alt skin if you want the repo look). Orthographic camera with yaw
+  (~18 deg, camera right) and pitch (~12 deg, camera above), pivoting at
+  the slab center; scale the 128-space so the slab spans ~68% of the
+  short viewport side; light grey ground (#e9e9ec). Every leaf is a BOX
+  standing on the base plane and popping TOWARD the viewer with a
+  SEEDED RANDOM HEIGHT: elevation = base(~8) + rng(cell)*pop(~40),
+  biased slightly taller for deeper cells — the random heights are what
+  make the mosaic bristle like the reference instead of reading flat.
+  Faces: front = leaf color, top +14 lightness, bottom -18, left +7,
+  right -12. Decide face visibility from the ROTATED OUTWARD NORMAL
+  (dot toward viewer), never from projected winding — winding sign
+  errors silently cull faces. Painter: sort boxes by projected depth of
+  their centers, far first. Behind everything, a thin pale grey-blue
+  back board box (#ccd0dd). Drag = orbit (yaw/pitch), shift-drag = pan,
+  wheel = zoom.
 - COLORS. Each leaf's color is a PURE FUNCTION of (cellX, cellY, cellW,
   seed): hash them into a seeded PRNG (mulberry32), then draw hue, sat,
   light in that fixed order from one stream — hue = rng*360, with coarse

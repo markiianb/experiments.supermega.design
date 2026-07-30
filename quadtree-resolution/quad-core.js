@@ -118,65 +118,130 @@
     return `hsl(${m[1]}, ${m[2]}%, ${l}%)`;
   }
 
-  // Painter order: cell boxes extend back up-right, and a neighbor's front
-  // face occludes the bevels of the cell below-left of it — so draw lower-left
-  // cells FIRST and up-right cells last. Ascending (x - y), ties: lower first.
-  function paintOrder(leaves) {
-    return [...leaves].sort((a, b) => (a.x - a.y) - (b.x - b.y) || b.y - a.y);
+  // Seeded per-cell elevation: base thickness + a random pop toward the
+  // viewer, gently biased so deeper (finer) cells bristle a little more —
+  // the reference's boxes pop forward at random heights.
+  function leafElevation(leaf, seed, extrude, pop, perDepth, maxN) {
+    const key = (Math.imul(leaf.x | 0, 40503) ^ Math.imul(leaf.y | 0, 88651)
+      ^ Math.imul(leaf.w | 0, 63689) ^ ((seed | 0) + 0x9E37)) >>> 0;
+    const rng = mulberry32(key);
+    const depthBias = 0.55 + 0.45 * Math.min(1, leaf.depth / (maxN || 7));
+    return extrude + rng() * (pop || 0) * depthBias + (perDepth || 0) * leaf.depth;
   }
 
-  const KX = 0.85, KY = 0.55; // up-right extrusion direction
+  // Orthographic camera: yaw around the vertical axis, then pitch around the
+  // horizontal. World units are buffer pixels; z points toward the viewer.
+  // Returns [screenX, screenY, depth] — larger depth = closer to the camera.
+  function makeCamera(yawDeg, pitchDeg, layout) {
+    // positive yaw = camera to the right (right faces visible);
+    // positive pitch = camera above (top faces visible)
+    const yaw = (yawDeg || 0) * Math.PI / 180;
+    const pitch = -(pitchDeg || 0) * Math.PI / 180;
+    const cy = Math.cos(yaw), sy = Math.sin(yaw);
+    const cp = Math.cos(pitch), sp = Math.sin(pitch);
+    const half = BUFFER / 2;
+    const cxs = layout.x0 + half * layout.scale;
+    const cys = layout.y0 + half * layout.scale;
+    const rotate = (dx, dy, dz) => {
+      const x1 = dx * cy - dz * sy;
+      const z1 = dx * sy + dz * cy;
+      const y1 = dy * cp - z1 * sp;
+      const z2 = dy * sp + z1 * cp;
+      return [x1, y1, z2];
+    };
+    const project = (px, py, pz) => {
+      const [x1, y1, z2] = rotate(px - half, py - half, pz);
+      return [cxs + x1 * layout.scale, cys + y1 * layout.scale, z2];
+    };
+    // a face is visible when its outward normal rotates toward the viewer
+    project.faceVisible = (nx, ny, nz) => rotate(nx, ny, nz)[2] > 1e-9;
+    return project;
+  }
 
-  // Draw the slab: a pale back board first (the video's grey-blue backdrop),
-  // then each leaf as a box — front face flat at base position, top and right
-  // faces extending back by the extrusion vector. Interior bevels get covered
-  // by up-right neighbours' front faces; bevels stay visible along the slab's
-  // top/right edges and wherever fine cells step against coarse ones — which
-  // is exactly the video's reading.
-  function drawBlocks(ctx, leaves, layout, seed, palette, extrude, perDepth, boardColor) {
-    const side = BUFFER * layout.scale;
-    const bx = extrude * 1.7 * KX, by = -extrude * 1.7 * KY;
-    // back board
-    ctx.fillStyle = boardColor || '#ccd0dd';
-    ctx.beginPath();
-    ctx.moveTo(layout.x0, layout.y0);
-    ctx.lineTo(layout.x0 + bx, layout.y0 + by);
-    ctx.lineTo(layout.x0 + side + bx, layout.y0 + by);
-    ctx.lineTo(layout.x0 + side + bx, layout.y0 + side + by);
-    ctx.lineTo(layout.x0 + side, layout.y0 + side);
-    ctx.lineTo(layout.x0 + side, layout.y0);
-    ctx.closePath();
-    ctx.fill();
-    for (const leaf of paintOrder(leaves)) {
-      const sx = layout.x0 + leaf.x * layout.scale;
-      const sy = layout.y0 + leaf.y * layout.scale;
-      const sw = leaf.w * layout.scale;
-      const sh = leaf.h * layout.scale;
-      const e = extrude + (perDepth || 0) * leaf.depth;
-      const ox = e * KX, oy = -e * KY;
-      const color = leafColor(leaf, seed, palette);
-      // top face (lightened)
-      ctx.fillStyle = shade(color, +14);
-      ctx.beginPath();
-      ctx.moveTo(sx, sy);
-      ctx.lineTo(sx + ox, sy + oy);
-      ctx.lineTo(sx + sw + ox, sy + oy);
-      ctx.lineTo(sx + sw, sy);
-      ctx.closePath();
-      ctx.fill();
-      // right face (darkened)
-      ctx.fillStyle = shade(color, -12);
-      ctx.beginPath();
-      ctx.moveTo(sx + sw, sy);
-      ctx.lineTo(sx + sw + ox, sy + oy);
-      ctx.lineTo(sx + sw + ox, sy + sh + oy);
-      ctx.lineTo(sx + sw, sy + sh);
-      ctx.closePath();
-      ctx.fill();
-      // front face flat at base
+  // Draw one axis-aligned box (in buffer space, z from z0 back plane to z1
+  // front) through the camera: project 8 corners, draw each face whose
+  // projected winding faces the camera. Corner order per face is CCW seen
+  // from outside, so a negative signed area means "visible".
+  function drawBox(ctx, project, x, y, w, h, z0, z1, faceColors) {
+    const c = [
+      project(x, y, z1), project(x + w, y, z1), project(x + w, y + h, z1), project(x, y + h, z1),
+      project(x, y, z0), project(x + w, y, z0), project(x + w, y + h, z0), project(x, y + h, z0),
+    ];
+    // [corner indices, outward normal, name] — visibility from the normal,
+    // never from projected winding (winding flips are how faces vanish).
+    const faces = [
+      [[0, 1, 2, 3], [0, 0, 1], 'front'],
+      [[5, 4, 7, 6], [0, 0, -1], 'back'],
+      [[4, 5, 1, 0], [0, -1, 0], 'top'],
+      [[3, 2, 6, 7], [0, 1, 0], 'bottom'],
+      [[4, 0, 3, 7], [-1, 0, 0], 'left'],
+      [[1, 5, 6, 2], [1, 0, 0], 'right'],
+    ];
+    for (const [idx, n, name] of faces) {
+      if (!project.faceVisible(n[0], n[1], n[2])) continue;
+      const color = faceColors[name];
+      if (!color) continue;
+      const p0 = c[idx[0]], p1 = c[idx[1]], p2 = c[idx[2]], p3 = c[idx[3]];
       ctx.fillStyle = color;
-      ctx.fillRect(sx, sy, sw, sh);
+      ctx.beginPath();
+      ctx.moveTo(p0[0], p0[1]);
+      ctx.lineTo(p1[0], p1[1]);
+      ctx.lineTo(p2[0], p2[1]);
+      ctx.lineTo(p3[0], p3[1]);
+      ctx.closePath();
+      ctx.fill();
     }
+  }
+
+  // Painter order: boxes sorted by projected depth of their center, far first.
+  function paintOrder(leaves, project, elevation) {
+    const elev = elevation || (() => 0);
+    return [...leaves].map((leaf) => {
+      const e = elev(leaf);
+      const center = project(leaf.x + leaf.w / 2, leaf.y + leaf.h / 2, e / 2);
+      return { leaf, depth: center[2] };
+    }).sort((a, b) => a.depth - b.depth).map((entry) => entry.leaf);
+  }
+
+  // Draw the scene: the pale back board (a thin box behind the base plane),
+  // then every leaf as a 3D pillar popping toward the viewer.
+  function drawBlocks(ctx, leaves, layout, seed, palette, extrude, perDepth, boardColor, pop, maxN, yaw, pitch) {
+    const project = makeCamera(yaw, pitch, layout);
+    const board = boardColor || '#ccd0dd';
+    drawBox(ctx, project, 0, 0, BUFFER, BUFFER, -14, 0, {
+      front: board, top: shade(boardShade(board), +8), bottom: shade(boardShade(board), -8),
+      left: shade(boardShade(board), +4), right: shade(boardShade(board), -6), back: board,
+    });
+    const elev = (leaf) => leafElevation(leaf, seed, extrude, pop, perDepth, maxN) * 0.22;
+    for (const leaf of paintOrder(leaves, project, elev)) {
+      const color = leafColor(leaf, seed, palette);
+      drawBox(ctx, project, leaf.x, leaf.y, leaf.w, leaf.h, 0, Math.max(0.6, elev(leaf)), {
+        front: color,
+        top: shade(color, +14),
+        bottom: shade(color, -18),
+        left: shade(color, +7),
+        right: shade(color, -12),
+        back: null,
+      });
+    }
+  }
+
+  // boards arrive as hex — convert to an hsl() string once so shade() works
+  function boardShade(hex) {
+    const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+    if (!m) return hex;
+    const r = parseInt(m[1], 16) / 255, g = parseInt(m[2], 16) / 255, bl = parseInt(m[3], 16) / 255;
+    const max = Math.max(r, g, bl), min = Math.min(r, g, bl);
+    const l = (max + min) / 2;
+    let h = 0, s = 0;
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      if (max === r) h = ((g - bl) / d + (g < bl ? 6 : 0)) / 6;
+      else if (max === g) h = ((bl - r) / d + 2) / 6;
+      else h = ((r - g) / d + 4) / 6;
+    }
+    return `hsl(${(h * 360).toFixed(1)}, ${(s * 100).toFixed(1)}%, ${(l * 100).toFixed(1)}%)`;
   }
 
   // Their skin: white stroke rect + ellipse per leaf on black (QuadTreeSplitter).
@@ -232,8 +297,11 @@
     fps: 12,
     skin: 'blocks',
     palette: 'spectrum',
-    extrude: 26,
+    extrude: 8,
+    pop: 40,
     perDepth: 0,
+    yaw: 20,
+    pitch: 12,
     ground: '#e9e9ec',
     ink: '#ffffff',
     viewX: 0,
@@ -282,7 +350,8 @@
       ctx.scale(config.zoom || 1, config.zoom || 1);
       ctx.translate(-width / 2, -height / 2);
       if (config.skin === 'wireframe') drawWireframe(ctx, leaves, layout, config.ink);
-      else drawBlocks(ctx, leaves, layout, config.seed, config.palette, config.extrude, config.perDepth, config.board);
+      else drawBlocks(ctx, leaves, layout, config.seed, config.palette, config.extrude,
+        config.perDepth, config.board, config.pop, config.maxN, config.yaw, config.pitch);
       ctx.restore();
     }
 
@@ -308,8 +377,8 @@
       play() { paused = false; },
       setConfig(partial, opts) {
         const softKeys = ['threshold', 'mode', 'maxN', 'timeline', 'manualDepth', 'speed',
-          'fps', 'skin', 'palette', 'extrude', 'perDepth', 'ground', 'board', 'ink', 'seed',
-          'viewX', 'viewY', 'zoom'];
+          'fps', 'skin', 'palette', 'extrude', 'pop', 'perDepth', 'yaw', 'pitch',
+          'ground', 'board', 'ink', 'seed', 'viewX', 'viewY', 'zoom'];
         const needsRebuild = Object.keys(partial).some((k) =>
           softKeys.indexOf(k) === -1 &&
           JSON.stringify(partial[k]) !== JSON.stringify(config[k]));
@@ -330,6 +399,7 @@
 
   root.QuadEngine = {
     mulberry32, BUFFER, gray, regionMean, deviation, split, timelineDepth,
-    leafColor, shade, paintOrder, drawBlocks, drawWireframe, renderMask, run, DEFAULTS,
+    leafColor, leafElevation, shade, makeCamera, drawBox, paintOrder,
+    drawBlocks, drawWireframe, renderMask, run, DEFAULTS,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

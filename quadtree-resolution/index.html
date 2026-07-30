@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="supermega-instrument-release" content="0.1.0-f0feb3fed659" />
+<meta name="supermega-instrument-release" content="0.1.0-1ff60f2032a6" />
 <title>SUPERMEGA — Quadtree Resolution</title>
-<link rel="stylesheet" href="../_kit/releases/0.1.0-f0feb3fed659/instrument.css" />
+<link rel="stylesheet" href="../_kit/releases/0.1.0-1ff60f2032a6/instrument.css" />
 <link rel="stylesheet" href="../_system/experiment-host.css" />
 <style>
   .hero{position:fixed;inset:0;overflow:hidden;background:#e9e9ec}
   .hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 </style>
 </head>
-<body data-system="instrument" data-instrument-release="0.1.0-f0feb3fed659" data-instrument-polarity="ink" data-instrument-grid="off" data-instrument-grain="off" data-instrument-density="normal" data-instrument-motion="system" data-controls="visible">
+<body data-system="instrument" data-instrument-release="0.1.0-1ff60f2032a6" data-instrument-polarity="ink" data-instrument-grid="off" data-instrument-grain="off" data-instrument-density="normal" data-instrument-motion="system" data-controls="visible">
   <script>if(new URLSearchParams(location.search).get('instrument-embed')==='1')document.body.dataset.instrumentEmbed='true';</script>
   <section class="hero instrument-renderer-surface">
     <canvas id="stage"></canvas>
@@ -22,7 +22,7 @@
     <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--middle"><span>STUDY</span><span>KITASENJU DESIGN</span></div>
     <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">EX-QUAD-01</span><button class="instrument-action" id="toggle" type="button">Controls</button></div>
   </header>
-  <div class="instrument-renderer-hud instrument-renderer-hud--top">The letter resolves — cells split where the glyph disagrees with itself · drag to pan, scroll to zoom</div>
+  <div class="instrument-renderer-hud instrument-renderer-hud--top">The letter resolves — cells split where the glyph disagrees with itself · drag to orbit, shift-drag to pan, scroll to zoom</div>
   <div class="instrument-renderer-hud instrument-renderer-hud--bottom" id="stat">A · TIMELINE · SEED 17 · LIVE</div>
   <div class="instrument-renderer-credit">Quadtree resolution / Study of Kitasenju Design's Algorithms from A to Z: Q — QuadTree · <a href="faithful.html">faithful cut</a></div>
 
@@ -56,14 +56,17 @@
       <div class="instrument-renderer-section">Blocks</div>
       <div class="instrument-group">
         <div class="instrument-row"><span class="instrument-row-label">Skin</span><div class="instrument-row-control instrument-renderer-choice" id="f-skin"><button class="instrument-action" data-skin="blocks" aria-pressed="true" type="button">Blocks</button><button class="instrument-action" data-skin="wireframe" aria-pressed="false" type="button" title="The published Q source's own skin">Wireframe</button></div><span></span></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-extrude">Extrude</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-extrude" min="0" max="60" step="1" value="26"></div><output class="instrument-row-value instrument-tabular" id="v-extrude" for="s-extrude">26</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-extrude">Base</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-extrude" min="0" max="60" step="1" value="8"></div><output class="instrument-row-value instrument-tabular" id="v-extrude" for="s-extrude">8</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-pop">Pop</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-pop" min="0" max="120" step="1" value="40"></div><output class="instrument-row-value instrument-tabular" id="v-pop" for="s-pop">40</output></div>
         <div class="instrument-row"><label class="instrument-row-label" for="s-perdepth">Depth lift</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-perdepth" min="0" max="6" step="0.5" value="0"></div><output class="instrument-row-value instrument-tabular" id="v-perdepth" for="s-perdepth">0.0</output></div>
       </div>
 
       <div class="instrument-renderer-section">View</div>
       <div class="instrument-group">
+        <div class="instrument-row"><label class="instrument-row-label" for="s-yaw">Yaw</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-yaw" min="-60" max="60" step="1" value="18"></div><output class="instrument-row-value instrument-tabular" id="v-yaw" for="s-yaw">18</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-pitch">Pitch</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-pitch" min="-45" max="45" step="1" value="12"></div><output class="instrument-row-value instrument-tabular" id="v-pitch" for="s-pitch">12</output></div>
         <div class="instrument-row"><label class="instrument-row-label" for="s-zoom">Zoom</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-zoom" min="0.25" max="4" step="0.05" value="1"></div><output class="instrument-row-value instrument-tabular" id="v-zoom" for="s-zoom">1.00</output></div>
-        <div class="instrument-row"><span class="instrument-row-label">Frame</span><div class="instrument-row-control instrument-renderer-actions"><button class="instrument-action" id="b-resetview" type="button" title="Recenter and reset zoom">Reset view</button></div><span class="instrument-row-value instrument-tabular" id="v-pan">0, 0</span></div>
+        <div class="instrument-row"><span class="instrument-row-label">Frame</span><div class="instrument-row-control instrument-renderer-actions"><button class="instrument-action" id="b-resetview" type="button" title="Recenter, reset zoom and orbit">Reset view</button></div><span class="instrument-row-value instrument-tabular" id="v-pan">0, 0</span></div>
       </div>
 
       <div class="instrument-renderer-section">Look</div>
@@ -86,7 +89,7 @@
   <div class="instrument-mode-dock instrument-renderer-dock" role="toolbar" aria-label="Material controls"><button class="instrument-action" type="button" data-instrument-coordinate="ink" aria-pressed="true">Ink</button><button class="instrument-action" type="button" data-instrument-coordinate="light" aria-pressed="false">Light</button><button class="instrument-action" type="button" data-instrument-coordinate="grid" aria-pressed="false">Grid</button><button class="instrument-action" type="button" data-instrument-coordinate="grain" aria-pressed="false">Grain</button></div>
   <div class="instrument-material-grid" aria-hidden="true"></div><div class="instrument-material-grain" aria-hidden="true"></div>
 
-<script src="../_kit/releases/0.1.0-f0feb3fed659/instrument-runtime.js"></script>
+<script src="../_kit/releases/0.1.0-1ff60f2032a6/instrument-runtime.js"></script>
 <script src="../_system/adapters/adapter-core.js"></script>
 <script src="../_system/adapters/quadtree-resolution.js"></script>
 <script src="quad-core.js"></script>
@@ -129,7 +132,10 @@
       skin: c.skin,
       palette: c.palette,
       extrude: c.extrude,
+      pop: c.pop,
       perDepth: c.perDepth,
+      yaw: c.yaw,
+      pitch: c.pitch,
       ground: GROUNDS[c.palette],
       board: BOARDS[c.palette],
       ink: '#ffffff',
@@ -166,7 +172,10 @@
       's-speed': [c.speed, 'v-speed', (v) => Number(v).toFixed(2)],
       's-manual': [c.manualDepth, 'v-manual', (v) => Number(v).toFixed(1)],
       's-extrude': [c.extrude, 'v-extrude', (v) => v],
+      's-pop': [c.pop, 'v-pop', (v) => v],
       's-perdepth': [c.perDepth, 'v-perdepth', (v) => Number(v).toFixed(1)],
+      's-yaw': [c.yaw, 'v-yaw', (v) => Math.round(v)],
+      's-pitch': [c.pitch, 'v-pitch', (v) => Math.round(v)],
       's-zoom': [c.zoom, 'v-zoom', (v) => Number(v).toFixed(2)],
     };
     Object.entries(ranges).forEach(([id, [value, output, fmt]]) => {
@@ -240,26 +249,38 @@
   }));
   const rangeBindings = {
     's-threshold': 'threshold', 's-maxn': 'maxN', 's-speed': 'speed', 's-manual': 'manualDepth',
-    's-extrude': 'extrude', 's-perdepth': 'perDepth', 's-zoom': 'zoom',
+    's-extrude': 'extrude', 's-pop': 'pop', 's-perdepth': 'perDepth',
+    's-yaw': 'yaw', 's-pitch': 'pitch', 's-zoom': 'zoom',
   };
   Object.entries(rangeBindings).forEach(([id, key]) => $(id).addEventListener('input', (event) => adapter.configure({ [key]: Number(event.target.value) })));
 
-  $('b-resetview').addEventListener('click', () => adapter.configure({ viewX: 0, viewY: 0, zoom: 1 }));
+  $('b-resetview').addEventListener('click', () => adapter.configure({ viewX: 0, viewY: 0, zoom: 1, yaw: 18, pitch: 12 }));
 
-  /* drag to pan */
+  /* drag = orbit (like the original's OrbitControls); shift+drag = pan */
   let dragFrom = null;
   canvas.addEventListener('pointerdown', (event) => {
     const c = adapter.getConfiguration();
-    dragFrom = { px: event.clientX, py: event.clientY, viewX: c.viewX, viewY: c.viewY };
+    dragFrom = {
+      px: event.clientX, py: event.clientY,
+      viewX: c.viewX, viewY: c.viewY, yaw: c.yaw, pitch: c.pitch,
+      pan: event.shiftKey,
+    };
     canvas.setPointerCapture(event.pointerId);
     canvas.style.cursor = 'grabbing';
   });
   canvas.addEventListener('pointermove', (event) => {
     if (!dragFrom) return;
-    adapter.configure({
-      viewX: dragFrom.viewX + (event.clientX - dragFrom.px),
-      viewY: dragFrom.viewY + (event.clientY - dragFrom.py),
-    });
+    if (dragFrom.pan) {
+      adapter.configure({
+        viewX: dragFrom.viewX + (event.clientX - dragFrom.px),
+        viewY: dragFrom.viewY + (event.clientY - dragFrom.py),
+      });
+    } else {
+      adapter.configure({
+        yaw: dragFrom.yaw + (event.clientX - dragFrom.px) * 0.25,
+        pitch: dragFrom.pitch + (event.clientY - dragFrom.py) * 0.25,
+      });
+    }
   });
   const endDrag = () => { dragFrom = null; canvas.style.cursor = 'grab'; };
   canvas.addEventListener('pointerup', endDrag);
@@ -283,7 +304,11 @@
     });
     // re-baseline an in-flight drag so the next pointermove doesn't yank the
     // view back to its pre-zoom anchor
-    if (dragFrom) dragFrom = { px: event.clientX, py: event.clientY, viewX: applied.viewX, viewY: applied.viewY };
+    if (dragFrom) dragFrom = {
+      px: event.clientX, py: event.clientY,
+      viewX: applied.viewX, viewY: applied.viewY,
+      yaw: applied.yaw, pitch: applied.pitch, pan: dragFrom.pan,
+    };
   }, { passive: false });
 
   $('b-dice').addEventListener('click', () => adapter.execute('randomize'));

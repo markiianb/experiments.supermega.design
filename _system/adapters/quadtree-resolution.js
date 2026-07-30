@@ -6,12 +6,14 @@
 	const skins = ["blocks", "wireframe"];
 	const palettes = ["spectrum", "paper", "red", "mono"];
 	const defaults = {
-		extrude: 26,
+		extrude: 8,
 		manualDepth: 7,
 		maxN: 7,
 		mode: "faithful",
 		palette: "spectrum",
 		perDepth: 0,
+		pitch: 12,
+		pop: 40,
 		seed: 17,
 		skin: "blocks",
 		speed: 1,
@@ -20,6 +22,7 @@
 		timeline: true,
 		viewX: 0,
 		viewY: 0,
+		yaw: 18,
 		zoom: 1,
 	};
 	const schema = {
@@ -32,6 +35,8 @@
 			mode: { type: "enum", label: "Deviation", group: "splitter", choices: modes },
 			palette: { type: "enum", label: "Colour", group: "look", choices: palettes },
 			perDepth: { type: "number", label: "Depth lift", group: "blocks", minimum: 0, maximum: 6, step: 0.5 },
+			pitch: { type: "number", label: "Pitch", group: "view", minimum: -45, maximum: 45, step: 1 },
+			pop: { type: "number", label: "Pop", group: "blocks", minimum: 0, maximum: 120, step: 1 },
 			seed: { type: "integer", label: "Seed", group: "seed", minimum: 0, maximum: 4294967295, step: 1 },
 			skin: { type: "enum", label: "Skin", group: "look", choices: skins },
 			speed: { type: "number", label: "Speed", group: "resolution", minimum: 0.25, maximum: 3, step: 0.05 },
@@ -40,6 +45,7 @@
 			timeline: { type: "boolean", label: "Timeline", group: "resolution" },
 			viewX: { type: "number", label: "Pan X", group: "view", minimum: -4000, maximum: 4000, step: 1 },
 			viewY: { type: "number", label: "Pan Y", group: "view", minimum: -4000, maximum: 4000, step: 1 },
+			yaw: { type: "number", label: "Yaw", group: "view", minimum: -60, maximum: 60, step: 1 },
 			zoom: { type: "number", label: "Zoom", group: "view", minimum: 0.25, maximum: 4, step: 0.05 },
 		},
 		defaults,
@@ -58,6 +64,8 @@
 			mode: modes.includes(input.mode) ? input.mode : defaults.mode,
 			palette: palettes.includes(input.palette) ? input.palette : defaults.palette,
 			perDepth: number(input.perDepth, defaults.perDepth, 0, 6),
+			pitch: number(input.pitch, defaults.pitch, -45, 45),
+			pop: number(input.pop, defaults.pop, 0, 120),
 			seed: Math.round(number(input.seed, defaults.seed, 0, 4294967295)),
 			skin: skins.includes(input.skin) ? input.skin : defaults.skin,
 			speed: number(input.speed, defaults.speed, 0.25, 3),
@@ -66,6 +74,7 @@
 			timeline: typeof input.timeline === "boolean" ? input.timeline : defaults.timeline,
 			viewX: Math.round(number(input.viewX, defaults.viewX, -4000, 4000)),
 			viewY: Math.round(number(input.viewY, defaults.viewY, -4000, 4000)),
+			yaw: number(input.yaw, defaults.yaw, -60, 60),
 			zoom: number(input.zoom, defaults.zoom, 0.25, 4),
 		};
 	}
