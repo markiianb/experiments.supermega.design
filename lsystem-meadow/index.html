@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L-System Meadow — instrument</title>
+<style>
+  :root { color-scheme: dark; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: #000; overflow: hidden;
+    font: 11px/1.5 "SF Mono", ui-monospace, Menlo, monospace; color: #999; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+
+  #panel {
+    position: fixed; top: 0; right: 0; bottom: 0; width: 248px; z-index: 3;
+    background: rgba(10,10,10,0.92); border-left: 1px solid #222;
+    padding: 14px 16px 18px; overflow-y: auto; letter-spacing: 0.03em;
+    backdrop-filter: blur(6px); transition: transform 0.25s ease;
+  }
+  #panel.hidden { transform: translateX(100%); }
+  #paneltoggle {
+    position: fixed; top: 12px; right: 12px; z-index: 4;
+    background: #111; color: #bbb; border: 1px solid #333; padding: 4px 9px;
+    font: inherit; cursor: pointer;
+  }
+  h1 { font: 700 13px/1.3 inherit; color: #eee; margin-bottom: 2px; padding-right: 64px; }
+  .sub { color: #555; margin-bottom: 14px; }
+  .sec { border-top: 1px solid #1d1d1d; padding: 10px 0; }
+  .sec .label { color: #666; text-transform: uppercase; font-size: 9px;
+    letter-spacing: 0.12em; margin-bottom: 7px; }
+  .row { display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; margin-bottom: 6px; }
+  .row span.k { color: #999; }
+  .row output { color: #ddd; min-width: 34px; text-align: right; }
+  input[type="range"] { flex: 1; accent-color: #F61515; height: 14px; }
+  input[type="text"], input[type="number"] {
+    width: 100%; background: #0d0d0d; border: 1px solid #2a2a2a; color: #ddd;
+    font: inherit; padding: 4px 6px; outline: none;
+  }
+  input[type="number"] { width: 90px; }
+  input[type="color"] { width: 26px; height: 20px; border: 1px solid #2a2a2a;
+    background: none; padding: 0; }
+  input[type="checkbox"] { accent-color: #F61515; }
+  .species { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; }
+  .species label { display: flex; gap: 6px; align-items: center; color: #999;
+    cursor: pointer; }
+  button {
+    background: #111; color: #ccc; border: 1px solid #333; font: inherit;
+    padding: 5px 8px; cursor: pointer; letter-spacing: 0.03em;
+  }
+  button:hover { border-color: #666; color: #fff; }
+  button.primary { background: #F61515; border-color: #F61515; color: #fff; }
+  .btnrow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .presets button { flex: 1 1 45%; }
+  .credit { border-top: 1px solid #1d1d1d; padding-top: 10px; margin-top: 4px;
+    color: #555; }
+  .credit a { color: #888; text-decoration: none; border-bottom: 1px solid #333; }
+  #toast { position: fixed; left: 16px; bottom: 14px; z-index: 4; color: #888;
+    opacity: 0; transition: opacity 0.3s; }
+  #toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+<button id="paneltoggle">panel</button>
+<div id="toast"></div>
+
+<div id="panel">
+  <h1>L-System Meadow</h1>
+  <div class="sub">an instrument on the Kitasenju study engine</div>
+
+  <div class="sec">
+    <div class="label">Mask</div>
+    <div class="row"><input type="text" id="maskText" value="L" spellcheck="false"></div>
+    <div class="row"><span class="k">plants</span>
+      <input type="range" id="treeCount" min="10" max="400" step="5" value="100"><output id="treeCountOut"></output></div>
+  </div>
+
+  <div class="sec">
+    <div class="label">Species</div>
+    <div class="species" id="speciesBox"></div>
+  </div>
+
+  <div class="sec">
+    <div class="label">Growth Rules</div>
+    <div class="row"><span class="k">angle ×</span>
+      <input type="range" id="angleScale" min="0.4" max="2" step="0.05" value="1"><output id="angleScaleOut"></output></div>
+    <div class="row"><span class="k">iterations ±</span>
+      <input type="range" id="iterDelta" min="-2" max="2" step="1" value="0"><output id="iterDeltaOut"></output></div>
+    <div class="row"><span class="k">decay</span>
+      <input type="range" id="decay" min="0.45" max="0.9" step="0.01" value="0"><output id="decayOut"></output></div>
+    <div class="row"><span class="k" style="color:#555">decay 0.45 = auto (0.60–0.75 per plant)</span></div>
+  </div>
+
+  <div class="sec">
+    <div class="label">Motion</div>
+    <div class="row"><span class="k">sway amp</span>
+      <input type="range" id="swayAmp" min="0" max="0.6" step="0.01" value="0.2"><output id="swayAmpOut"></output></div>
+    <div class="row"><span class="k">sway speed</span>
+      <input type="range" id="swaySpeed" min="0" max="0.1" step="0.002" value="0.02"><output id="swaySpeedOut"></output></div>
+    <div class="row"><span class="k">grow in</span><input type="checkbox" id="growth"></div>
+    <div class="row"><span class="k">grow speed</span>
+      <input type="range" id="growthSpeed" min="1" max="40" step="1" value="6"><output id="growthSpeedOut"></output></div>
+  </div>
+
+  <div class="sec">
+    <div class="label">Ink</div>
+    <div class="row"><span class="k">ink / ground</span>
+      <span><input type="color" id="ink" value="#dcdcdc">
+      <input type="color" id="background" value="#000000"></span></div>
+    <div class="btnrow presets">
+      <button data-preset="faithful">faithful L</button>
+      <button data-preset="red">red meadow</button>
+      <button data-preset="paper">paper</button>
+      <button data-preset="wordmark">wordmark</button>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="label">Seed</div>
+    <div class="row">
+      <input type="number" id="seed" value="1968" min="0" step="1">
+      <button id="randomize">dice</button>
+    </div>
+    <div class="btnrow">
+      <button id="pause">pause</button>
+      <button id="replay">replay</button>
+      <button id="copylink">copy link</button>
+      <button id="exportpng" class="primary">PNG</button>
+    </div>
+  </div>
+
+  <div class="credit">
+    study of <a href="https://x.com/kitasenjudesign/status/2082479558906015959">Kitasenju Design</a> —
+    Algorithms from A to Z: L-system
+    (<a href="https://github.com/kitasenjudesign/algorithms-from-a-to-z">source</a>).
+    L-systems: 1968, Aristid Lindenmayer. Engine rules faithful; instrument ours.
+    <a href="faithful.html">faithful cut →</a>
+  </div>
+</div>
+
+<script src="meadow-core.js"></script>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const canvas = $('stage');
+  const SPECIES = MeadowEngine.SPECIES_NAMES;
+
+  // --- state ----------------------------------------------------------------
+  const state = {
+    maskText: 'L', treeCount: 100, species: SPECIES.slice(),
+    angleScale: 1, iterDelta: 0, decay: null,
+    swayAmp: 0.2, swaySpeed: 0.02, growth: false, growthSpeed: 6,
+    ink: '#dcdcdc', background: '#000000', seed: 1968,
+  };
+
+  // Every preset carries the FULL key set — presets are applied as overlays
+  // onto current state, so a missing key would leak the previous value.
+  const PRESETS = {
+    faithful: { maskText: 'L', treeCount: 100, species: SPECIES.slice(), angleScale: 1,
+      iterDelta: 0, decay: null, swayAmp: 0.2, swaySpeed: 0.02, growth: false,
+      growthSpeed: 6, ink: '#dcdcdc', background: '#000000', seed: 1968 },
+    red: { maskText: 'L', treeCount: 180, species: ['broadleaf', 'wind', 'weeping', 'dead'],
+      angleScale: 1.1, iterDelta: 0, decay: null, swayAmp: 0.26, swaySpeed: 0.024, growth: true,
+      growthSpeed: 8, ink: '#F61515', background: '#000000', seed: 15 },
+    paper: { maskText: 'L', treeCount: 140, species: ['symmetric', 'pine', 'bamboo'],
+      angleScale: 0.9, iterDelta: 0, decay: null, swayAmp: 0.12, swaySpeed: 0.016, growth: false,
+      growthSpeed: 6, ink: '#1a1a1a', background: '#F3EFE7', seed: 7 },
+    wordmark: { maskText: 'SM', treeCount: 260, species: SPECIES.slice(), angleScale: 1,
+      iterDelta: -1, decay: null, swayAmp: 0.2, swaySpeed: 0.02, growth: true,
+      growthSpeed: 12, ink: '#dcdcdc', background: '#000000', seed: 88 },
+  };
+
+  function engineConfig() {
+    return {
+      seed: state.seed >>> 0,
+      maskText: state.maskText || 'L',
+      treeCount: state.treeCount,
+      species: state.species.length ? state.species : null,
+      mods: {
+        angleScale: state.angleScale,
+        iterDelta: state.iterDelta,
+        decay: state.decay,
+      },
+      ink: state.ink, background: state.background,
+      swayAmp: state.swayAmp, swaySpeed: state.swaySpeed,
+      fps: 20, growth: state.growth, growthSpeed: state.growthSpeed,
+    };
+  }
+
+  // --- url hash round-trip --------------------------------------------------
+  function encodeHash() {
+    const c = Object.assign({}, state, { decay: state.decay === null ? 'auto' : state.decay });
+    location.replace('#' + encodeURIComponent(JSON.stringify(c)));
+  }
+  function decodeHash() {
+    if (location.hash.length < 2) return;
+    try {
+      const c = JSON.parse(decodeURIComponent(location.hash.slice(1)));
+      if (c.decay === 'auto') c.decay = null;
+      // Whitelist + type-check every key so a wrong-shape hash degrades to
+      // defaults per key instead of throwing at boot.
+      const num = (v, min, max, fallback) => {
+        v = Number(v);
+        return Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : fallback;
+      };
+      const s = state;
+      if (typeof c.maskText === 'string' && c.maskText.trim()) s.maskText = c.maskText.slice(0, 24);
+      s.treeCount = num(c.treeCount, 1, 400, s.treeCount);
+      if (Array.isArray(c.species)) {
+        const valid = c.species.filter((x) => SPECIES.includes(x));
+        if (valid.length) s.species = valid;
+      }
+      s.angleScale = num(c.angleScale, 0.4, 2, s.angleScale);
+      s.iterDelta = Math.round(num(c.iterDelta, -2, 2, s.iterDelta));
+      s.decay = (c.decay === null || c.decay === undefined) ? s.decay
+        : (Number.isFinite(Number(c.decay)) ? num(c.decay, 0.45, 0.9, null) : s.decay);
+      if (c.decay === null) s.decay = null;
+      s.swayAmp = num(c.swayAmp, 0, 0.6, s.swayAmp);
+      s.swaySpeed = num(c.swaySpeed, 0, 0.1, s.swaySpeed);
+      if (typeof c.growth === 'boolean') s.growth = c.growth;
+      s.growthSpeed = num(c.growthSpeed, 1, 40, s.growthSpeed);
+      if (/^#[0-9a-fA-F]{6}$/.test(c.ink || '')) s.ink = c.ink;
+      if (/^#[0-9a-fA-F]{6}$/.test(c.background || '')) s.background = c.background;
+      s.seed = Math.round(num(c.seed, 0, 0xFFFFFFFF, s.seed));
+    } catch (_) { /* malformed hash: keep defaults */ }
+  }
+
+  // --- panel wiring ---------------------------------------------------------
+  const speciesBox = $('speciesBox');
+  for (const name of SPECIES) {
+    const label = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.value = name;
+    cb.addEventListener('change', () => {
+      let picked = [...speciesBox.querySelectorAll('input:checked')].map((x) => x.value);
+      if (!picked.length) {
+        // empty selection means "all species" in the engine — reflect that in
+        // the panel instead of showing zero boxes checked
+        picked = SPECIES.slice();
+        for (const box of speciesBox.querySelectorAll('input')) box.checked = true;
+      }
+      state.species = picked;
+      apply();
+    });
+    label.append(cb, document.createTextNode(name));
+    speciesBox.append(label);
+  }
+
+  const sliders = [
+    ['treeCount', (v) => v, parseInt],
+    ['angleScale', (v) => v.toFixed(2), parseFloat],
+    ['iterDelta', (v) => (v > 0 ? '+' + v : v), parseInt],
+    ['decay', (v) => (v <= 0.45 ? 'auto' : v.toFixed(2)), parseFloat],
+    ['swayAmp', (v) => v.toFixed(2), parseFloat],
+    ['swaySpeed', (v) => v.toFixed(3), parseFloat],
+    ['growthSpeed', (v) => v, parseInt],
+  ];
+  for (const [id, fmt, parse] of sliders) {
+    $(id).addEventListener('input', () => {
+      let v = parse($(id).value);
+      if (id === 'decay') v = (v <= 0.45 ? null : v);
+      state[id] = v;
+      $(id + 'Out').textContent = fmt(parse($(id).value));
+      apply();
+    });
+  }
+  $('maskText').addEventListener('change', () => { state.maskText = $('maskText').value || 'L'; apply(); });
+  $('seed').addEventListener('change', () => { state.seed = parseInt($('seed').value) || 0; apply(); });
+  $('ink').addEventListener('input', () => { state.ink = $('ink').value; apply(); });
+  $('background').addEventListener('input', () => { state.background = $('background').value; apply(); });
+  $('growth').addEventListener('change', () => { state.growth = $('growth').checked; apply(true); });
+
+  function syncPanel() {
+    $('maskText').value = state.maskText;
+    $('seed').value = state.seed;
+    $('ink').value = state.ink;
+    $('background').value = state.background;
+    $('growth').checked = state.growth;
+    for (const [id, fmt, parse] of sliders) {
+      const v = (id === 'decay' && state.decay === null) ? 0.45 : state[id];
+      $(id).value = v;
+      $(id + 'Out').textContent = fmt(parse(String($(id).value)));
+    }
+    for (const cb of speciesBox.querySelectorAll('input')) {
+      cb.checked = state.species.includes(cb.value);
+    }
+  }
+
+  // --- engine ---------------------------------------------------------------
+  let handle = null;
+  function apply(rebuild) {
+    encodeHash();
+    if (!handle) return;
+    handle.setConfig(engineConfig(), { rebuild: !!rebuild });
+  }
+
+  decodeHash();
+  syncPanel();
+  handle = MeadowEngine.run(canvas, engineConfig());
+  encodeHash();
+
+  // --- actions --------------------------------------------------------------
+  function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toast._id); toast._id = setTimeout(() => t.classList.remove('show'), 1600);
+  }
+  $('randomize').addEventListener('click', () => {
+    state.seed = Math.floor(Math.random() * 0xFFFFFFFF);
+    $('seed').value = state.seed;
+    apply();
+  });
+  $('replay').addEventListener('click', () => apply(true));
+  $('pause').addEventListener('click', () => {
+    if (handle.paused) { handle.play(); $('pause').textContent = 'pause'; }
+    else { handle.pause(); $('pause').textContent = 'play'; }
+  });
+  $('copylink').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(location.href); toast('link copied — same link, same meadow'); }
+    catch (_) { toast('copy blocked — grab the URL bar'); }
+  });
+  $('exportpng').addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.download = `lsystem-meadow-${state.maskText}-${state.seed}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+    toast('PNG saved');
+  });
+  $('paneltoggle').addEventListener('click', () => $('panel').classList.toggle('hidden'));
+  document.querySelectorAll('[data-preset]').forEach((b) => {
+    b.addEventListener('click', () => {
+      Object.assign(state, JSON.parse(JSON.stringify(PRESETS[b.dataset.preset])));
+      syncPanel();
+      apply(true);
+    });
+  });
+  addEventListener('resize', () => handle.resize());
+</script>
+</body>
+</html>

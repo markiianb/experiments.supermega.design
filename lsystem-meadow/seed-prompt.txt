@@ -1,0 +1,89 @@
+SEED PROMPT — SUPERMEGA L-SYSTEM MEADOW
+=======================================
+You are implementing the "L-system meadow" visual system from
+https://experiments.supermega.design/lsystem-meadow/ in the user's project.
+It is a study of Kitasenju Design's "Algorithms from A to Z: L — L-system"
+(github.com/kitasenjudesign/algorithms-from-a-to-z); credit them when you
+ship it. L-systems: 1968, Aristid Lindenmayer.
+
+WHAT IT IS
+A meadow of wispy white plants on pure black, drawn on 2D canvas. The
+compositional secret: plants grow only from the bright pixels of a hidden
+letterform render, so the meadow IS typography — a tall dense cluster is
+the letter's vertical stroke. The only motion is each whole plant slowly
+pivoting at its base. No glow, no fades, hairline tips, 20fps on purpose.
+
+CORE RULES (reimplement these, or fetch the engine below)
+- MASK. Render text white-on-black on a hidden 90x90 canvas
+  (ctx.fillText, bold sans, ~92% of height, shrink-to-fit width, centered
+  both axes: textAlign center + textBaseline middle at 45,45). Every
+  pixel with r > 128 becomes a planting point stored normalized
+  (x/90, y/90). Pick random mask points, scale to stage size, plant.
+  Planting positions scale with the viewport; step lengths are fixed px.
+- SPECIES. Each plant picks one of seven rule sets, axiom "X" unless
+  noted (angles in degrees, baseStep in px):
+    symmetric  X -> F[+X][-X]FX   F -> FF    25.0   iter 5    max(40, rnd*120)
+    broadleaf  X -> F[-X][+X][X]  F -> FF    22.0   iter 4-5  max(30, rnd*100)
+    wind       X -> F[+X]F[-X]FX  F -> FF    20.0   iter 4    50+rnd*80
+    weeping    X -> FF-[-X]+[+X]  F -> FF    18.0   iter 4    40+rnd*60
+    pine       X -> FFX           F -> F[+F][-F]F  30.0  iter 5   30+rnd*60
+    dead       X -> stochastic: 60% F[+X]F[-X]FX, 30% F[-X]FX, 10% F;
+               F -> FF            10-35 rnd  iter 3-5  50+rnd*100
+    bamboo     axiom A; A -> FFA  F -> F[+F]F      10.0  iter 4   60+rnd*80
+  Iteration ranges (4-5, 3-5) are inclusive uniform integers:
+  4 + floor(rnd*2), 3 + floor(rnd*3). Expand the axiom through the rules
+  for that plant's iteration count, ONCE, at build time. The animation
+  never regenerates sentences. The reference/faithful look has NO grow-in
+  reveal — the meadow appears fully grown; grow-in is an optional
+  instrument feature only.
+- LENGTHS. baseStep *= 0.35. Per plant, lengthDecay = 0.6 + rnd*0.15.
+  Drawn step length = baseStep * pow(lengthDecay, iterations). At every
+  "[" push the length stack and multiply the current length by
+  lengthDecay; at "]" pop both. That bracket-depth decay is what makes
+  the feathery tips — the "flower clusters" are just depth-4/5
+  branchlets at sub-pixel stroke widths.
+- TURTLE. Use the canvas transform stack, no manual trig:
+  save; translate(plant.x, plant.y); rotate(sway); then per character:
+    F: lineWidth = clamp(len/18, 0.5, 6); line (0,0)->(0,-len);
+       translate(0,-len). Then species curvature: weeping rotates
+       -0.5deg per segment, wind +0.2deg — cumulative droop and lean.
+    +: rotate(+angle)   -: rotate(-angle)
+    [: save (and push len; len *= decay)   ]: restore (and pop len)
+  End with restore.
+- MOTION. background black every frame; stroke rgb(220,220,220);
+  sway = sin(frame * 0.02) * 0.2 radians applied as the root rotation of
+  EVERY plant; frame rate locked to 20fps (accumulate on
+  requestAnimationFrame; don't setInterval). The reference look is 100
+  plants, letter "L".
+- DETERMINISM. The original calls Math.random() and is unreproducible.
+  Do better: route every draw (species pick, params, decay, planting
+  points) through one seeded PRNG (mulberry32) consumed in a fixed
+  order, so one integer seed = one exact meadow.
+
+GOTCHAS (each cost a review finding — don't relearn them)
+- If a control panel always sends the full config, decide "rebuild the
+  forest or just repaint" by DIFFING VALUES against the current config,
+  not by which keys are present — otherwise every color/sway tweak
+  resets the animation to frame 0.
+- If you serialize config into the URL hash, whitelist + type-check +
+  clamp every key on decode. Valid-JSON-wrong-shape input (species as a
+  string) otherwise throws during boot and blanks the page.
+- Presets applied as Object.assign overlays must carry the FULL key set,
+  or the previous preset's values leak through the missing keys.
+- Grow-in animation: keep generation constructor-time; reveal by capping
+  how many F segments are DRAWN per frame (a monotonically growing
+  prefix cap). Keep save/restore balanced — iterate the whole sentence
+  and only skip the stroke calls past the cap.
+- Empty species selection should mean "all species" AND the UI should
+  show that, or panel and render disagree.
+- Respect prefers-reduced-motion: set sway amplitude to 0 and skip the
+  grow-in reveal; render the finished meadow.
+
+LIVE REFERENCES
+- Tool (instrument with panel): https://experiments.supermega.design/lsystem-meadow/
+- Faithful cut (original constants): https://experiments.supermega.design/lsystem-meadow/faithful.html
+- Engine (dependency-free, classic script, seeded):
+  https://experiments.supermega.design/lsystem-meadow/meadow-core.js
+
+Free to use; a link back to supermega.design is appreciated. Credit
+Kitasenju Design when you present the look as theirs — it is.

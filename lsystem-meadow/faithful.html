@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L-System Meadow — faithful cut</title>
+<style>
+  :root { color-scheme: dark; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; background: #000; overflow: hidden; }
+  #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: pointer; }
+  .chip, .title, .credit {
+    font: 11px/1.5 "SF Mono", ui-monospace, Menlo, monospace;
+    color: #888; position: fixed; z-index: 2; letter-spacing: 0.04em;
+  }
+  .chip { top: 16px; left: 16px; }
+  .chip b { color: #ddd; font-weight: 500; }
+  .title { top: 18%; right: 8%; text-align: left; color: #999; }
+  .title .name { font: 700 26px/1.2 "Helvetica Neue", Helvetica, Arial, sans-serif; color: #fff; letter-spacing: 0; }
+  .credit { bottom: 14px; left: 16px; right: 16px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .credit a { color: #aaa; text-decoration: none; border-bottom: 1px solid #333; }
+</style>
+</head>
+<body>
+<canvas id="stage"></canvas>
+
+<div class="chip">seed <b id="seed"></b> — click to regrow</div>
+
+<div class="title">
+  Algorithms from A to Z<br>
+  <span class="name">L-system</span><br>
+  1968, Aristid Lindenmayer
+</div>
+
+<div class="credit">
+  <span>study — faithful cut: the original's constants, letter-L mask, 100 plants, 20fps sway</span>
+  <span>after <a href="https://x.com/kitasenjudesign/status/2082479558906015959">Kitasenju Design</a>
+  · <a href="https://github.com/kitasenjudesign/algorithms-from-a-to-z">source</a> · rebuild by SUPERMEGA</span>
+</div>
+
+<script src="meadow-core.js"></script>
+<script>
+  // Faithful cut — every constant from LSystemP5/LSystemTree:
+  // letter "L" mask sampled at 90x90 r>128, 100 trees, stroke rgb(220),
+  // black ground, frameRate(20), sway = sin(frame*0.02)*0.2.
+  const canvas = document.getElementById('stage');
+  const seedEl = document.getElementById('seed');
+  const handle = MeadowEngine.run(canvas, {
+    seed: 1968,
+    maskText: 'L',
+    treeCount: 100,
+    ink: 'rgb(220,220,220)',
+    background: '#000000',
+    swayAmp: 0.2,
+    swaySpeed: 0.02,
+    fps: 20,
+  });
+  seedEl.textContent = handle.config.seed;
+  canvas.addEventListener('click', () => { seedEl.textContent = handle.reseed(); });
+  addEventListener('resize', () => handle.resize());
+</script>
+</body>
+</html>

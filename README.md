@@ -7,3 +7,4 @@ Live: https://experiments.supermega.design/
 
 Published experiments:
 - [Pixel Garden Lab](/pixel-garden/) — since 2026-07-29
+- [L-System Meadow](/lsystem-meadow/) — since 2026-07-30
