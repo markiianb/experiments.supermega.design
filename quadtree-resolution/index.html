@@ -56,8 +56,8 @@
       <div class="instrument-renderer-section">Blocks</div>
       <div class="instrument-group">
         <div class="instrument-row"><span class="instrument-row-label">Skin</span><div class="instrument-row-control instrument-renderer-choice" id="f-skin"><button class="instrument-action" data-skin="blocks" aria-pressed="true" type="button">Blocks</button><button class="instrument-action" data-skin="wireframe" aria-pressed="false" type="button" title="The published Q source's own skin">Wireframe</button></div><span></span></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-extrude">Base</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-extrude" min="0" max="12" step="0.5" value="1.5"></div><output class="instrument-row-value instrument-tabular" id="v-extrude" for="s-extrude">1.5</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-step">Step</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-step" min="0" max="10" step="0.25" value="3.5"></div><output class="instrument-row-value instrument-tabular" id="v-step" for="s-step">3.50</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-extrude">Cap</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-extrude" min="1" max="30" step="0.5" value="12"></div><output class="instrument-row-value instrument-tabular" id="v-extrude" for="s-extrude">12.0</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-step">Cube</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-step" min="0" max="2" step="0.05" value="1"></div><output class="instrument-row-value instrument-tabular" id="v-step" for="s-step">1.00</output></div>
       </div>
 
       <div class="instrument-renderer-section">View</div>
@@ -113,8 +113,8 @@
   const PRESETS = {
     faithful: {},
     wireQ: { text: 'Q', skin: 'wireframe', timeline: true, speed: 1, seed: 17 },
-    redSM: { text: 'SM', palette: 'red', step: 5, timeline: false, manualDepth: 6, seed: 88 },
-    paperMono: { text: '3', palette: 'paper', step: 2.5, timeline: false, manualDepth: 5, mode: 'true', seed: 7 },
+    redSM: { text: 'SM', palette: 'red', step: 1.2, timeline: false, manualDepth: 6, seed: 88 },
+    paperMono: { text: '3', palette: 'paper', step: 0.7, timeline: false, manualDepth: 5, mode: 'true', seed: 7 },
   };
 
   function engineConfig(c) {

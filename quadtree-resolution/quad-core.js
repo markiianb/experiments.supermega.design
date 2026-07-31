@@ -70,6 +70,37 @@
     return leaves;
   }
 
+  // The reference's 3D geometry: the WHOLE subdivision tree is drawn, stacked.
+  // Every visited node (split or leaf) is a box whose thickness scales with
+  // its own size (thickness = ratio·w, so boxes stay cube-proportioned), and
+  // a split node's four children stand ON its front face — z0(child) =
+  // z1(parent). Fine regions therefore ride the accumulated stack of their
+  // ancestors: the glyph rises out of the slab as a terraced tower, and
+  // raising maxDepth stacks smaller cubes on top. Returns every node with
+  // {x, y, w, h, depth, z0, z1, isLeaf}.
+  function splitStacked(img, opts) {
+    const nodes = [];
+    const ratio = (opts.ratio === undefined) ? 1 : opts.ratio;
+    const cap = (opts.cap === undefined) ? 12 : opts.cap;
+    function recurse(x, y, w, h, depth, z0) {
+      // cube-proportioned thickness, capped so coarse cells stay tiles
+      const z1 = z0 + Math.max(0.6, Math.min(cap, w * ratio));
+      nodes.push({ x, y, w, h, depth, z0, z1, isLeaf: false });
+      const node = nodes[nodes.length - 1];
+      const dev = deviation(img, x, y, w, h, opts.mode);
+      if (dev < opts.threshold || depth >= opts.maxDepth || w / 2 < 1 || h / 2 < 1) {
+        node.isLeaf = true;
+        return;
+      }
+      recurse(x, y, w / 2, h / 2, depth + 1, z1);
+      recurse(x + w / 2, y, w / 2, h / 2, depth + 1, z1);
+      recurse(x, y + h / 2, w / 2, h / 2, depth + 1, z1);
+      recurse(x + w / 2, y + h / 2, w / 2, h / 2, depth + 1, z1);
+    }
+    recurse(0, 0, img.width, img.height, 0, 0);
+    return nodes;
+  }
+
   // The reference loop (QuadTreeP5.loopAnim, GSAP):
   //   t=0: maxDepth 0 · t=1..3: linear 0->N · hold · t=8.5..9.5: linear N->0 ·
   //   loop at t=10.5.
@@ -118,13 +149,6 @@
     return `hsl(${m[1]}, ${m[2]}%, ${l}%)`;
   }
 
-  // Terraced elevation — the reference's geometry: every subdivision level
-  // STACKS on its parent, so a leaf at depth d is a pillar of height
-  // base + (d+1)·step. As the timeline raises maxDepth, the glyph grows
-  // frontally, terrace by terrace.
-  function leafElevation(leaf, extrude, step) {
-    return (extrude || 0) + (leaf.depth + 1) * (step || 0);
-  }
 
   // Orthographic camera: yaw around the vertical axis, then pitch around the
   // horizontal. World units are buffer pixels; z points toward the viewer.
@@ -191,28 +215,28 @@
   }
 
   // Painter order: boxes sorted by projected depth of their center, far first.
-  function paintOrder(leaves, project, elevation) {
-    const elev = elevation || (() => 0);
-    return [...leaves].map((leaf) => {
-      const e = elev(leaf);
-      const center = project(leaf.x + leaf.w / 2, leaf.y + leaf.h / 2, e / 2);
-      return { leaf, depth: center[2] };
-    }).sort((a, b) => a.depth - b.depth).map((entry) => entry.leaf);
+  // Nodes carry their own z spans (z0/z1) from splitStacked.
+  function paintOrder(nodes, project) {
+    return [...nodes].map((node) => {
+      const zc = ((node.z0 || 0) + (node.z1 || 0)) / 2;
+      const center = project(node.x + node.w / 2, node.y + node.h / 2, zc);
+      return { node, depth: center[2] };
+    }).sort((a, b) => a.depth - b.depth).map((entry) => entry.node);
   }
 
-  // Draw the scene: the pale back board (a thin box behind the base plane),
-  // then every leaf as a terraced pillar growing toward the viewer.
-  function drawBlocks(ctx, leaves, layout, seed, palette, extrude, boardColor, step, yaw, pitch) {
+  // Draw the scene: the pale back board, then the WHOLE stacked tree — every
+  // node is a cube-proportioned box standing on its parent's front face, so
+  // the glyph rises out of the slab as a tower of ever-smaller cubes.
+  function drawBlocks(ctx, nodes, layout, seed, palette, boardColor, yaw, pitch) {
     const project = makeCamera(yaw, pitch, layout);
     const board = boardColor || '#ccd0dd';
     drawBox(ctx, project, 0, 0, BUFFER, BUFFER, -14, 0, {
       front: board, top: shade(boardShade(board), +8), bottom: shade(boardShade(board), -8),
       left: shade(boardShade(board), +4), right: shade(boardShade(board), -6), back: board,
     });
-    const elev = (leaf) => Math.max(0.6, leafElevation(leaf, extrude, step));
-    for (const leaf of paintOrder(leaves, project, elev)) {
-      const color = leafColor(leaf, seed, palette);
-      drawBox(ctx, project, leaf.x, leaf.y, leaf.w, leaf.h, 0, elev(leaf), {
+    for (const node of paintOrder(nodes, project)) {
+      const color = leafColor(node, seed, palette);
+      drawBox(ctx, project, node.x, node.y, node.w, node.h, node.z0, node.z1, {
         front: color,
         top: shade(color, +14),
         bottom: shade(color, -18),
@@ -266,7 +290,13 @@
     const g = c.getContext('2d', { willReadFrequently: true });
     g.fillStyle = '#000';
     g.fillRect(0, 0, size, size);
-    g.fillStyle = '#fff';
+    // The reference's buffer is a LIT 3D letter (Phong shading), so the glyph
+    // interior carries gradients and subdivides fully. A flat fill would leave
+    // the letter body uniform and unsplit — fill with a soft diagonal ramp.
+    const ramp = g.createLinearGradient(0, 0, size, size);
+    ramp.addColorStop(0, '#ffffff');
+    ramp.addColorStop(1, '#909090');
+    g.fillStyle = ramp;
     g.textAlign = 'center';
     g.textBaseline = 'middle';
     let px = Math.floor(size * 0.86);
@@ -294,8 +324,8 @@
     fps: 12,
     skin: 'blocks',
     palette: 'spectrum',
-    extrude: 1.5,
-    step: 3.5,
+    extrude: 12,
+    step: 1,
     yaw: 20,
     pitch: 12,
     ground: '#e9e9ec',
@@ -332,9 +362,7 @@
       ctx.fillRect(0, 0, width, height);
       const maxDepth = config.timeline ? timelineDepth(simT, { maxN: config.maxN })
         : Math.min(config.manualDepth, config.maxN);
-      const leaves = split(mask, {
-        maxDepth, threshold: config.threshold, mode: config.mode,
-      });
+      const splitOpts = { maxDepth, threshold: config.threshold, mode: config.mode };
       const side = Math.min(width, height) * 0.68;
       const layout = {
         x0: (width - side) / 2,
@@ -345,9 +373,15 @@
       ctx.translate(width / 2 + (config.viewX || 0), height / 2 + (config.viewY || 0));
       ctx.scale(config.zoom || 1, config.zoom || 1);
       ctx.translate(-width / 2, -height / 2);
-      if (config.skin === 'wireframe') drawWireframe(ctx, leaves, layout, config.ink);
-      else drawBlocks(ctx, leaves, layout, config.seed, config.palette, config.extrude,
-        config.board, config.step, config.yaw, config.pitch);
+      if (config.skin === 'wireframe') {
+        drawWireframe(ctx, split(mask, splitOpts), layout, config.ink);
+      } else {
+        const nodes = splitStacked(mask, Object.assign({}, splitOpts, {
+          ratio: config.step, cap: config.extrude,
+        }));
+        drawBlocks(ctx, nodes, layout, config.seed, config.palette,
+          config.board, config.yaw, config.pitch);
+      }
       ctx.restore();
     }
 
@@ -395,7 +429,7 @@
 
   root.QuadEngine = {
     mulberry32, BUFFER, gray, regionMean, deviation, split, timelineDepth,
-    leafColor, leafElevation, shade, makeCamera, drawBox, paintOrder,
+    leafColor, shade, makeCamera, drawBox, paintOrder, splitStacked,
     drawBlocks, drawWireframe, renderMask, run, DEFAULTS,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -6,7 +6,7 @@
 	const skins = ["blocks", "wireframe"];
 	const palettes = ["spectrum", "paper", "red", "mono"];
 	const defaults = {
-		extrude: 1.5,
+		extrude: 12,
 		manualDepth: 7,
 		maxN: 7,
 		mode: "faithful",
@@ -15,7 +15,7 @@
 		seed: 17,
 		skin: "blocks",
 		speed: 1,
-		step: 3.5,
+		step: 1,
 		text: "A",
 		threshold: 0.03,
 		timeline: true,
@@ -28,7 +28,7 @@
 		id: "supermega.instrument.configuration/quadtree-resolution/v1",
 		version: 1,
 		fields: {
-			extrude: { type: "number", label: "Base", group: "blocks", minimum: 0, maximum: 12, step: 0.5 },
+			extrude: { type: "number", label: "Cap", group: "blocks", minimum: 1, maximum: 30, step: 0.5 },
 			manualDepth: { type: "number", label: "Depth", group: "resolution", minimum: 0, maximum: 7, step: 0.1 },
 			maxN: { type: "integer", label: "Max depth", group: "resolution", minimum: 1, maximum: 7, step: 1 },
 			mode: { type: "enum", label: "Deviation", group: "splitter", choices: modes },
@@ -37,7 +37,7 @@
 			seed: { type: "integer", label: "Seed", group: "seed", minimum: 0, maximum: 4294967295, step: 1 },
 			skin: { type: "enum", label: "Skin", group: "look", choices: skins },
 			speed: { type: "number", label: "Speed", group: "resolution", minimum: 0.25, maximum: 3, step: 0.05 },
-			step: { type: "number", label: "Step", group: "blocks", minimum: 0, maximum: 10, step: 0.25 },
+			step: { type: "number", label: "Cube", group: "blocks", minimum: 0, maximum: 2, step: 0.05 },
 			text: { type: "string", label: "Text", group: "mask", maximumLength: 12 },
 			threshold: { type: "number", label: "Threshold", group: "splitter", minimum: 0, maximum: 64, step: 0.01 },
 			timeline: { type: "boolean", label: "Timeline", group: "resolution" },
@@ -56,7 +56,7 @@
 
 	function normalize(input) {
 		return {
-			extrude: number(input.extrude, defaults.extrude, 0, 12),
+			extrude: number(input.extrude, defaults.extrude, 1, 30),
 			manualDepth: number(input.manualDepth, defaults.manualDepth, 0, 7),
 			maxN: Math.round(number(input.maxN, defaults.maxN, 1, 7)),
 			mode: modes.includes(input.mode) ? input.mode : defaults.mode,
@@ -65,7 +65,7 @@
 			seed: Math.round(number(input.seed, defaults.seed, 0, 4294967295)),
 			skin: skins.includes(input.skin) ? input.skin : defaults.skin,
 			speed: number(input.speed, defaults.speed, 0.25, 3),
-			step: number(input.step, defaults.step, 0, 10),
+			step: number(input.step, defaults.step, 0, 2),
 			text: (typeof input.text === "string" && input.text.trim()) ? input.text.slice(0, 12) : defaults.text,
 			threshold: number(input.threshold, defaults.threshold, 0, 64),
 			timeline: typeof input.timeline === "boolean" ? input.timeline : defaults.timeline,

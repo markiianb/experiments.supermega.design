@@ -45,25 +45,26 @@ CORE RULES (reimplement these, or fetch the engine below)
   Run at 12fps (accumulate on requestAnimationFrame). Accumulate
   timeline seconds per tick (t += speed/fps) so a speed change alters
   the rate from the current phase instead of teleporting it.
-- BLOCKS — TRUE 3D (measured from the video; the published Q source
-  draws white stroke rects+ellipses on black instead — ship that as an
-  alt skin if you want the repo look). Orthographic camera with yaw
-  (~18 deg, camera right) and pitch (~12 deg, camera above), pivoting at
-  the slab center; scale the 128-space so the slab spans ~68% of the
-  short viewport side; light grey ground (#e9e9ec). Every leaf is a BOX
-  standing on the base plane, and ELEVATION IS TERRACED: each
-  subdivision level stacks on its parent, so a leaf at depth d spans
-  z = 0 .. base(~1.5) + (d+1)*step(~3.5) in buffer units. Coarse cells
-  are low tiles; the fine glyph cells form a raised plateau — the
-  letter grows FRONTALLY out of the slab as resolution rises, which is
-  the whole point of the animation. (Not random heights, not a flat
-  slab — deterministic stacking.)
-  Faces: front = leaf color, top +14 lightness, bottom -18, left +7,
-  right -12. Decide face visibility from the ROTATED OUTWARD NORMAL
-  (dot toward viewer), never from projected winding — winding sign
-  errors silently cull faces. Painter: sort boxes by projected depth of
-  their centers, far first. Behind everything, a thin pale grey-blue
-  back board box (#ccd0dd). Drag = orbit (yaw/pitch), shift-drag = pan,
+- BLOCKS — TRUE 3D, STACKED TREE (measured from the video; the
+  published Q source draws white stroke rects+ellipses on black instead
+  — ship that as an alt skin if you want the repo look). Orthographic
+  camera with yaw (~18 deg, camera right) and pitch (~12 deg, camera
+  above), pivoting at the slab center; slab spans ~68% of the short
+  viewport side; light grey ground (#e9e9ec). Draw the WHOLE quadtree,
+  not just leaves: every visited node is a box of thickness
+  clamp(w * cube(~1), 0.6, cap(~12)) buffer units — cube-proportioned,
+  capped so coarse cells stay tiles — and a split node's four children
+  stand ON its front face (z0(child) = z1(parent)). Fine regions ride
+  the accumulated stack of their ancestors: the glyph rises as a
+  terraced tower, and raising maxDepth stacks smaller cubes on top.
+  IMPORTANT: fill the glyph with a soft gradient (white -> ~#909090
+  diagonal), not flat white — the reference buffer is a lit 3D letter,
+  and a flat interior never subdivides. Faces: front = node color, top
+  +14 lightness, bottom -18, left +7, right -12. Face visibility from
+  the ROTATED OUTWARD NORMAL (never projected winding). Painter: sort
+  boxes by projected depth of their centers, far first. Behind
+  everything, a thin pale grey-blue back board box (#ccd0dd). Drag =
+  orbit, shift-drag = pan,
   wheel = zoom.
 - COLORS. Each leaf's color is a PURE FUNCTION of (cellX, cellY, cellW,
   seed): hash them into a seeded PRNG (mulberry32), then draw hue, sat,
