@@ -12,16 +12,4 @@
 - [Seed prompt](https://experiments.supermega.design/pixel-garden/seed-prompt.txt): a self-contained prompt for coding agents — paste it into your agent to rebuild and adapt this system
 - [Engine](https://experiments.supermega.design/pixel-garden/core/pixel-core.js): dependency-free source, with [sprites](https://experiments.supermega.design/pixel-garden/core/sprites.js)
 
-## L-System Meadow
-- [Open](https://experiments.supermega.design/lsystem-meadow/): the instrument — mask text, species mix, rule mods, seed links, PNG export
-- [Faithful cut](https://experiments.supermega.design/lsystem-meadow/faithful.html): Kitasenju Design's original constants (credited study)
-- [Seed prompt](https://experiments.supermega.design/lsystem-meadow/seed-prompt.txt): a self-contained prompt for coding agents — paste it into your agent to rebuild and adapt this system
-- [Engine](https://experiments.supermega.design/lsystem-meadow/meadow-core.js): dependency-free seeded L-system + turtle, classic script
-
-## Quadtree Resolution
-- [Open](https://experiments.supermega.design/quadtree-resolution/): the instrument — glyph, splitter, breathing-resolution timeline, block/wireframe skins, palettes, seed
-- [Faithful cut](https://experiments.supermega.design/quadtree-resolution/faithful.html): Kitasenju Design's constants, corner-pixel deviation quirk included (credited study)
-- [Seed prompt](https://experiments.supermega.design/quadtree-resolution/seed-prompt.txt): a self-contained prompt for coding agents — paste it into your agent to rebuild and adapt this system
-- [Engine](https://experiments.supermega.design/quadtree-resolution/quad-core.js): dependency-free seeded quadtree + extruded-block renderer, classic script
-
 Free to use in your projects; a link back is appreciated.
