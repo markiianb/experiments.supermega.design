@@ -1,0 +1,7 @@
+Build a dependency-free classic-script SUPERMEGA Instrument called Cube Series Projection, credited to Howard Fegarsky, based on From the Cube Series in Computer Graphics and Art, May 1976 p. 3. Pin Instrument 0.1.0-1ff60f2032a6 and support file:// plus HTTP.
+
+Label it Interpretation. The only documented basis is visual anatomy: a projected cube with emphasized perimeter and dense interior lines. Create a clean-room grammar with an eight-vertex/twelve-edge base cube and selectable monotonic homothetic shells, axial slice planes, or cubes contracted toward corners. Use a fixed orthographic projection and seeded deterministic omissions. Do not trace source lines, claim recovered code, or call Math.random.
+
+The named adapter solely owns family, count, minimum inner scale, yaw, pitch, X/Y/Z axis toggles, omission rate, depth order, outer/inner line weight, polarity, seed, and locked 1976 view. Drag and keyboard orbit write through the adapter. This is static, so capabilities are configure/copy/reset/randomize/show/hide/create with no pause/resume. Reset View returns exactly to yaw -34 and pitch 26.
+
+Use exact version/type URL envelopes, visible bare-JSON loading, a 16 KB bound, safe text/value sinks, DPR canvas, canonical 1600x1000 offscreen export with one-pixel minimum lines, strict bridge, inert hidden controls, pressed presets, and mobile sheet layout. Show the exact evidence labels Documented mechanism / Interpretation / Supermega, pending-review disclosure, HTTPS sources, tests, shot, notes, and optimized preview. Ship no scan or later code.

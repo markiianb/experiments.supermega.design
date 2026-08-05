@@ -1,6 +1,12 @@
 # SUPERMEGA Experiments
 > Weekly visual experiments by SUPERMEGA Design (https://supermega.design). Plain HTML/CSS/JS, no build step.
 
+## Computer Graphics and Art
+- [Open the collection](https://experiments.supermega.design/cga76/): sixteen instruments derived from Computer Graphics and Art, vol. 1 no. 2, May 1976
+- Each one is a clean-room study written from the issue's published descriptions — no scans ship, no source lines are traced
+- Instruments: [Ordinal Fifteen](https://experiments.supermega.design/cga76-ordinal-fifteen/), [Barbadillo Modules](https://experiments.supermega.design/cga76-barbadillo-modules/), [Cubic Limit](https://experiments.supermega.design/cga76-cubic-limit/), [Cube Variations](https://experiments.supermega.design/cga76-cube-variations/), [Sykora Matrix](https://experiments.supermega.design/cga76-sykora-matrix/), [Nine-Square Variations](https://experiments.supermega.design/cga76-nine-square/), [Cube Series Projection](https://experiments.supermega.design/cga76-cube-series/), [Kubus Permutator](https://experiments.supermega.design/cga76-kubus-permutator/), [Kawano Mosaic](https://experiments.supermega.design/cga76-kawano-mosaic/), [Random Squares](https://experiments.supermega.design/cga76-random-squares/), [Text Image Matrix](https://experiments.supermega.design/cga76-text-image-matrix/), [Harmonic Story](https://experiments.supermega.design/cga76-harmonic-story/), [Colored Matrix Growth](https://experiments.supermega.design/cga76-colored-matrix/), [Luminous Sculpture](https://experiments.supermega.design/cga76-luminous-sculpture/), [Tangent Polygon Trails](https://experiments.supermega.design/cga76-tangent-polygons/), [Concentric Rosettes](https://experiments.supermega.design/cga76-concentric-rosettes/)
+- Every instrument ships a seed-prompt.txt — paste it into a coding agent to rebuild and adapt that system
+
 ## Pixel Garden Lab
 - [Open](https://experiments.supermega.design/pixel-garden/): the live tool
 - [Seed prompt](https://experiments.supermega.design/pixel-garden/seed-prompt.txt): a self-contained prompt for coding agents — paste it into your agent to rebuild and adapt this system

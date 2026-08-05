@@ -1,0 +1,7 @@
+Build a dependency-free classic-script SUPERMEGA Instrument called Kubus Permutator, credited to Klaus Basset, based on Kubus-Serie in Computer Graphics and Art, May 1976 p. 27. Pin Instrument 0.1.0-1ff60f2032a6 and support file:// plus HTTP.
+
+Preserve the documented five-character typewriter alphabet exactly as I, O, o, H, and %. Draw stable vector-cell equivalents by default, with literal type as a labeled comparison. Define integer-registered isometric cube face masks, monotonic overstrike-tone stacks, and all six permutations of three face-tone classes. Stamp them along deterministic diagonal, serpentine, or grid translation paths. Distinguish manual algorithmic typing from later computer output. Do not copy later code, ship source scans, or call Math.random.
+
+The named adapter solely owns rows, columns, cell aspect, fixed alphabet, vector/literal style, overstrike depth, selected permutation, all-six enumeration, cube size, stamp count, path, compositing, background, polarity, and seed. Capabilities are configure/copy/reset/randomize/show/hide/create. This static tool has no pause/resume.
+
+Use exact version/type URL envelopes, visible bare-JSON loading, a 16 KB bound, safe text/value sinks, DPR canvas, canonical 1600x1000 offscreen export, strict bridge, inert hidden controls, pressed presets, and mobile sheet layout. Show the exact evidence labels Documented mechanism / Interpretation / Supermega, pending-review disclosure, HTTPS sources, tests, shot, notes, and optimized preview. Ship no scan or later implementation.

@@ -1,0 +1,13 @@
+Build a dependency-free browser Instrument called "Random Squares Field" as a clean-room credited study of Herbert W. Franke's Random Squares (c. 1967), reproduced in Computer Graphics and Art, May 1976 p. 6.
+
+Use static HTML, CSS, and classic JavaScript over HTTP and file://. Pin SUPERMEGA Instrument release 0.1.0-1ff60f2032a6, then load the runtime, adapter core, named adapter, local core, and page controller in that order.
+
+Create exactly three independent planes of axis-aligned unfilled square outlines. Each plane owns visibility, count, an inclusive discrete min/max/step size grid, concentration, and stroke. Keep overlaps. Never use filled or rounded rectangles and never reject collisions.
+
+Use one audited Mulberry32 stream with a fixed tape: three layers, 192 reserved slots per layer, and size/x/y draws per slot. Consume every reserved slot even if hidden or beyond count, so edits in one plane cannot shift another plane. Draw order changes painting sequence only. Plot playback and final output must use the same ordered geometry.
+
+Expose period red/blue/black, monochrome, and Supermega palettes; period, reverse, and interleaved drawing; margin; per-plane controls; plot speed; and seed. The adapter declares configure, copy-config, reset-configuration, randomize, pause, resume, show-controls, hide-controls, and create-artifact.
+
+Provide versioned 16 KB URL state, visible normalized loading, strict bridge, safe text sinks, DPR live canvas, reduced-motion complete still, and a separate deterministic 1600×1000 final PNG. Visibly credit Herbert W. Franke and state that ReCode's Csuri attribution and rounded rectangles conflict with the issue and Franke's method. Carry rights state pending-review.
+
+Prove discrete sizes, exact counts, square-only geometry, fixed draw order, layer isolation, overlap preservation, playback identity, adapter truth, page pixels, copy/load replay, literal safety, mobile behavior, and preview generation.

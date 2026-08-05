@@ -1,0 +1,10 @@
+Build a dependency-free classic-script SUPERMEGA Instrument called Cube Theme and Variation, credited to Edward Zajec's 1970–73 series as reproduced in Computer Graphics and Art, May 1976 p. 16. Pin Instrument 0.1.0-1ff60f2032a6. Run over file:// and HTTP. Use the shared runtime, host CSS, adapter core, one named adapter, and only local renderer/core code.
+
+Create eight original oblique-cube tile identities from empty, solid, horizontal-hatch, diagonal-hatch, split-triangle, and face fragments. Preserve the documented classes: formative 1; connective 2, 3, 4, and 8; additive 5, 6, 7. Encode element 8 as a quarter rotation of element 3. Label tile geometry and machine-readable adjacency as interpretation.
+
+Implement distinct interpreted K/M edge tables plus mixed mode and a deterministic bounded constraint solver. Strict output must satisfy edge, white-target, symmetry, and optional connectivity constraints. Diagnostic or bounded failure must leave explicit unresolved cells. Never silently random-fill. Use a local seeded PRNG and fixed order; no Math.random in renderer/simulation.
+
+The named adapter solely owns grid, system, functional weights, composition, white target, connectivity, hatch spacing, angle, solid balance, symmetry, solve mode, bounded manual overrides, seed, and build speed. Capabilities are base actions plus randomize and pause/resume. Canvas click/touch and keyboard editing must cycle a selected manual cell through adapter state.
+
+Use an exact version/type URL envelope, a visible bare-JSON Load Configuration path, 16 KB decoded bound, literal sinks, DPR live canvas, strict bridge, inert hidden panel, pressed presets, responsive mobile stage/bottom sheet, reduced-motion final still that rejects motion actions, and separate deterministic 1600x1000 final export. Show compact exact evidence labels Documented mechanism / Interpretation / Supermega, HTTPS sources, pending-review disclosure, source and materially distinct Supermega presets, tests, notes, shot, and optimized preview. Do not ship scans or later grammar code.
+

@@ -6,6 +6,7 @@ Do not edit here — edit the vault, rerun the build, commit, push.
 Live: https://experiments.supermega.design/
 
 Published experiments:
+- [Computer Graphics and Art](/cga76/) — since 2026-08-05
 - [Pixel Garden Lab](/pixel-garden/) — since 2026-07-29
 - [L-System Meadow](/lsystem-meadow/) — since 2026-07-30
 - [Quadtree Resolution](/quadtree-resolution/) — since 2026-07-30

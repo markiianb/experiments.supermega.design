@@ -3,12 +3,110 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta http-equiv="refresh" content="0; url=/pixel-garden/" />
+<meta name="description" content="Visual experiments by SUPERMEGA Design — interactive instruments, generative systems, and interface studies. Plain HTML, CSS, and JavaScript." />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2' y='2' width='12' height='12' fill='%23f61515'/%3E%3C/svg%3E" />
-<link rel="canonical" href="https://experiments.supermega.design/pixel-garden/" />
-<title>SUPERMEGA Experiments</title>
+<link rel="canonical" href="https://experiments.supermega.design/" />
+<title>Experiments — SUPERMEGA</title>
+<style>
+  @font-face { font-family: "Tanker"; src: url("/_system/fonts/Tanker-Regular.woff2") format("woff2"); font-display: swap; }
+  :root {
+    --ink: #0b0b0b; --paper: #ecebe6; --dim: #8b8b86; --line: #262626; --red: #f61515;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ink); color: var(--paper); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+  .chrome { display: flex; align-items: center; gap: .6rem; padding: .85rem 1.5rem; border-bottom: 1px solid var(--line);
+            font-family: var(--mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
+  .chrome-mark { width: .85rem; height: .85rem; background: var(--red); }
+  .chrome a { color: var(--paper); text-decoration: none; }
+  .chrome a:hover { color: var(--red); }
+  .chrome-sep, .chrome-here { color: var(--dim); }
+  main { max-width: 78rem; margin: 0 auto; padding: 5rem 1.5rem 6rem; }
+  h1 { font-family: "Tanker", var(--sans); font-size: clamp(2.6rem, 7vw, 5rem); line-height: .95; margin: 0 0 1.25rem; letter-spacing: -.01em; }
+  .lede { max-width: 40rem; margin: 0 0 3.5rem; font-size: 1.05rem; line-height: 1.55; color: #c9c8c2; }
+  .lede a { color: var(--paper); }
+  .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); }
+  .card { display: flex; flex-direction: column; border: 1px solid var(--line); background: #121212;
+          text-decoration: none; color: inherit; transition: border-color .15s ease, transform .15s ease; }
+  .card:hover { border-color: var(--red); transform: translateY(-2px); }
+  .card-shot { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-bottom: 1px solid var(--line); background: #1b1b1b; }
+  .card-text { display: flex; flex-direction: column; gap: .55rem; padding: 1.1rem 1.2rem 1.3rem; }
+  .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+  .card-title { font-size: 1.02rem; font-weight: 600; }
+  .card-meta { font-family: var(--mono); font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); white-space: nowrap; }
+  .card-blurb { font-size: .9rem; line-height: 1.5; color: #b6b5b0; }
+  .card-open { font-family: var(--mono); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--red); margin-top: .2rem; }
+  footer { margin-top: 4.5rem; padding-top: 1.4rem; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: .5rem 1.5rem;
+           justify-content: space-between; font-family: var(--mono); font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); }
+  footer a { color: var(--paper); text-decoration: none; }
+  footer a:hover { color: var(--red); }
+  @media (max-width: 40rem) { main { padding: 3rem 1.1rem 4rem; } .lede { margin-bottom: 2.5rem; } }
+</style>
 </head>
 <body>
-<p><a href="/pixel-garden/">SUPERMEGA Experiments &rarr;</a></p>
+  <header class="chrome">
+    <span class="chrome-mark" aria-hidden="true"></span>
+    <a href="https://supermega.design">SUPERMEGA</a>
+    <span class="chrome-sep">/</span>
+    <span class="chrome-here">EXPERIMENTS</span>
+  </header>
+
+  <main>
+    <h1>Experiments</h1>
+    <p class="lede">Visual systems we build to find out how they work — generative instruments, interface studies, and recoveries of older computer art. Everything here runs as plain HTML, CSS, and JavaScript, with no build step. Take what is useful.</p>
+
+    <div class="grid">
+      <a class="card" href="/cga76/">
+        <img class="card-shot" src="/cga76/background.png" alt="" loading="lazy" />
+        <span class="card-text">
+          <span class="card-head">
+            <span class="card-title">Computer Graphics and Art</span>
+            <span class="card-meta">1976 · 16 instruments</span>
+          </span>
+          <span class="card-blurb">Sixteen visual systems from one 1976 issue, rebuilt as working instruments. Open a card, change its rules, make a new image from the mechanism.</span>
+          <span class="card-open">Open &rarr;</span>
+        </span>
+      </a>
+      <a class="card" href="/pixel-garden/">
+        <img class="card-shot" src="/pixel-garden/preview.jpg" alt="" loading="lazy" />
+        <span class="card-text">
+          <span class="card-head">
+            <span class="card-title">Pixel Garden Lab</span>
+            <span class="card-meta">11 interface studies</span>
+          </span>
+          <span class="card-blurb">A seeded pixel-plant system, then eleven interface studies built on it — heroes, footers, 404s, OG images.</span>
+          <span class="card-open">Open &rarr;</span>
+        </span>
+      </a>
+      <a class="card" href="/lsystem-meadow/">
+        <img class="card-shot" src="/lsystem-meadow/preview.jpg" alt="" loading="lazy" />
+        <span class="card-text">
+          <span class="card-head">
+            <span class="card-title">L-System Meadow</span>
+            <span class="card-meta">instrument</span>
+          </span>
+          <span class="card-blurb">A seeded L-system meadow you can retune — mask text, species mix, rule mods, PNG export.</span>
+          <span class="card-open">Open &rarr;</span>
+        </span>
+      </a>
+      <a class="card" href="/quadtree-resolution/">
+        <img class="card-shot" src="/quadtree-resolution/preview.jpg" alt="" loading="lazy" />
+        <span class="card-text">
+          <span class="card-head">
+            <span class="card-title">Quadtree Resolution</span>
+            <span class="card-meta">instrument</span>
+          </span>
+          <span class="card-blurb">A glyph dissolved into a breathing quadtree — splitter rules, block and wireframe skins, seeded palettes.</span>
+          <span class="card-open">Open &rarr;</span>
+        </span>
+      </a>
+    </div>
+
+    <footer>
+      <span>made by <a href="https://supermega.design">SUPERMEGA Design</a></span>
+      <span><a href="/llms.txt">llms.txt</a></span>
+    </footer>
+  </main>
 </body>
 </html>

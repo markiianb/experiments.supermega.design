@@ -1,0 +1,24 @@
+Build a dependency-free browser Instrument called "Ordinal Fifteen" as a clean-room credited study of Manfred Mohr's Combinatorial Framework of the Ordinal 15 (1972), shown on the front cover of Computer Graphics and Art, May 1976.
+
+Use plain HTML, CSS, and classic JavaScript so the page runs over HTTP and directly from file://. Pin the SUPERMEGA Instrument release 0.1.0-1ff60f2032a6 and use its runtime and CSS, the shared experiment host CSS, the shared adapter core, and one named adapter. Keep all renderer and controller code inside this experiment folder. Do not import a collection renderer or add a build step.
+
+Preserve this evidence boundary in the visible page and local notes:
+
+- Documented: four numbered graphic units; two generating routines; labyrinthine paths through a matrix; interpolation and hatching between two curves; placement calculated by a magic square whose sum is fifteen.
+- Interpretation: a five-by-five, five-symbol Latin magic field in which each row, column, and main diagonal contains values one through five and sums to fifteen; values one through four map to the four generated motifs; value five is a configurable negative-space state. Exact coefficients, curve constants, maze rules, and mapping families are interpreted.
+- Supermega: deterministic seed, alternate mapping/polarity/palette, build playback, reduced-motion final still, replayable URL and copied configuration, controls, and fixed PNG export.
+
+Create four genuinely generated motif families from original code: two orthogonal maze families produced by seeded matrix walks, plus one family of curves interpolated between two cubic boundaries and one family of hatch segments drawn between another curve pair. Do not trace the cover, ship scans, reuse later translation code, or claim recovered source code. Use a local audited PRNG and fixed draw order. Never use Math.random in a renderer or simulation path.
+
+The named adapter must own every JSON-safe field: magic family, motif mapping, negative-space rule, maze density, turn bias, path continuity, curve amplitude, interpolation steps, hatch angle, hatch spacing, polarity, palette, line weight, seed, and build speed. Declare only configure, copy-config, reset-configuration, randomize, pause, resume, show-controls, hide-controls, and create-artifact. The controller owns only playback clocks and geometry/canvas caches.
+
+Use versioned #config=<base64url JSON> state with a 16 KB decoded limit. Normalize unknown, invalid, and out-of-range input through the adapter. Provide a visible Load Configuration textarea and button that accept Copy config's serialized JSON, report errors, and preserve the last valid state. All configuration-derived text must reach page chrome through textContent or form value. Clipboard denial must leave selectable serialized JSON visible.
+
+Render the live canvas at device pixel ratio. Render artifacts on a separate 1600x1000 offscreen canvas at the finite build's final frame, independent of viewport and paused progress. Build playback must really pause and resume. Reduced-motion users open on the final still; after reduced motion is disabled, remain paused until explicit Resume.
+
+Opt into the strict bridge. Authorize only a same-origin parent named by a valid HTTP(S) referrer, compare the incoming event origin, post to that exact origin, rate-limit artifact calls, and refuse null-origin sessions. Keep the page keyboard-operable, canvas named and described, status polite, controls focus-safe, sources actionable, and mobile free of horizontal overflow.
+
+Ship a light, source-facing preset and a visibly different black/red/cream Supermega preset. Display Manfred Mohr, the work title, 1972, the May 1976 front-cover location, the three provenance rows, and a visible permission-required notice. ReCode reports that Mohr asked that his work not be reproduced online, so the study must remain local pending permission or legal review.
+
+Add a pure Node-testable core, its tests, the named adapter test, NOTES.md, this seed prompt, a browser shot script, and a regenerable optimized 1600x1000 JPEG preview. Core tests must independently verify the placement oracle, all four motif families, determinism, control divergence, and absence of Math.random. Adapter tests must cover exact capabilities, every field, invalid input, reset, round trip, action forwarding, fixed artifact metadata, and unsupported actions.
+

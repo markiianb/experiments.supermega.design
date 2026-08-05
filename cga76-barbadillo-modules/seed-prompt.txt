@@ -1,0 +1,15 @@
+Build a dependency-free browser Instrument called "Barbadillo Modules" as a clean-room credited study of Manuel Barbadillo's Aeleana (1973), reproduced in Computer Graphics and Art, May 1976 p. 11.
+
+Use static HTML, CSS, and classic JavaScript. Run over HTTP and directly from file://. Pin SUPERMEGA Instrument release 0.1.0-1ff60f2032a6. Load the runtime, adapter core, named adapter, local core, and page script in that order. Keep renderer and controller code inside this folder.
+
+Preserve the visible evidence boundary:
+
+- Documented mechanism: square modules act as an alphabet, usually four in a grid; black-on-white and white-on-black polarity; active complementary space; square and quarter-circle vocabulary; rotation, inversion, adjacent fusion, and rough asterisk line-printer candidate studies.
+- Interpretation: define four new modules from straight bands, quarter-circle transitions, and rounded voids. The exact shapes, boundary signatures, scoring weights, symmetry rules, and candidate arrangement are new.
+- Supermega: one-module inspection, deterministic candidate scoring, macro-module bias, source and black/red/cream presets, replayable configuration, strict bridge, and fixed PNG export.
+
+The named adapter owns repertoire size, rows, columns, rotations, polarity ratio, curve radius, inner void, continuity weight, symmetry, macro-module bias, candidate count, clean-print or asterisk-study output, and seed. Declare configure, copy-config, reset-configuration, randomize, show-controls, hide-controls, and create-artifact only. Do not claim pause or resume.
+
+Use a local audited PRNG and fixed draw order. Never use Math.random in deterministic paths. Provide versioned #config=<base64url JSON> state with a 16 KB decoded limit, a visible Load Configuration control, normalized literal-safe state, selectable copy fallback, DPR live canvas, and a separate deterministic 1600x1000 PNG canvas.
+
+Prove rotation signature invariants, polarity inversion, increased joined-edge score, one-module purity, deterministic candidates, stable asterisk grids, exact adapter capabilities, browser pixels and material differences, copy/load replay, hostile literal safety, malformed and oversized state preservation, visible normalization, mobile overflow, artifact metadata, and regenerable preview generation. Carry rights state pending-review.

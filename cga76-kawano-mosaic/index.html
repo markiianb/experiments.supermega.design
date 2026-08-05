@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="supermega-instrument-release" content="0.1.0-1ff60f2032a6" />
+<title>SUPERMEGA — Kawano Mosaic Simulator</title>
+<link rel="icon" href="data:," />
+<link rel="stylesheet" href="../_kit/releases/0.1.0-1ff60f2032a6/instrument.css" />
+<link rel="stylesheet" href="../_system/experiment-host.css" />
+<style>
+  .kawano-stage{background:#ded9cc;overflow:hidden}
+  .kawano-stage canvas{display:block;width:100%;height:100%;touch-action:manipulation}
+  .kawano-fallback{position:absolute;inset:50% auto auto 50%;max-width:32rem;transform:translate(-50%,-50%);padding:1rem;color:#111;background:#eeeae0;font:600 14px/1.5 system-ui;text-align:center}
+  .kawano-evidence{display:grid;gap:1px;margin:0;background:var(--instrument-rule-horizontal)}
+  .kawano-evidence-row{display:grid;grid-template-columns:1fr;gap:var(--instrument-space-1);padding:var(--instrument-space-2) var(--instrument-space-3);background:var(--instrument-color-surface-overlay)}
+  .kawano-evidence-row dt{color:var(--instrument-color-text);font-size:var(--instrument-font-size-label);font-weight:var(--instrument-font-weight-semibold);text-transform:uppercase}
+  .kawano-evidence-row dd{margin:0;color:var(--instrument-color-text-muted);font-size:var(--instrument-font-size-label);line-height:1.35}
+  .kawano-source-links,.kawano-load{display:grid;gap:var(--instrument-space-2);padding:var(--instrument-space-3);font-size:var(--instrument-font-size-small);line-height:1.45}
+  .kawano-source-links a{color:var(--instrument-color-text);text-decoration:underline;text-underline-offset:3px}
+  .kawano-load textarea{width:100%;min-height:6rem;resize:vertical;font:var(--instrument-font-size-label)/1.45 var(--instrument-font-mono)}
+  .kawano-load-actions{display:flex;gap:var(--instrument-space-2)}
+  .kawano-load-actions .instrument-action{flex:1}
+  .kawano-mobile-credit{display:none}
+  .kawano-paint-row{display:grid;grid-template-columns:1fr 1fr;gap:var(--instrument-space-2);padding:var(--instrument-space-2) var(--instrument-space-3)}
+	.kawano-paint-row label{display:grid;gap:var(--instrument-space-1)}
+	.cga76-breadcrumb{display:inline-flex;align-items:center;gap:var(--instrument-space-2);color:inherit;text-decoration:none}.cga76-breadcrumb:hover{color:var(--instrument-color-text)}.cga76-breadcrumb-sep{color:var(--instrument-color-text-faint)}
+	[data-system="instrument"] .instrument-renderer-credit{inset-block-end:calc(var(--instrument-dock-min-height) + var(--instrument-space-6) + var(--instrument-space-2))}
+	body[data-system="instrument"] .instrument-renderer-hud.kawano-safe-hud{inline-size:fit-content;max-inline-size:min(52rem,calc(100vw - var(--instrument-space-6)));padding:.45rem .65rem;border-inline-start:3px solid #f61515;color:#f1eadf;background:rgba(9,9,11,.9);line-height:1.35;mix-blend-mode:normal}
+	.kawano-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+  @media (max-width:767px){
+    .instrument-renderer-chrome{overflow:hidden}.instrument-renderer-chrome-zone{padding-inline:var(--instrument-space-2);font-size:10px;line-height:1.15}.instrument-renderer-chrome-zone:first-child{max-width:12rem}.instrument-renderer-meta{display:none}.instrument-renderer-hud--top{display:none}
+    .kawano-mobile-credit{position:fixed;display:block;inset-block-start:3.7rem;inset-inline-start:var(--instrument-space-3);z-index:var(--instrument-z-raised);padding:.25rem .45rem;color:#fff;background:#111;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+    body[data-system="instrument"][data-controls="visible"] .kawano-stage{inset:var(--instrument-chrome-height) 0 58vh}
+    body[data-system="instrument"][data-controls="visible"] .instrument-renderer-panel{inset:42vh 0 0;max-inline-size:none;padding-block-end:calc(var(--instrument-dock-min-height) + var(--instrument-space-6));border-block-start:1px solid var(--instrument-rule-horizontal)}
+    body[data-system="instrument"][data-controls="visible"] .instrument-renderer-panel.hidden{transform:translateY(100%)}
+		body[data-system="instrument"][data-controls="visible"] .instrument-mode-dock.instrument-renderer-dock,body[data-system="instrument"][data-controls="visible"] .instrument-renderer-hud--bottom,body[data-system="instrument"][data-controls="visible"] .instrument-renderer-credit{display:none}
+    body[data-instrument-embed="true"] .kawano-mobile-credit{inset-block-start:var(--instrument-space-3)}
+  }
+</style>
+</head>
+<body data-system="instrument" data-instrument-release="0.1.0-1ff60f2032a6" data-instrument-polarity="ink" data-instrument-grid="off" data-instrument-grain="off" data-instrument-density="normal" data-instrument-motion="system" data-controls="visible">
+  <script>if(new URLSearchParams(location.search).get("instrument-embed")==="1")document.body.dataset.instrumentEmbed="true";if(matchMedia("(max-width: 767px)").matches)document.body.dataset.controls="hidden";</script>
+  <main class="kawano-stage instrument-renderer-surface" aria-label="Kawano Mosaic artwork stage">
+    <canvas id="kawano-canvas" tabindex="0" role="img" aria-label="Training, generated, and transformed categorical mosaic grids" aria-describedby="kawano-canvas-summary"></canvas>
+    <p id="kawano-fallback" class="kawano-fallback" role="alert" hidden>Canvas 2D is unavailable. This instrument needs a browser with Canvas 2D support.</p>
+    <p id="kawano-canvas-summary" class="kawano-visually-hidden">Five-state mosaic loading.</p>
+  </main>
+  <header class="instrument-renderer-chrome">
+    <div class="instrument-renderer-chrome-zone"><span class="instrument-identity-mark" aria-hidden="true"></span><a class="cga76-breadcrumb" href="../cga76/" aria-label="Back to the Computer Graphics and Art 1976 collection"><span>SUPERMEGA</span><span class="cga76-breadcrumb-sep">/</span><span>CGA 1976</span></a></div>
+    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--middle"><span>09 · KAWANO MOSAIC</span><span>HIROSHI KAWANO</span></div>
+    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">CREDITED STUDY</span><button class="instrument-action" id="toggle-controls" type="button" aria-controls="kawano-panel">Controls</button></div>
+  </header>
+	<div class="instrument-renderer-hud instrument-renderer-hud--top kawano-safe-hud">Fit a two-dimensional transition model to a categorical source, sample a new grid, then transform its same-state regions.</div>
+  <div class="kawano-mobile-credit">Hiroshi Kawano · 1969–70</div>
+	<div class="instrument-renderer-hud instrument-renderer-hud--bottom kawano-safe-hud" id="kawano-hud-status">FITTED MODEL · REVEALING</div>
+  <div class="instrument-renderer-credit">Hiroshi Kawano / Simulated Color Mosaic / 1969–70 / Computer Graphics and Art, May 1976 p. 12</div>
+  <aside class="instrument-renderer-panel" id="kawano-panel" aria-labelledby="kawano-controls-title">
+    <section class="instrument-panel">
+      <header class="instrument-panel-header"><h1 class="instrument-panel-title" id="kawano-controls-title">Kawano Mosaic</h1><div class="instrument-panel-actions"><button class="instrument-action" id="reset-configuration" type="button">Defaults</button><button class="instrument-action" id="hide-controls" type="button">Hide</button></div></header>
+      <dl class="kawano-evidence" aria-label="Provenance boundary">
+        <div class="kawano-evidence-row"><dt>Documented mechanism</dt><dd>Kawano analyzed data pictures into transition characteristics, then used a computer to generate new pictures. The issue shows raw grid output and a transformed result.</dd></div>
+        <div class="kawano-evidence-row"><dt>Interpretation</dt><dd>An order-two model uses left, left-two, above, and above-two contexts with smoothing and deterministic backoff. Exact historical tables are unavailable.</dd></div>
+        <div class="kawano-evidence-row"><dt>Supermega</dt><dd>Paintable training data, live transition diagnostics, linked views, contemporary palettes, replayable reveal, and fixed PNG export.</dd></div>
+      </dl>
+      <div class="instrument-renderer-section">Presets</div><div class="instrument-group"><div class="instrument-row"><span class="instrument-row-label">Study</span><div class="instrument-row-control instrument-renderer-actions"><button class="instrument-action" type="button" data-preset="source">Source-facing</button><button class="instrument-action" type="button" data-preset="supermega">Supermega regions</button></div><span></span></div></div>
+      <div class="instrument-renderer-section">Training data</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><label class="instrument-row-label" for="field-training-fixture">Fixture</label><div class="instrument-row-control"><select class="instrument-control" id="field-training-fixture"><option value="source">Source study</option><option value="checker">Diagonal checker</option><option value="custom">Custom grid</option></select></div><span></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="range-states">States</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="range-states" min="2" max="5" step="1" value="5" /></div><output class="instrument-row-value instrument-tabular" id="value-states">5</output></div>
+      </div>
+      <div class="kawano-paint-row"><label><span class="instrument-row-label">Cell index</span><input class="instrument-control instrument-text-field" id="field-training-index" type="number" min="0" max="143" value="0" /></label><label><span class="instrument-row-label">Paint state</span><select class="instrument-control" id="field-paint-state"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option></select></label><button class="instrument-action" id="paint-training-cell" type="button">Apply cell</button><button class="instrument-action" id="clear-training" type="button">Zero grid</button></div>
+      <div class="instrument-renderer-section">Generated field</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><label class="instrument-row-label" for="range-rows">Rows</label><div class="instrument-row-control"><input class="instrument-range" id="range-rows" type="range" min="8" max="64" step="1" value="40" /></div><output class="instrument-row-value instrument-tabular" id="value-rows">40</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="range-columns">Columns</label><div class="instrument-row-control"><input class="instrument-range" id="range-columns" type="range" min="8" max="64" step="1" value="40" /></div><output class="instrument-row-value instrument-tabular" id="value-columns">40</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="field-context-order">Context</label><div class="instrument-row-control"><select class="instrument-control" id="field-context-order"><option value="two">Order two</option><option value="one">Order one</option></select></div><span></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="field-scan-order">Scan</label><div class="instrument-row-control"><select class="instrument-control" id="field-scan-order"><option value="row-major">Rows</option><option value="column-major">Columns</option></select></div><span></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="range-horizontal">Horizontal</label><div class="instrument-row-control"><input class="instrument-range" id="range-horizontal" type="range" min="0" max="1" step="0.01" value="0.56" /></div><output class="instrument-row-value instrument-tabular" id="value-horizontal">0.56</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="range-vertical">Vertical</label><div class="instrument-row-control"><input class="instrument-range" id="range-vertical" type="range" min="0" max="1" step="0.01" value="0.44" /></div><output class="instrument-row-value instrument-tabular" id="value-vertical">0.44</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="range-temperature">Temperature</label><div class="instrument-row-control"><input class="instrument-range" id="range-temperature" type="range" min="0.25" max="3" step="0.01" value="0.92" /></div><output class="instrument-row-value instrument-tabular" id="value-temperature">0.92</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="range-smoothing">Smoothing</label><div class="instrument-row-control"><input class="instrument-range" id="range-smoothing" type="range" min="0.001" max="2" step="0.001" value="0.12" /></div><output class="instrument-row-value instrument-tabular" id="value-smoothing">0.120</output></div>
+      </div>
+      <details class="instrument-disclosure"><summary><span class="instrument-disclosure-label">Look, seed, and playback</span><span class="instrument-disclosure-meta">Six controls</span></summary><div class="instrument-disclosure-body"><div class="instrument-group">
+        <div class="instrument-row"><label class="instrument-row-label" for="field-view">View</label><div class="instrument-row-control"><select class="instrument-control" id="field-view"><option value="linked">Linked triptych</option><option value="raw">Generated raw</option><option value="transformed">Transformed regions</option></select></div><span></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="field-palette">Palette</label><div class="instrument-row-control"><select class="instrument-control" id="field-palette"><option value="source">Source study</option><option value="supermega">Supermega</option><option value="cool">Cool archive</option></select></div><span></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="range-rounding">Rounding</label><div class="instrument-row-control"><input class="instrument-range" id="range-rounding" type="range" min="0" max="1" step="0.01" value="0.38" /></div><output class="instrument-row-value instrument-tabular" id="value-rounding">0.38</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="range-reveal-speed">Reveal speed</label><div class="instrument-row-control"><input class="instrument-range" id="range-reveal-speed" type="range" min="1" max="30" step="1" value="12" /></div><output class="instrument-row-value instrument-tabular" id="value-reveal-speed">12</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="field-seed">Seed</label><div class="instrument-row-control"><input class="instrument-control instrument-text-field" id="field-seed" type="number" min="0" max="4294967295" value="1970" /></div><span class="instrument-row-value"><button class="instrument-action" id="randomize" type="button">New</button></span></div>
+        <div class="instrument-row"><span class="instrument-row-label">Reveal</span><div class="instrument-row-control instrument-renderer-actions"><button class="instrument-action" id="pause-resume" type="button">Pause</button><button class="instrument-action" id="replay" type="button">Replay</button></div><span></span></div>
+      </div></div></details>
+      <div class="instrument-renderer-section">Artifact</div><div class="instrument-group"><div class="instrument-row"><span class="instrument-row-label">Output</span><div class="instrument-row-control instrument-renderer-actions"><button class="instrument-action" id="copy-configuration" type="button">Copy config</button><button class="instrument-action" id="export-artifact" type="button">Export PNG</button></div><span class="instrument-row-value instrument-tabular">1600×1000</span></div><p class="instrument-renderer-panel-lede">PNG export always renders the complete canonical grid, including while reveal playback is paused.</p></div>
+      <div class="instrument-renderer-section">Load Configuration</div><div class="kawano-load"><label class="instrument-row-label" for="configuration-input">Serialized configuration JSON</label><textarea class="instrument-control instrument-textarea" id="configuration-input" maxlength="22000" spellcheck="false" autocomplete="off" placeholder="Paste Copy config output here"></textarea><div class="kawano-load-actions"><button class="instrument-action" id="load-configuration" type="button">Load Configuration</button><button class="instrument-action" id="select-configuration" type="button">Select text</button></div></div>
+      <div class="instrument-status" id="kawano-status" role="status" aria-live="polite" data-instrument-tone="active"><span class="instrument-status-mark" aria-hidden="true"></span><span>Model</span><span class="instrument-status-value instrument-tabular" id="kawano-status-value">READY</span></div>
+      <details class="instrument-disclosure"><summary><span class="instrument-disclosure-label">Full provenance and source links</span><span class="instrument-disclosure-meta">May 1976</span></summary><div class="instrument-disclosure-body kawano-source-links"><p><strong>Artist:</strong> Hiroshi Kawano<br /><strong>Work:</strong> <cite>Simulated Color Mosaic</cite><br /><strong>Date:</strong> 1969–70<br /><strong>Issue:</strong> <cite>Computer Graphics and Art</cite>, May 1976 p. 12.</p><a href="https://zkm.de/en/artwork/simulated-color-mosaic" target="_blank" rel="noopener noreferrer">ZKM object record</a><a href="https://isea-archives.siggraph.org/wp-content/uploads/2020/06/ISEA2011_188_SIMONE-GRISTWOOD.pdf" target="_blank" rel="noopener noreferrer">Archive-based process research</a><a href="https://www.pli.jp/kawano/Kawano-j-index.html" target="_blank" rel="noopener noreferrer">Kawano archive index</a></div></details>
+    </section>
+  </aside>
+  <div class="instrument-mode-dock instrument-renderer-dock" role="toolbar" aria-label="Material controls"><button class="instrument-action" type="button" data-instrument-coordinate="ink" aria-pressed="true">Ink</button><button class="instrument-action" type="button" data-instrument-coordinate="light" aria-pressed="false">Light</button><button class="instrument-action" type="button" data-instrument-coordinate="grid" aria-pressed="false">Grid</button><button class="instrument-action" type="button" data-instrument-coordinate="grain" aria-pressed="false">Grain</button></div><div class="instrument-material-grid" aria-hidden="true"></div><div class="instrument-material-grain" aria-hidden="true"></div>
+  <script src="../_kit/releases/0.1.0-1ff60f2032a6/instrument-runtime.js"></script><script src="../_system/adapters/adapter-core.js"></script><script src="../_system/adapters/cga76-kawano-mosaic.js"></script><script src="kawano-core.js"></script><script src="kawano-page.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+Build a dependency-free browser Instrument called "Kawano Mosaic Simulator" as a clean-room credited study of Hiroshi Kawano's Simulated Color Mosaic (1969–70), reproduced in Computer Graphics and Art, May 1976 p. 12.
+
+Use static HTML, CSS, and classic JavaScript. Run over HTTP and file://. Pin SUPERMEGA Instrument release 0.1.0-1ff60f2032a6, then load the runtime, adapter core, named adapter, local core, and page controller in that order.
+
+Fit global, horizontal order-one/order-two, vertical order-one/order-two, and left-two/left/above-two/above categorical transition counts from a bounded editable training grid. Smooth observed rows toward axis priors and expose deterministic fallback metadata for unseen contexts. Generate in row-major or column-major order with one audited Mulberry32 draw per output cell. Keep transformation separate: derive same-state joins and rounding without changing the categorical output.
+
+Show a linked training/generated/transformed view, raw and transformed solo views, source and Supermega presets, state count, grid dimensions, axis influences, context order, temperature, smoothing, scan order, palette, rounding, reveal speed, and seed. Provide direct and keyboard training-cell editing.
+
+The adapter owns every JSON-safe field, including training cells. Declare configure, copy-config, reset-configuration, randomize, pause, resume, show-controls, hide-controls, and create-artifact. Use versioned 16 KB URL state, visible normalized loading, strict bridge, DPR live canvas, reduced-motion final still, and a separate deterministic 1600×1000 final-frame PNG. Do not fetch remote or local images.
+
+Visibly distinguish the documented transition-matrix/Monte-Carlo method, the inferred order-two model, and Supermega additions. Carry rights state pending-review. Prove row normalization, sparse backoff, refitting, one-draw-per-cell replay, transform state preservation, completed reveal identity, adapter truth, page pixels, replay, literal safety, mobile behavior, and preview generation.

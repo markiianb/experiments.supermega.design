@@ -4,6 +4,7 @@
 	const NAMESPACE = "supermega.instrument.bridge/v1";
 	const VERSION = 1;
 	const registry = global.SUPERMEGA_INSTRUMENT_ADAPTERS || {};
+	let strictAppearanceOrigin = "";
 
 	function isPlainObject(value) {
 		if (!value || typeof value !== "object" || Array.isArray(value)) return false;
@@ -46,6 +47,7 @@
 	function applyAppearanceMessage(event) {
 		const message = event.data;
 		if (event.source !== global.parent || !message || message.namespace !== NAMESPACE || message.version !== VERSION || message.type !== "APPEARANCE") return;
+		if (strictAppearanceOrigin !== null && (!strictAppearanceOrigin || event.origin !== strictAppearanceOrigin)) return;
 		const appearance = message.appearance;
 		if (!isPlainObject(appearance)) return;
 		const body = global.document?.body;
@@ -350,15 +352,39 @@
 		});
 	}
 
-	function installBridge(adapter) {
+	function installBridge(adapter, options) {
+		options = options || {};
 		const target = global.parent;
-		const sessionId = global.crypto && typeof global.crypto.randomUUID === "function"
+		const strict = options.strict === true;
+		let trustedOrigin = "*";
+		if (strict) {
+			try {
+				const protocol = global.location && global.location.protocol;
+				const pageOrigin = global.location && global.location.origin;
+				const referrer = global.document && global.document.referrer;
+				const referrerOrigin = referrer ? new URL(referrer).origin : "";
+				trustedOrigin = (protocol === "http:" || protocol === "https:") && referrerOrigin === pageOrigin
+					? referrerOrigin
+					: "";
+			} catch {
+				trustedOrigin = "";
+			}
+		}
+		const authorized = !strict || Boolean(trustedOrigin);
+		strictAppearanceOrigin = strict ? (authorized ? trustedOrigin : "") : null;
+		const sessionId = authorized && global.crypto && typeof global.crypto.randomUUID === "function"
 			? global.crypto.randomUUID()
-			: `${adapter.id}-${Date.now().toString(36)}`;
+			: authorized ? `${adapter.id}-${Date.now().toString(36)}` : null;
 		let destroyed = false;
+		let lastArtifactAt = -Infinity;
+		const artifactIntervalMs = Number.isFinite(options.artifactIntervalMs)
+			? Math.max(0, options.artifactIntervalMs)
+			: 750;
+		const now = typeof options.now === "function" ? options.now : Date.now;
 
 		function post(message) {
-			target.postMessage(message, "*");
+			if (!authorized) return;
+			target.postMessage(message, trustedOrigin);
 		}
 
 		function result(request, outcome) {
@@ -375,12 +401,37 @@
 		}
 
 		function onMessage(event) {
-			if (destroyed || event.source !== target) return;
+			if (destroyed || !authorized || event.source !== target) return;
+			if (strict && event.origin !== trustedOrigin) return;
 			const message = event.data;
 			if (!exactKeys(message, ["namespace", "version", "type", "sessionId", "requestId", "action", "payload"])) return;
 			if (message.namespace !== NAMESPACE || message.version !== VERSION || message.type !== "REQUEST") return;
 			if (message.sessionId !== sessionId || typeof message.requestId !== "string" || !message.requestId) return;
 			if (typeof message.action !== "string" || !isJsonValue(message.payload)) return;
+			const artifactRequestedAt = message.action === "create-artifact" ? now() : null;
+			if (artifactRequestedAt !== null) {
+				if (artifactRequestedAt - lastArtifactAt < artifactIntervalMs) {
+					result(message, {
+						action: message.action,
+						error: { code: "RATE_LIMITED", message: "Artifact requests are arriving too quickly." },
+						ok: false,
+					});
+					return;
+				}
+			}
+			if (typeof options.authorizeRequest === "function" && options.authorizeRequest({
+				action: message.action,
+				payload: clone(message.payload),
+				origin: event.origin,
+			}) !== true) {
+				result(message, {
+					action: message.action,
+					error: { code: "BRIDGE_FORBIDDEN", message: "The embedded request requires an in-frame action." },
+					ok: false,
+				});
+				return;
+			}
+			if (artifactRequestedAt !== null) lastArtifactAt = artifactRequestedAt;
 			result(message, adapter.execute(message.action, message.payload));
 		}
 
@@ -394,18 +445,23 @@
 			});
 		}
 
-		global.addEventListener("message", onMessage);
-		postReady();
-		if (global.document && global.document.readyState !== "complete") {
-			global.addEventListener("load", postReady, { once: true });
+		if (authorized) {
+			global.addEventListener("message", onMessage);
+			postReady();
+			if (global.document && global.document.readyState !== "complete") {
+				global.addEventListener("load", postReady, { once: true });
+			}
 		}
 
 		return Object.freeze({
+			authorized,
 			destroy() {
 				if (destroyed) return;
 				destroyed = true;
-				global.removeEventListener("message", onMessage);
-				global.removeEventListener("load", postReady);
+				if (authorized) {
+					global.removeEventListener("message", onMessage);
+					global.removeEventListener("load", postReady);
+				}
 			},
 			sessionId,
 		});

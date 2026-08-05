@@ -49,8 +49,13 @@
 		defaults,
 	};
 
+	// null and "" must NOT read as 0. The adapter core JSON-clones every patch,
+	// so NaN and Infinity arrive as null; coercing that to 0 would silently slam a
+	// control to its floor instead of ignoring bad input.
+	const usableNumber = (value) => value !== null && value !== undefined && value !== "";
+
 	function number(value, fallback, min, max) {
-		const parsed = Number(value);
+		const parsed = usableNumber(value) ? Number(value) : Number.NaN;
 		return Math.min(max, Math.max(min, Number.isFinite(parsed) ? parsed : fallback));
 	}
 

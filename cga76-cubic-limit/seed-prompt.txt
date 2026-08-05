@@ -1,0 +1,17 @@
+Build a dependency-free browser Instrument called "Cubic Limit" as a clean-room credited study of Manfred Mohr's The Cubic Limit Series, May 1976 p. 14, corresponding closely to P-159-R (1974).
+
+Use static HTML, CSS, and classic JavaScript. Run over HTTP and directly from file://. Pin SUPERMEGA Instrument release 0.1.0-1ff60f2032a6. Load the runtime, adapter core, named adapter, local core, and page script in that order. Keep renderer and controller code inside this folder.
+
+Preserve the visible evidence boundary:
+
+- Documented mechanism: the cube's twelve edges act as an alphabet; signs sit on a lattice; visible edge count decreases statistically outward; orientation rotates slowly across the field; related works use subsets, complements, addition, and logical operations.
+- Interpretation: own canonical eight vertices and twelve edges, new grid dimensions, radial falloff, seeded edge ranking, positional rotations, projection constants, noise, and subset sequence. Avoid the known work's exact grid, rotations, and sequence.
+- Supermega: alternate projections and logical populations, offset center, black/red/cream preset, optional slow phase, deterministic replay, strict bridge, and canonical PNG export.
+
+The named adapter owns rows, columns, center X/Y, falloff, min/max edge count, XYZ rotation sweeps, projection, glyph scale, noise, subset operation, stroke, polarity, and seed. Declare configure, copy-config, reset-configuration, randomize, pause, resume, show-controls, hide-controls, and create-artifact. The controller owns only phase, frame timing, and canvas resources. Configure and reset return phase to zero. Pause freezes geometry; resume continues it.
+
+Use a local audited PRNG and fixed draw order. Never use Math.random in deterministic paths. Provide versioned #config=<base64url JSON> state with a 16 KB decoded limit, visible Load Configuration, normalized literal-safe state, selectable copy fallback, DPR live canvas, and a separate deterministic 1600x1000 PNG canvas at canonical phase zero. Honor reduced motion.
+
+Prove the twelve-edge alphabet, subset bounds, radial relation, deterministic projection, complement completeness, invalid projection fallback, exact adapter capabilities, pause/resume frame behavior, browser pixels and material differences, copy/load replay, hostile literal safety, malformed and oversized state preservation, visible normalization, mobile overflow, artifact metadata, and preview generation.
+
+Display a visible permission-required notice. ReCode reports that Mohr asked for his work not to be reproduced online. Keep the study local pending permission or legal review, and require the collection candidate packager to exclude this ID and artist.
