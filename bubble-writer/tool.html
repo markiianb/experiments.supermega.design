@@ -14,11 +14,21 @@
   .hero{position:fixed;inset:0;overflow:hidden;background:#0B0B0D}
   /* breadcrumb: the same trail the landing page and the directory use, so a
      tool opened cold still says where it sits */
-  .bw-crumb{display:flex;align-items:center;gap:var(--instrument-space-2)}
+  /* The trail must never wrap into the zone beside it — a breadcrumb that grows
+     a second line pushes the chrome's middle zone straight through it. It stays
+     on one line, and the descriptive middle zone is what gives way when space
+     runs short, because it is the only part that carries no navigation. */
+  .bw-crumb{display:flex;align-items:center;gap:var(--instrument-space-2);min-inline-size:0;white-space:nowrap;overflow:hidden}
   .bw-crumb a{color:#e0e0e0;text-decoration:none}
   .bw-crumb a:hover{color:#fff}
   .bw-sep{color:#6f6f6f}
-  .bw-here{color:#a8a8a8}
+  .bw-here{color:#a8a8a8;overflow:hidden;text-overflow:ellipsis}
+  @media (max-inline-size: 1180px){
+    .instrument-renderer-chrome-zone--middle{display:none}
+  }
+  @media (max-inline-size: 720px){
+    .bw-crumb a[data-crumb="root"],.bw-crumb .bw-sep:first-of-type{display:none}
+  }
   .hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
   /* A five-option group cannot shrink below its own labels, so inside a row it
      spills out of the grid cell and over the row label. These sit full width
@@ -49,7 +59,7 @@
   </section>
 
   <header class="instrument-renderer-chrome">
-    <div class="instrument-renderer-chrome-zone bw-crumb"><span class="instrument-identity-mark" aria-hidden="true"></span><a href="https://supermega.design">SUPERMEGA</a><span class="bw-sep">/</span><a href="../">EXPERIMENTS</a><span class="bw-sep">/</span><span class="bw-here">BUBBLE WRITER</span></div>
+    <div class="instrument-renderer-chrome-zone bw-crumb"><span class="instrument-identity-mark" aria-hidden="true"></span><a href="https://supermega.design" data-crumb="root">SUPERMEGA</a><span class="bw-sep">/</span><a href="../">EXPERIMENTS</a><span class="bw-sep">/</span><span class="bw-here">BUBBLE WRITER</span></div>
     <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--middle"><span>WORK</span><span>WRITTEN ANIMATION</span></div>
     <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">EX-BUBBLE-02</span><button class="instrument-action" id="toggle" type="button">Controls</button></div>
   </header>
@@ -193,6 +203,7 @@ GREAT</textarea>
   const ENTER = 0.34;        // seconds one letter takes to arrive
 
   const S = { ...window.SUPERMEGA_INSTRUMENT_ADAPTERS.bubbleScatter.defaults, paused: false };
+  let boardKey = "";   // the artboard the composition was last laid out against
   let lines = [];
   let letters = 0;
   let clock = 0;
@@ -206,8 +217,18 @@ GREAT</textarea>
     // translated off the right edge, so this reads as zero with no special case.
     const embedded = document.body.dataset.instrumentEmbed === 'true';
     const edge = embedded ? innerWidth : $('panel').getBoundingClientRect().left;
-    const reserved = Math.max(0, Math.min(innerWidth * 0.45, innerWidth - edge));
-    return { height: innerHeight, width: Math.max(240, innerWidth - reserved), x: 0, y: 0 };
+    // No cap on what the panel reserves. Capping it at a fraction of the window
+    // lies whenever the panel is wider than that fraction — which happens as
+    // soon as the window is narrow or the page is zoomed — and the board is then
+    // centred in a strip wider than the one you can see, so it runs under the
+    // panel and reads as shifted left with a gap on the right.
+    let reserved = Math.max(0, Math.min(innerWidth, innerWidth - edge));
+    // Below the kit's breakpoint the panel stops being a side rail and becomes a
+    // full-width sheet. Reserving its width then leaves nothing to draw in, so
+    // past a certain share it is treated as an overlay and the frame takes the
+    // whole window — the panel simply sits on top of it.
+    if (reserved > innerWidth * 0.6) reserved = 0;
+    return { height: innerHeight, width: Math.max(200, innerWidth - reserved), x: 0, y: 0 };
   };
   const board = () => {
     const area = stage();
@@ -492,6 +513,13 @@ GREAT</textarea>
 
   const paint = (target, now) => {
     const frame = board();
+    // The composition is laid out against a particular artboard. If that board
+    // has changed since — a resize that fired no event, browser zoom, the panel
+    // opening — the letters would still be placed for the old one while the
+    // paper is drawn for the new, which reads as the work sitting off-centre.
+    // Re-laying out on any change makes the two impossible to disagree.
+    const key = `${Math.round(frame.width)}x${Math.round(frame.height)}@${Math.round(frame.x)}`;
+    if (key !== boardKey) { boardKey = key; compose(); }
     target.fillStyle = '#0B0B0D';
     target.fillRect(0, 0, innerWidth, innerHeight);
     target.save();
