@@ -413,7 +413,7 @@
 				if (artifactRequestedAt - lastArtifactAt < artifactIntervalMs) {
 					result(message, {
 						action: message.action,
-						error: { code: "RATE_LIMITED", message: "Artifact requests are arriving too quickly." },
+						error: { code: "ACTION_FAILED", message: "Artifact requests are arriving too quickly." },
 						ok: false,
 					});
 					return;
@@ -426,7 +426,7 @@
 			}) !== true) {
 				result(message, {
 					action: message.action,
-					error: { code: "BRIDGE_FORBIDDEN", message: "The embedded request requires an in-frame action." },
+						error: { code: "PERMISSION_REQUIRED", message: "The embedded request requires an in-frame action." },
 					ok: false,
 				});
 				return;

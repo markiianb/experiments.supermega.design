@@ -1,0 +1,1228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="supermega-instrument-release" content="0.1.0-1ff60f2032a6" />
+<title>SUPERMEGA — Chroma Atlas</title>
+<link rel="stylesheet" href="../_kit/releases/0.1.0-1ff60f2032a6/instrument.css" />
+<link rel="stylesheet" href="../_system/experiment-host.css" />
+<style>
+  body.atlas-page{--instrument-renderer-inspector-width:clamp(336px,29vw,408px)}
+  .atlas-surface{overflow:hidden;background:var(--instrument-color-canvas)}
+  .atlas-workspace{position:absolute;inset:var(--instrument-chrome-height) 0 0;min-inline-size:0;min-block-size:0}
+  .atlas-tabs{position:absolute;inset:0;gap:0;min-block-size:0}
+  .atlas-tabs-list-host{position:absolute;inset-block-start:0;inset-inline:0;block-size:calc(var(--instrument-control-min-height) + var(--instrument-space-2));z-index:var(--instrument-z-raised);background:var(--instrument-color-canvas)}
+  .atlas-view{position:absolute;inset:calc(var(--instrument-control-min-height) + var(--instrument-space-2)) 0 0;min-inline-size:0;min-block-size:0;overflow:hidden}
+  .atlas-canvas{display:block;inline-size:100%;block-size:100%;touch-action:none}
+  .atlas-orbit{cursor:grab}
+  .atlas-orbit[data-dragging="true"]{cursor:grabbing}
+  .atlas-work-readout{position:absolute;inset-block-start:var(--instrument-space-4);inset-inline-start:var(--instrument-space-4);display:grid;gap:var(--instrument-space-1);max-inline-size:min(52ch,calc(100% - var(--instrument-space-8)));color:var(--instrument-color-text);font-family:var(--instrument-font-mono);font-size:var(--instrument-font-size-label);line-height:var(--instrument-line-height-normal);pointer-events:none;z-index:var(--instrument-z-raised)}
+  .atlas-work-readout span{color:var(--instrument-color-text-muted)}
+  .atlas-colour-metrics{position:absolute;inset-inline:var(--instrument-space-4);inset-block-end:calc(var(--instrument-dock-min-height) + var(--instrument-space-6));max-inline-size:720px;z-index:var(--instrument-z-raised)}
+  .atlas-image-work,.atlas-library-work{block-size:100%;overflow:auto;padding:var(--instrument-space-6);color:var(--instrument-color-text);background:var(--instrument-color-canvas)}
+  .atlas-image-grid{display:grid;grid-template-columns:minmax(240px,2fr) minmax(192px,1fr);gap:var(--instrument-space-6);max-inline-size:1100px;margin-inline:auto}
+  .atlas-image-grid>[hidden]{display:none}
+  .atlas-image-stage{display:grid;place-items:center;min-block-size:360px}
+  .atlas-image-stage canvas{display:block;max-inline-size:100%;max-block-size:min(62vh,680px);inline-size:100%;block-size:auto}
+  .atlas-image-side{display:grid;align-content:start;gap:var(--instrument-space-3)}
+  .atlas-palette-run{display:flex;flex-wrap:wrap;gap:var(--instrument-space-2);align-items:center}
+  .atlas-palette-item{display:grid;justify-items:center;gap:var(--instrument-space-1);font-family:var(--instrument-font-mono);font-size:var(--instrument-font-size-label);color:var(--instrument-color-text-muted)}
+  .atlas-palette-share{font-variant-numeric:tabular-nums}
+  .atlas-library-columns{display:grid;grid-template-columns:repeat(2,minmax(240px,1fr));gap:var(--instrument-space-8);max-inline-size:1200px;margin-inline:auto}
+  .atlas-library-list{display:grid;align-content:start}
+  .atlas-library-strip{inline-size:min(200px,100%)}
+  .atlas-history-copy{min-inline-size:0}
+  .atlas-history-copy strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .atlas-history-actions{display:flex;gap:var(--instrument-space-1)}
+  .atlas-history-actions .instrument-action{inline-size:auto}
+  .atlas-empty-compact{min-block-size:192px}
+  .atlas-panel-action-row>*{inline-size:auto!important;flex:1 1 auto}
+  .atlas-gradient-header>*{inline-size:auto!important}
+  .atlas-gradient-header .instrument-gradient-type{inline-size:100%!important}
+  .atlas-gradient-stop-row[hidden]{display:none}
+  .atlas-gradient-stop-row .instrument-gradient-number{inline-size:68px!important}
+  .atlas-gradient-handle[hidden]{display:none}
+  .atlas-code-value{white-space:normal;word-break:break-word}
+  .atlas-copy-button{inline-size:auto!important}
+  .atlas-file-status{margin-block-start:var(--instrument-space-2)}
+  .atlas-visually-muted{opacity:.56}
+  .atlas-snapshot-name{inline-size:100%}
+  .atlas-restore-input{cursor:pointer}
+  .atlas-export-size>*{inline-size:auto!important;flex:1 1 0}
+  @media (max-width:900px){
+    .atlas-image-grid,.atlas-library-columns{grid-template-columns:1fr}
+    .atlas-image-stage{min-block-size:240px}
+  }
+  @media (max-width:767px){
+    body.atlas-page{--instrument-renderer-inspector-width:min(360px,100%)}
+    .atlas-image-work,.atlas-library-work{padding:var(--instrument-space-3)}
+    .atlas-colour-metrics{display:none}
+    .atlas-work-readout{inset-block-start:var(--instrument-space-3);inset-inline-start:var(--instrument-space-3)}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .atlas-orbit{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body class="atlas-page" data-system="instrument" data-instrument-release="0.1.0-1ff60f2032a6" data-instrument-polarity="ink" data-instrument-grid="off" data-instrument-grain="off" data-instrument-density="normal" data-instrument-motion="system" data-controls="visible">
+  <script>if(new URLSearchParams(location.search).get('instrument-embed')==='1')document.body.dataset.instrumentEmbed='true';</script>
+
+  <section class="atlas-surface instrument-renderer-surface" aria-label="Chroma Atlas work surface">
+    <div class="atlas-workspace">
+      <div class="atlas-tabs instrument-tabs" id="workspace-tabs" data-instrument-orientation="horizontal" data-instrument-portability="behavioral" data-instrument-selected-id="gradient">
+        <div class="atlas-tabs-list-host instrument-tabs-list" role="tablist" aria-label="Chroma Atlas workspace views" aria-orientation="horizontal">
+          <span class="instrument-tab-wrap"><button class="instrument-tab" id="tab-gradient" type="button" role="tab" data-instrument-tab-id="gradient" aria-controls="view-gradient" aria-selected="true" data-instrument-active tabindex="0">Gradient</button></span>
+          <span class="instrument-tab-wrap"><button class="instrument-tab" id="tab-colour" type="button" role="tab" data-instrument-tab-id="colour" aria-controls="view-colour" aria-selected="false" tabindex="-1">Colour</button></span>
+          <span class="instrument-tab-wrap"><button class="instrument-tab" id="tab-image" type="button" role="tab" data-instrument-tab-id="image" aria-controls="view-image" aria-selected="false" tabindex="-1">Image</button></span>
+          <span class="instrument-tab-wrap"><button class="instrument-tab" id="tab-space" type="button" role="tab" data-instrument-tab-id="space" aria-controls="view-space" aria-selected="false" tabindex="-1">Space</button></span>
+          <span class="instrument-tab-wrap"><button class="instrument-tab" id="tab-library" type="button" role="tab" data-instrument-tab-id="library" aria-controls="view-library" aria-selected="false" tabindex="-1">Library</button></span>
+        </div>
+
+        <section class="atlas-view" id="view-gradient" role="tabpanel" aria-labelledby="tab-gradient">
+          <canvas class="atlas-canvas" id="gradient-canvas" aria-label="Rendered gradient preview"></canvas>
+          <div class="atlas-work-readout" aria-hidden="true"><strong id="gradient-readout">LINEAR · OKLCH · 04 STOPS</strong><span id="gradient-subreadout">Signal collection · 135°</span></div>
+        </section>
+
+        <section class="atlas-view" id="view-colour" role="tabpanel" aria-labelledby="tab-colour" hidden>
+          <canvas class="atlas-canvas" id="colour-canvas" aria-label="Selected colour preview"></canvas>
+          <div class="atlas-work-readout" aria-hidden="true"><strong id="colour-readout">#F61515</strong><span id="colour-subreadout">Against #0A0A0A</span></div>
+          <div class="atlas-colour-metrics instrument-metrics" aria-label="Contrast summary">
+            <div class="instrument-metric"><span class="instrument-metric-value instrument-tabular" id="metric-ratio">5.12</span><span class="instrument-metric-label">WCAG ratio</span></div>
+            <div class="instrument-metric"><span class="instrument-metric-value instrument-tabular" id="metric-aa">PASS</span><span class="instrument-metric-label">AA normal</span></div>
+            <div class="instrument-metric"><span class="instrument-metric-value instrument-tabular" id="metric-aaa">FAIL</span><span class="instrument-metric-label">AAA normal</span></div>
+          </div>
+        </section>
+
+        <section class="atlas-view" id="view-image" role="tabpanel" aria-labelledby="tab-image" hidden>
+          <div class="atlas-image-work">
+            <section class="instrument-empty-state" id="image-empty" role="status">
+              <span class="instrument-empty-state-code">IMG</span>
+              <h2>Choose a local image</h2>
+              <p>Decode it in this tab, then request up to twelve distinct colours.</p>
+              <div class="instrument-file-drop instrument-empty-state-action" id="image-drop-work">
+                <label class="instrument-file-drop-zone" id="image-drop-zone-work">
+                  <input class="instrument-file-drop-input" id="image-file-work" type="file" accept="image/png,image/jpeg,image/webp" aria-label="Choose an image for palette extraction" />
+                  <span class="instrument-file-drop-cue" aria-hidden="true">Drop an image or browse</span>
+                </label>
+              </div>
+            </section>
+            <div class="instrument-status" id="image-loading" role="status" data-instrument-tone="active" hidden><span class="instrument-status-mark" aria-hidden="true"></span><span>Image</span><span class="instrument-status-value instrument-tabular">DECODING</span></div>
+            <div class="instrument-notice" id="image-invalid" role="alert" data-instrument-tone="error" hidden>That file could not be decoded. Choose a static PNG, JPEG, or WebP image.</div>
+            <div class="atlas-image-grid" id="image-success" hidden>
+              <figure class="instrument-media-block" aria-label="Local source preview">
+                <div class="atlas-image-stage instrument-media-block-stage"><canvas id="image-canvas" aria-label="Decoded source image"></canvas></div>
+                <figcaption><span id="image-caption">Local source</span><cite>Private to this tab</cite></figcaption>
+              </figure>
+              <div class="atlas-image-side">
+                <div class="instrument-section">Extracted palette</div>
+                <div class="atlas-palette-run" id="image-palette" aria-label="Extracted colours"></div>
+                <div class="instrument-status" role="status" data-instrument-tone="active"><span class="instrument-status-mark" aria-hidden="true"></span><span>Extraction</span><span class="instrument-status-value instrument-tabular" id="image-palette-count">00 COLOURS</span></div>
+                <div class="instrument-help">Pick a swatch to inspect it in Colour. “Use as gradient” maps up to four evenly spaced colours into the fixed stop slots.</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="atlas-view" id="view-space" role="tabpanel" aria-labelledby="tab-space" hidden>
+          <canvas class="atlas-canvas atlas-orbit" id="space-canvas" tabindex="0" aria-label="Current ramp plotted on Cartesian OKLab L, a, and b axes. Drag to orbit. Arrow keys adjust yaw and pitch. Home resets the view."></canvas>
+          <div class="atlas-work-readout" aria-hidden="true"><strong id="space-readout">CURRENT RAMP · OKLAB L/A/B</strong><span id="space-subreadout">Sampled in OKLCH · Cartesian projection · Drag to orbit</span></div>
+        </section>
+
+        <section class="atlas-view" id="view-library" role="tabpanel" aria-labelledby="tab-library" hidden>
+          <div class="atlas-library-work">
+            <div class="atlas-library-columns">
+              <section aria-labelledby="studio-collections-title">
+                <div class="instrument-section" id="studio-collections-title">Studio collections</div>
+                <div class="atlas-library-list" id="studio-collections"></div>
+              </section>
+              <section aria-labelledby="saved-favourites-title">
+                <div class="instrument-section" id="saved-favourites-title">Saved favourites</div>
+                <div class="atlas-library-list" id="saved-favourites"></div>
+                <section class="atlas-empty-compact instrument-empty-state" id="library-empty" role="status"><span class="instrument-empty-state-code">00</span><h2>No saved favourites</h2><p>Name the current state in the Inspector, then save it here.</p></section>
+              </section>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <header class="instrument-renderer-chrome">
+    <div class="instrument-renderer-chrome-zone"><span class="instrument-identity-mark" aria-hidden="true"></span>SUPERMEGA / CHROMA ATLAS</div>
+    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--middle"><span id="chrome-mode">GRADIENT</span><span id="chrome-context">OKLCH / LINEAR</span></div>
+    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">EX-CHR-01</span><button class="instrument-action" id="toggle-controls" type="button" aria-controls="panel" aria-expanded="true">Controls</button></div>
+  </header>
+
+  <aside class="instrument-renderer-panel" id="panel" aria-label="Chroma Atlas Inspector">
+    <section class="instrument-panel">
+      <header class="instrument-panel-header">
+        <h1 class="instrument-panel-title" id="atlas-controls-title">Chroma Atlas</h1>
+        <div class="instrument-panel-actions"><button class="instrument-action" id="defaults" type="button" title="Restore every configuration default">Defaults</button><button class="instrument-action" id="hide-controls" type="button">Hide</button></div>
+      </header>
+      <p class="instrument-renderer-panel-lede">Build a ramp, inspect one colour, pull a palette from local pixels, project it through OKLab, then save or export the result.</p>
+
+      <div id="inspector-gradient">
+        <div class="instrument-renderer-section">Gradient</div>
+        <div class="instrument-group">
+          <div class="instrument-gradient-field" id="gradient-field">
+            <div class="atlas-gradient-header instrument-gradient-header">
+              <select class="instrument-control instrument-gradient-type" id="style" aria-label="Gradient style">
+                <option value="linear">Linear</option><option value="radial">Radial</option><option value="angular">Angular</option><option value="air">Air</option><option value="cube">Cube</option><option value="mono">Mono</option><option value="dither">Dither</option>
+              </select>
+              <button class="instrument-action" id="reverse" type="button" title="Reverse active stops">Reverse</button>
+            </div>
+            <div class="instrument-gradient-strip" id="gradient-strip" style="--instrument-gradient-preview:linear-gradient(90deg,#f61515 0%,#ff8f6b 34%,#5744ff 68%,#0a0a0a 100%)">
+              <button class="instrument-gradient-handle" id="handle-1" data-slot="1" type="button" role="slider" aria-label="Stop 1 position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" style="--instrument-gradient-stop:0%"></button>
+              <button class="instrument-gradient-handle" id="handle-2" data-slot="2" type="button" role="slider" aria-label="Stop 2 position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="34" style="--instrument-gradient-stop:34%"></button>
+              <button class="instrument-gradient-handle" id="handle-3" data-slot="3" type="button" role="slider" aria-label="Stop 3 position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="68" style="--instrument-gradient-stop:68%"></button>
+              <button class="instrument-gradient-handle" id="handle-4" data-slot="4" type="button" role="slider" aria-label="Stop 4 position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" style="--instrument-gradient-stop:100%"></button>
+            </div>
+            <div class="instrument-gradient-stops">
+              <div class="instrument-gradient-stop-row" id="stop-row-1" data-slot="1">
+                <span class="instrument-color-field"><span class="instrument-color-swatch" id="swatch-1" style="background:#f61515"><input class="instrument-color-picker" id="color-picker-1" type="color" value="#f61515" aria-label="Stop 1 colour picker" /></span><input class="instrument-control instrument-text-field instrument-color-hex" id="color-1" value="#f61515" aria-label="Stop 1 hexadecimal colour" /></span>
+                <input class="instrument-control instrument-mini-field instrument-gradient-number instrument-tabular" id="position-1" type="number" min="0" max="100" step="1" value="0" aria-label="Stop 1 position percent" readonly />
+              </div>
+              <div class="instrument-gradient-stop-row" id="stop-row-2" data-slot="2">
+                <span class="instrument-color-field"><span class="instrument-color-swatch" id="swatch-2" style="background:#ff8f6b"><input class="instrument-color-picker" id="color-picker-2" type="color" value="#ff8f6b" aria-label="Stop 2 colour picker" /></span><input class="instrument-control instrument-text-field instrument-color-hex" id="color-2" value="#ff8f6b" aria-label="Stop 2 hexadecimal colour" /></span>
+                <input class="instrument-control instrument-mini-field instrument-gradient-number instrument-tabular" id="position-2" type="number" min="0" max="100" step="1" value="34" aria-label="Stop 2 position percent" />
+              </div>
+              <div class="instrument-gradient-stop-row" id="stop-row-3" data-slot="3">
+                <span class="instrument-color-field"><span class="instrument-color-swatch" id="swatch-3" style="background:#5744ff"><input class="instrument-color-picker" id="color-picker-3" type="color" value="#5744ff" aria-label="Stop 3 colour picker" /></span><input class="instrument-control instrument-text-field instrument-color-hex" id="color-3" value="#5744ff" aria-label="Stop 3 hexadecimal colour" /></span>
+                <input class="instrument-control instrument-mini-field instrument-gradient-number instrument-tabular" id="position-3" type="number" min="0" max="100" step="1" value="68" aria-label="Stop 3 position percent" />
+              </div>
+              <div class="instrument-gradient-stop-row" id="stop-row-4" data-slot="4">
+                <span class="instrument-color-field"><span class="instrument-color-swatch" id="swatch-4" style="background:#0a0a0a"><input class="instrument-color-picker" id="color-picker-4" type="color" value="#0a0a0a" aria-label="Stop 4 colour picker" /></span><input class="instrument-control instrument-text-field instrument-color-hex" id="color-4" value="#0a0a0a" aria-label="Stop 4 hexadecimal colour" /></span>
+                <input class="instrument-control instrument-mini-field instrument-gradient-number instrument-tabular" id="position-4" type="number" min="0" max="100" step="1" value="100" aria-label="Stop 4 position percent" readonly />
+              </div>
+            </div>
+          </div>
+          <div class="instrument-row" id="row-stop-count"><label class="instrument-row-label" for="stop-count">Stops</label><div class="instrument-row-control"><input class="instrument-range" id="stop-count" type="range" min="2" max="4" step="1" value="4" /></div><output class="instrument-row-value instrument-tabular" id="value-stop-count" for="stop-count">04</output></div>
+          <div class="instrument-row"><label class="instrument-row-label" for="palette">Collection</label><div class="instrument-row-control"><select class="instrument-control" id="palette"><option value="signal">Signal</option><option value="studio">Studio</option><option value="ultraviolet">Ultraviolet</option><option value="paper">Paper</option><option value="night">Night</option><option value="field">Field</option><option value="custom">Custom</option></select></div><span class="instrument-row-value" id="palette-state">Signal</span></div>
+          <div class="instrument-row"><label class="instrument-row-label" for="interpolation">Interpolation</label><div class="instrument-row-control"><select class="instrument-control" id="interpolation"><option value="srgb">sRGB</option><option value="linear-srgb">Linear sRGB</option><option value="oklab">OKLab</option><option value="oklch">OKLCH</option></select></div><span class="instrument-row-value" id="interpolation-state">OKLCH</span></div>
+        </div>
+
+        <div class="instrument-renderer-section" id="section-shape">Shape</div>
+        <div class="instrument-group" id="controls-shape">
+          <div class="instrument-row" id="row-angle"><label class="instrument-row-label" for="angle">Angle</label><div class="instrument-row-control"><input class="instrument-range" id="angle" type="range" min="0" max="360" step="1" value="135" /></div><output class="instrument-row-value instrument-tabular" id="value-angle" for="angle">135°</output></div>
+          <div class="instrument-row" id="row-focus-x"><label class="instrument-row-label" for="focus-x">Focus X</label><div class="instrument-row-control"><input class="instrument-range" id="focus-x" type="range" min="0" max="1" step="0.01" value="0.5" /></div><output class="instrument-row-value instrument-tabular" id="value-focus-x" for="focus-x">0.50</output></div>
+          <div class="instrument-row" id="row-focus-y"><label class="instrument-row-label" for="focus-y">Focus Y</label><div class="instrument-row-control"><input class="instrument-range" id="focus-y" type="range" min="0" max="1" step="0.01" value="0.5" /></div><output class="instrument-row-value instrument-tabular" id="value-focus-y" for="focus-y">0.50</output></div>
+          <div class="instrument-row" id="row-softness"><label class="instrument-row-label" for="softness">Softness</label><div class="instrument-row-control"><input class="instrument-range" id="softness" type="range" min="0" max="1" step="0.01" value="0.5" /></div><output class="instrument-row-value instrument-tabular" id="value-softness" for="softness">0.50</output></div>
+        </div>
+
+        <div class="instrument-renderer-section" id="section-air" hidden>Air</div>
+        <div class="instrument-group" id="controls-air" hidden>
+          <div class="instrument-row"><label class="instrument-row-label" for="air-scale">Scale</label><div class="instrument-row-control"><input class="instrument-range" id="air-scale" type="range" min="0.5" max="2" step="0.01" value="1" /></div><output class="instrument-row-value instrument-tabular" id="value-air-scale" for="air-scale">1.00</output></div>
+        </div>
+
+        <div class="instrument-renderer-section" id="section-cube" hidden>Cube</div>
+        <div class="instrument-group" id="controls-cube" hidden>
+          <div class="instrument-row" id="row-cube-layers"><label class="instrument-row-label" for="cube-layers">Layers</label><div class="instrument-row-control"><input class="instrument-range" id="cube-layers" type="range" min="3" max="20" step="1" value="9" /></div><output class="instrument-row-value instrument-tabular" id="value-cube-layers" for="cube-layers">09</output></div>
+          <div class="instrument-row" id="row-cube-gap"><label class="instrument-row-label" for="cube-gap">Gap</label><div class="instrument-row-control"><input class="instrument-range" id="cube-gap" type="range" min="0" max="0.2" step="0.005" value="0.04" /></div><output class="instrument-row-value instrument-tabular" id="value-cube-gap" for="cube-gap">0.040</output></div>
+          <div class="instrument-row"><label class="instrument-row-label" for="speed">Speed</label><div class="instrument-row-control"><input class="instrument-range" id="speed" type="range" min="0" max="2" step="0.01" value="0.7" /></div><output class="instrument-row-value instrument-tabular" id="value-speed" for="speed">0.70</output></div>
+        </div>
+
+        <div class="instrument-renderer-section" id="section-mono" hidden>Mono</div>
+        <div class="instrument-group" id="controls-mono" hidden>
+          <div class="instrument-row"><label class="instrument-row-label" for="mono-range">Range</label><div class="instrument-row-control"><input class="instrument-range" id="mono-range" type="range" min="0.1" max="1" step="0.01" value="0.6" /></div><output class="instrument-row-value instrument-tabular" id="value-mono-range" for="mono-range">0.60</output></div>
+        </div>
+
+        <div class="instrument-renderer-section" id="section-dither" hidden>Dither</div>
+        <div class="instrument-group" id="controls-dither" hidden>
+          <div class="instrument-row"><label class="instrument-row-label" for="dither-pattern">Pattern</label><div class="instrument-row-control"><select class="instrument-control" id="dither-pattern"><option value="bayer-2">Bayer 2</option><option value="bayer-4">Bayer 4</option><option value="bayer-8">Bayer 8</option><option value="cluster">Cluster</option><option value="line">Line</option><option value="diagonal">Diagonal</option></select></div><span class="instrument-row-value">Screen</span></div>
+          <div class="instrument-row"><label class="instrument-row-label" for="dither-scale">Scale</label><div class="instrument-row-control"><input class="instrument-range" id="dither-scale" type="range" min="1" max="24" step="1" value="6" /></div><output class="instrument-row-value instrument-tabular" id="value-dither-scale" for="dither-scale">06</output></div>
+        </div>
+      </div>
+
+      <div id="inspector-colour" hidden>
+        <div class="instrument-renderer-section">Colour</div>
+        <div class="instrument-group">
+          <div class="instrument-row"><label class="instrument-row-label" for="colour-picker">Colour</label><div class="instrument-row-control"><span class="instrument-color-field"><span class="instrument-color-swatch" id="colour-swatch" style="background:#f61515"><input class="instrument-color-picker" id="colour-picker" type="color" value="#f61515" aria-label="Colour picker" /></span><input class="instrument-control instrument-text-field instrument-color-hex" id="colour-hex" value="#f61515" aria-label="Hexadecimal colour" /></span></div><span></span></div>
+          <div class="instrument-row"><label class="instrument-row-label" for="background-picker">Ground</label><div class="instrument-row-control"><span class="instrument-color-field"><span class="instrument-color-swatch" id="background-swatch" style="background:#0a0a0a"><input class="instrument-color-picker" id="background-picker" type="color" value="#0a0a0a" aria-label="Contrast background picker" /></span><input class="instrument-control instrument-text-field instrument-color-hex" id="background-hex" value="#0a0a0a" aria-label="Contrast background hexadecimal colour" /></span></div><span></span></div>
+        </div>
+        <div class="instrument-renderer-section">Exact codes</div>
+        <div class="instrument-group">
+          <div class="instrument-table-scroll"><table class="instrument-table" data-instrument-variant="ruled"><caption>Selected colour</caption><tbody id="colour-codes"><tr><th scope="row">HEX</th><td class="atlas-code-value instrument-tabular">#F61515</td><td><button class="atlas-copy-button instrument-action" type="button">Copy</button></td></tr></tbody></table></div>
+          <div class="instrument-row"><span class="instrument-row-label">Codes</span><div class="atlas-panel-action-row instrument-row-control"><button class="instrument-action" id="copy-all-codes" type="button">Copy all</button></div><span></span></div>
+        </div>
+        <div class="instrument-renderer-section">WCAG contrast</div>
+        <div class="instrument-group">
+          <div class="instrument-metrics"><div class="instrument-metric"><span class="instrument-metric-value instrument-tabular" id="contrast-ratio">5.12</span><span class="instrument-metric-label">Ratio</span></div><div class="instrument-metric"><span class="instrument-metric-value instrument-tabular" id="contrast-aa-large">PASS</span><span class="instrument-metric-label">AA large</span></div></div>
+          <div class="instrument-notice" id="contrast-verdict">AA normal passes at 4.5:1. AAA normal needs 7:1.</div>
+          <div class="instrument-row"><span class="instrument-row-label">Evidence</span><div class="atlas-panel-action-row instrument-row-control"><button class="instrument-action" id="copy-contrast" type="button">Copy evidence</button></div><span></span></div>
+        </div>
+      </div>
+
+      <div id="inspector-image" hidden>
+        <div class="instrument-renderer-section">Image source</div>
+        <div class="instrument-group">
+          <div class="instrument-file-drop" id="image-drop-panel">
+            <label class="instrument-file-drop-zone" id="image-drop-zone-panel">
+              <input class="instrument-file-drop-input" id="image-file-panel" type="file" accept="image/png,image/jpeg,image/webp" aria-label="Replace the image used for palette extraction" />
+              <span class="instrument-file-drop-cue" aria-hidden="true">Drop an image or browse</span>
+            </label>
+          </div>
+          <div class="instrument-row"><label class="instrument-row-label" for="image-colour-count">Colours</label><div class="instrument-row-control"><input class="instrument-range" id="image-colour-count" type="range" min="2" max="12" step="1" value="6" /></div><output class="instrument-row-value instrument-tabular" id="value-image-colour-count" for="image-colour-count">06</output></div>
+          <div class="instrument-row"><span class="instrument-row-label">Source</span><div class="atlas-panel-action-row instrument-row-control"><button class="instrument-action" id="use-image-gradient" type="button" disabled>Use as gradient</button><button class="instrument-action" id="remove-image" type="button" disabled>Remove</button></div><span></span></div>
+          <div class="instrument-row" id="row-bridge-image-consent" hidden><span class="instrument-row-label">Bridge</span><div class="atlas-panel-action-row instrument-row-control"><button class="instrument-action" id="allow-bridge-image-export" type="button" disabled>Allow one embedded export</button></div><span></span></div>
+          <div class="atlas-file-status instrument-status" id="image-panel-status" role="status"><span class="instrument-status-mark" aria-hidden="true"></span><span>Local source</span><span class="instrument-status-value instrument-tabular">EMPTY</span></div>
+          <div class="instrument-help">Static PNG, JPEG, or WebP only—20 MB and 20 megapixels maximum. Image bytes and extracted colours stay in this browser tab. Embedded image export needs a fresh in-frame confirmation.</div>
+        </div>
+      </div>
+
+      <div id="inspector-space" hidden>
+        <div class="instrument-renderer-section">OKLab projection</div>
+        <div class="instrument-group">
+          <div class="instrument-row"><label class="instrument-row-label" for="space-yaw">Yaw</label><div class="instrument-row-control"><input class="instrument-range" id="space-yaw" type="range" min="-180" max="180" step="1" value="24" /></div><output class="instrument-row-value instrument-tabular" id="value-space-yaw" for="space-yaw">24°</output></div>
+          <div class="instrument-row"><label class="instrument-row-label" for="space-pitch">Pitch</label><div class="instrument-row-control"><input class="instrument-range" id="space-pitch" type="range" min="-80" max="80" step="1" value="-18" /></div><output class="instrument-row-value instrument-tabular" id="value-space-pitch" for="space-pitch">−18°</output></div>
+          <div class="instrument-row"><label class="instrument-row-label" for="point-size">Point</label><div class="instrument-row-control"><input class="instrument-range" id="point-size" type="range" min="2" max="10" step="0.5" value="4" /></div><output class="instrument-row-value instrument-tabular" id="value-point-size" for="point-size">4.0</output></div>
+          <div class="instrument-row"><span class="instrument-row-label">View</span><div class="atlas-panel-action-row instrument-row-control"><button class="instrument-action" id="reset-space" type="button">Reset view</button></div><span></span></div>
+          <div class="instrument-help" id="space-help">Current ramp sampled in OKLCH, plotted on Cartesian OKLab L/a/b axes. Dragging changes the view only; the ranges and arrow keys provide the same result.</div>
+        </div>
+      </div>
+
+      <div id="inspector-library" hidden>
+        <div class="instrument-renderer-section">Saved favourites</div>
+        <div class="instrument-group">
+          <div class="instrument-row"><label class="instrument-row-label" for="snapshot-name">Name</label><div class="instrument-row-control"><input class="atlas-snapshot-name instrument-control instrument-text-field" id="snapshot-name" type="text" maxlength="80" value="Untitled atlas" /></div><span></span></div>
+          <div class="instrument-row"><span class="instrument-row-label">Current</span><div class="atlas-panel-action-row instrument-row-control"><button class="instrument-action" id="save-snapshot" type="button">Save</button><button class="instrument-action" id="backup-library" type="button">Backup</button></div><span></span></div>
+          <div class="instrument-file-drop">
+            <label class="instrument-file-drop-zone">
+              <input class="atlas-restore-input instrument-file-drop-input" id="restore-library" type="file" accept="application/json,.json" aria-label="Restore a Chroma Atlas library backup" />
+              <span class="instrument-file-drop-cue" aria-hidden="true">Restore a library backup</span>
+            </label>
+          </div>
+          <div class="instrument-status" id="library-status" role="status"><span class="instrument-status-mark" aria-hidden="true"></span><span id="library-storage-label">Saved locally</span><span class="instrument-status-value instrument-tabular">00</span></div>
+          <div class="instrument-help">Snapshots store normalized configuration only. Backup downloads a JSON copy; restore validates the envelope before replacing the local list.</div>
+        </div>
+      </div>
+
+      <div class="instrument-renderer-section">Commands</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><span class="instrument-row-label">Variant</span><div class="atlas-panel-action-row instrument-row-control"><button class="instrument-action" id="randomize" type="button">Randomize</button><button class="instrument-action" id="pause" type="button" hidden>Pause</button></div><span></span></div>
+        <div class="instrument-row"><span class="instrument-row-label">State</span><div class="atlas-panel-action-row instrument-row-control"><button class="instrument-action" id="copy-config" type="button">Copy config</button><button class="instrument-action" id="save-current" type="button">Save</button></div><span></span></div>
+      </div>
+
+      <div class="instrument-renderer-section">Export</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><label class="instrument-row-label" for="export-format">Format</label><div class="instrument-row-control"><select class="instrument-control" id="export-format"><option value="png">PNG</option><option value="jpeg">JPEG</option><option value="tiff">TIFF</option><option value="svg">SVG</option><option value="css">CSS</option><option value="json">JSON</option></select></div><span class="instrument-row-value instrument-tabular" id="export-kind">RASTER</span></div>
+        <div class="instrument-row"><span class="instrument-row-label">Size</span><div class="atlas-export-size instrument-row-control"><input class="instrument-control instrument-mini-field instrument-tabular" id="export-width" type="number" min="64" max="4096" step="1" value="1600" aria-label="Export width" /><input class="instrument-control instrument-mini-field instrument-tabular" id="export-height" type="number" min="64" max="4096" step="1" value="1000" aria-label="Export height" /></div><span class="instrument-row-value instrument-tabular">PX</span></div>
+        <div class="instrument-row" id="row-jpeg-quality" hidden><label class="instrument-row-label" for="jpeg-quality">Quality</label><div class="instrument-row-control"><input class="instrument-range" id="jpeg-quality" type="range" min="0.1" max="1" step="0.01" value="0.9" /></div><output class="instrument-row-value instrument-tabular" id="value-jpeg-quality" for="jpeg-quality">0.90</output></div>
+        <div class="instrument-row"><span class="instrument-row-label">Artifact</span><div class="atlas-panel-action-row instrument-row-control"><button class="instrument-action" id="export" type="button" data-instrument-tone="primary">Export</button></div><span></span></div>
+        <div class="instrument-notice">Artifact creation is synchronous and separate from the visible download gesture.</div>
+      </div>
+
+      <div class="instrument-status" id="instrument-status" role="status" data-instrument-tone="active"><span class="instrument-status-mark" aria-hidden="true"></span><span>Instrument</span><span class="instrument-status-value instrument-tabular">STARTING</span></div>
+      <a class="instrument-credit" href="https://www.nuevo.tokyo/japanese-gradients-for-ui" target="_blank" rel="noreferrer">UI behavior reference: Nuevo.Tokyo’s Japanese Gradients [For UI]. Palette data, colour-space work, rendering, and code are original SUPERMEGA work.</a>
+    </section>
+  </aside>
+
+  <div class="instrument-mode-dock instrument-renderer-dock" role="toolbar" aria-label="Material controls"><button class="instrument-action" type="button" data-instrument-coordinate="ink" aria-pressed="true">Ink</button><button class="instrument-action" type="button" data-instrument-coordinate="light" aria-pressed="false">Light</button><button class="instrument-action" type="button" data-instrument-coordinate="grid" aria-pressed="false">Grid</button><button class="instrument-action" type="button" data-instrument-coordinate="grain" aria-pressed="false">Grain</button></div>
+  <div class="instrument-material-grid" aria-hidden="true"></div><div class="instrument-material-grain" aria-hidden="true"></div>
+
+<script src="../_kit/releases/0.1.0-1ff60f2032a6/instrument-runtime.js"></script>
+<script src="../_system/adapters/adapter-core.js"></script>
+<script src="../_system/adapters/chroma-atlas.js"></script>
+<script src="chroma-atlas-core.js"></script>
+<script>
+(() => {
+  'use strict';
+
+  const $ = id => document.getElementById(id);
+  const engine = window.ChromaAtlasEngine;
+  const adapterDefinition = window.SUPERMEGA_INSTRUMENT_ADAPTERS.chromaAtlas;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const STORAGE_KEY = 'supermega.chroma-atlas.library/v1';
+  const LIBRARY_LIMIT = 200;
+  const MAX_IMAGE_BYTES = engine.MAX_IMAGE_BYTES;
+  const MAX_TIFF_PIXELS = 8_000_000;
+  const AIR_PREVIEW_PIXELS = 240_000;
+  const MODES = ['gradient', 'colour', 'image', 'space', 'library'];
+  const PALETTE_NAMES = Object.keys(adapterDefinition.collections);
+  const ACTIVE_SLOTS = Object.freeze({ 2: [1, 4], 3: [1, 2, 4], 4: [1, 2, 3, 4] });
+  const FORMAT_META = Object.freeze({
+    png: ['png', 'image/png', 'RASTER'], jpeg: ['jpg', 'image/jpeg', 'RASTER'],
+    tiff: ['tiff', 'image/tiff', 'RASTER'], svg: ['svg', 'image/svg+xml', 'SVG'],
+    css: ['css', 'text/css', 'TEXT'], json: ['json', 'application/json', 'TEXT'],
+  });
+  const canvases = {
+    gradient: $('gradient-canvas'), colour: $('colour-canvas'), image: $('image-canvas'), space: $('space-canvas'),
+  };
+  const panel = $('panel');
+  const workspaceTabs = $('workspace-tabs');
+  let adapter;
+  let bridge;
+  let materials;
+  let rangeContract;
+  let resizeObserver;
+  let frameHandle = 0;
+  let configuration = adapterDefinition.defaults;
+  let paused = reducedMotion.matches;
+  let renderClock = 0;
+  let lastFrameAt = performance.now();
+  let lastAirPaintAt = -Infinity;
+  let imageToken = 0;
+  let restoreToken = 0;
+  let bridgeArtifactConsent = false;
+  let sessionLibrary = [];
+  let libraryStorageMode = 'local';
+  let imageState = 'empty';
+  let imageSource = null;
+  let imageSourceData = null;
+  let imageSourceName = '';
+  let imageSourceSize = [0, 0];
+  let extractedColours = [];
+  let extractedPalette = [];
+  let extractedAtCount = 0;
+
+  const titleCase = value => String(value).replace(/(^|[-\s])([a-z])/g, (_, lead, letter) => `${lead}${letter.toUpperCase()}`);
+  const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
+  const pad2 = value => String(Math.round(value)).padStart(2, '0');
+  const validHex = value => {
+    try { return engine.formatHex(engine.parseHex(value), false); } catch (_) { return null; }
+  };
+  const setText = (id, value) => { const element = $(id); if (element) element.textContent = value; };
+  const activeSlots = count => ACTIVE_SLOTS[count] || ACTIVE_SLOTS[4];
+  const setStatus = (message, tone = 'active') => {
+    const status = $('instrument-status');
+    status.dataset.instrumentTone = tone;
+    status.querySelector('.instrument-status-value').textContent = message;
+  };
+  const setImagePanelStatus = (message, tone) => {
+    const status = $('image-panel-status');
+    status.dataset.instrumentTone = tone || (message === 'EMPTY' ? '' : 'active');
+    status.querySelector('.instrument-status-value').textContent = message;
+  };
+  const engineConfiguration = input => ({
+    ...input,
+    space: input.interpolation,
+    centerX: input.focusX,
+    centerY: input.focusY,
+    radius: clamp(0.28 + (1 - input.softness) * 1.12, 0.05, 2),
+    cubeScale: clamp(0.58 + input.cubeLayers / 13 - input.cubeGap * 1.5, 0.35, 3),
+    yaw: input.spaceYaw,
+    pitch: input.spacePitch,
+    zoom: 1,
+  });
+
+  function collectionPatch(name) {
+    return adapterDefinition.collection(PALETTE_NAMES.includes(name) ? name : 'signal');
+  }
+
+  function fixedSlotPatch(colours) {
+    const source = colours.filter(Boolean).slice(0, 4);
+    if (source.length < 2) return {};
+    if (source.length === 2) return { stopCount: 2, color1: source[0], color4: source[1], position1: 0, position4: 1 };
+    if (source.length === 3) return { stopCount: 3, color1: source[0], color2: source[1], color4: source[2], position1: 0, position2: 0.5, position4: 1 };
+    return { stopCount: 4, color1: source[0], color2: source[1], color3: source[2], color4: source[3], position1: 0, position2: 1 / 3, position3: 2 / 3, position4: 1 };
+  }
+
+  function gradientCss(input) {
+    const stops = engine.normaliseStops(engineConfiguration(input));
+    const list = stops.map(stop => `${stop.color} ${(stop.position * 100).toFixed(2)}%`).join(', ');
+    if (input.style === 'radial' || input.style === 'air') return `radial-gradient(circle at ${input.focusX * 100}% ${input.focusY * 100}%, ${list})`;
+    if (input.style === 'angular') return `conic-gradient(from ${(90 - input.angle + 360) % 360}deg at ${input.focusX * 100}% ${input.focusY * 100}%, ${list})`;
+    return `linear-gradient(${input.angle + 90}deg, ${list})`;
+  }
+
+  function sizePreviewCanvas(canvas, pixelBudget) {
+    const rectangle = canvas.getBoundingClientRect();
+    if (!rectangle.width || !rectangle.height) return false;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let width = Math.max(2, Math.floor(rectangle.width * dpr));
+    let height = Math.max(2, Math.floor(rectangle.height * dpr));
+    if (Number.isFinite(pixelBudget) && width * height > pixelBudget) {
+      const scale = Math.sqrt(pixelBudget / (width * height));
+      width = Math.max(2, Math.floor(width * scale));
+      height = Math.max(2, Math.floor(height * scale));
+    }
+    if (canvas.width === width && canvas.height === height) return false;
+    canvas.width = width;
+    canvas.height = height;
+    return true;
+  }
+
+  function drawImagePreview() {
+    if (!imageSource || !canvases.image.closest('#image-success') || $('image-success').hidden) return;
+    const maxWidth = Math.max(240, Math.floor($('image-success').getBoundingClientRect().width * 0.64));
+    const scale = Math.min(1, maxWidth / imageSourceSize[0]);
+    const width = Math.max(2, Math.round(imageSourceSize[0] * scale));
+    const height = Math.max(2, Math.round(imageSourceSize[1] * scale));
+    if (canvases.image.width !== width || canvases.image.height !== height) {
+      canvases.image.width = width;
+      canvases.image.height = height;
+    }
+    const context = canvases.image.getContext('2d');
+    context.clearRect(0, 0, width, height);
+    context.drawImage(imageSource, 0, 0, width, height);
+  }
+
+  function renderCurrent(force) {
+    if (!adapter) return;
+    const config = engineConfiguration(configuration);
+    if (configuration.mode === 'gradient') {
+      const pixelBudget = configuration.style === 'air' ? AIR_PREVIEW_PIXELS : undefined;
+      if (sizePreviewCanvas(canvases.gradient, pixelBudget) || force || (!paused && ['air', 'cube'].includes(configuration.style))) {
+        engine.renderPreview(canvases.gradient.getContext('2d'), canvases.gradient.width, canvases.gradient.height, config, renderClock);
+      }
+    } else if (configuration.mode === 'colour') {
+      if (sizePreviewCanvas(canvases.colour) || force) engine.renderColour(canvases.colour.getContext('2d'), canvases.colour.width, canvases.colour.height, config);
+    } else if (configuration.mode === 'space') {
+      if (sizePreviewCanvas(canvases.space) || force) {
+        engine.renderSpace(canvases.space.getContext('2d'), canvases.space.width, canvases.space.height, config, {
+          space: config.space, yaw: configuration.spaceYaw, pitch: configuration.spacePitch, zoom: 1, pointSize: configuration.pointSize,
+        });
+      }
+    } else if (configuration.mode === 'image') {
+      drawImagePreview();
+    }
+  }
+
+  function frame(now) {
+    const delta = Math.min(100, now - lastFrameAt);
+    lastFrameAt = now;
+    if (!paused && !reducedMotion.matches && configuration.speed > 0 && ['air', 'cube'].includes(configuration.style)) {
+      renderClock += delta / 1000;
+      const canPaint = configuration.style !== 'air' || now - lastAirPaintAt >= 1000 / 30;
+      if (configuration.mode === 'gradient' && canPaint) {
+        renderCurrent(false);
+        if (configuration.style === 'air') lastAirPaintAt = now;
+      }
+    }
+    frameHandle = requestAnimationFrame(frame);
+  }
+
+  function syncTabs(mode) {
+    workspaceTabs.dataset.instrumentSelectedId = mode;
+    workspaceTabs.querySelectorAll('[role="tab"]').forEach(button => {
+      const selected = button.dataset.instrumentTabId === mode;
+      button.setAttribute('aria-selected', String(selected));
+      button.toggleAttribute('data-instrument-active', selected);
+      button.tabIndex = selected ? 0 : -1;
+      const view = $(button.getAttribute('aria-controls'));
+      if (view) view.hidden = !selected;
+    });
+    MODES.forEach(name => { $(`inspector-${name}`).hidden = name !== mode; });
+  }
+
+  function syncRange(id, output, value, formatter) {
+    $(id).value = String(value);
+    setText(output, formatter(value));
+  }
+
+  function syncStyleVisibility(config) {
+    const show = (id, visible) => { $(id).hidden = !visible; };
+    const focus = ['radial', 'angular', 'cube'].includes(config.style);
+    show('row-angle', ['linear', 'angular', 'cube', 'mono', 'dither'].includes(config.style));
+    show('row-focus-x', focus);
+    show('row-focus-y', focus);
+    show('row-softness', ['radial', 'air'].includes(config.style));
+    const shapeVisible = true;
+    show('section-shape', shapeVisible); show('controls-shape', shapeVisible);
+    show('section-air', config.style === 'air'); show('controls-air', config.style === 'air');
+    const moving = ['air', 'cube'].includes(config.style);
+    show('section-cube', moving); show('controls-cube', moving);
+    $('section-cube').textContent = config.style === 'cube' ? 'Cube' : 'Motion';
+    show('row-cube-layers', config.style === 'cube'); show('row-cube-gap', config.style === 'cube');
+    show('section-mono', config.style === 'mono'); show('controls-mono', config.style === 'mono');
+    show('section-dither', config.style === 'dither'); show('controls-dither', config.style === 'dither');
+    show('row-stop-count', config.style !== 'dither');
+    $('pause').hidden = !moving;
+    $('pause').textContent = paused ? 'Play' : 'Pause';
+  }
+
+  function syncGradientField(config) {
+    const slots = config.style === 'dither' ? [1, 4] : activeSlots(config.stopCount);
+    for (let slot = 1; slot <= 4; slot++) {
+      const colour = config[`color${slot}`];
+      const position = config[`position${slot}`];
+      const active = slots.includes(slot);
+      $(`stop-row-${slot}`).hidden = !active;
+      $(`handle-${slot}`).hidden = !active;
+      const movable = active && slot !== 1 && slot !== 4;
+      $(`handle-${slot}`).tabIndex = movable ? 0 : -1;
+      $(`handle-${slot}`).setAttribute('aria-disabled', String(!movable));
+      $(`handle-${slot}`).style.setProperty('--instrument-gradient-stop', `${position * 100}%`);
+      $(`handle-${slot}`).setAttribute('aria-valuenow', String(Math.round(position * 100)));
+      $(`color-picker-${slot}`).value = colour.toLowerCase();
+      $(`color-${slot}`).value = colour;
+      $(`color-${slot}`).removeAttribute('data-instrument-invalid');
+      $(`swatch-${slot}`).style.background = colour;
+      $(`position-${slot}`).value = String(Math.round(position * 100));
+    }
+    $('gradient-strip').style.setProperty('--instrument-gradient-preview', gradientCss(config));
+  }
+
+  function colourEvidence(config) {
+    const hex = config.color1;
+    const ground = config.background;
+    const rgb = engine.parseHex(hex);
+    const bytes = rgb.slice(0, 3).map(channel => Math.round(channel * 255));
+    const lab = engine.srgbToOklab(rgb);
+    const lch = engine.oklabToOklch(lab);
+    const maximum = Math.max(...rgb), minimum = Math.min(...rgb);
+    const lightness = (maximum + minimum) / 2;
+    const delta = maximum - minimum;
+    let hue = 0;
+    if (delta) {
+      if (maximum === rgb[0]) hue = ((rgb[1] - rgb[2]) / delta) % 6;
+      else if (maximum === rgb[1]) hue = (rgb[2] - rgb[0]) / delta + 2;
+      else hue = (rgb[0] - rgb[1]) / delta + 4;
+      hue = (hue * 60 + 360) % 360;
+    }
+    const saturation = delta ? delta / (1 - Math.abs(2 * lightness - 1)) : 0;
+    const codes = [
+      ['HEX', hex],
+      ['RGB', `rgb(${bytes[0]} ${bytes[1]} ${bytes[2]})`],
+      ['HSL', `hsl(${hue.toFixed(1)} ${Number.isFinite(saturation) ? (saturation * 100).toFixed(1) : '0.0'}% ${(lightness * 100).toFixed(1)}%)`],
+      ['OKLab', `oklab(${(lab[0] * 100).toFixed(2)}% ${lab[1].toFixed(4)} ${lab[2].toFixed(4)})`],
+      ['OKLCH', `oklch(${(lch[0] * 100).toFixed(2)}% ${lch[1].toFixed(4)} ${lch[2].toFixed(2)})`],
+    ];
+    const ratio = engine.contrastRatio(hex, ground);
+    return { codes, ground, hex, ratio, aa: ratio >= 4.5, aaLarge: ratio >= 3, aaa: ratio >= 7, aaaLarge: ratio >= 4.5 };
+  }
+
+  function syncColourEvidence(config) {
+    const evidence = colourEvidence(config);
+    $('colour-picker').value = evidence.hex.toLowerCase();
+    $('colour-hex').value = evidence.hex;
+    $('colour-swatch').style.background = evidence.hex;
+    $('background-picker').value = evidence.ground.toLowerCase();
+    $('background-hex').value = evidence.ground;
+    $('background-swatch').style.background = evidence.ground;
+    $('colour-codes').replaceChildren(...evidence.codes.map(([label, value]) => {
+      const row = document.createElement('tr');
+      const heading = document.createElement('th'); heading.scope = 'row'; heading.textContent = label;
+      const cell = document.createElement('td'); cell.className = 'atlas-code-value instrument-tabular'; cell.textContent = value;
+      const action = document.createElement('td');
+      const button = document.createElement('button'); button.className = 'atlas-copy-button instrument-action'; button.type = 'button'; button.textContent = 'Copy'; button.dataset.copyValue = value; button.setAttribute('aria-label', `Copy ${label}`);
+      action.append(button); row.append(heading, cell, action); return row;
+    }));
+    const ratioText = evidence.ratio.toFixed(2);
+    setText('contrast-ratio', ratioText); setText('metric-ratio', ratioText);
+    setText('contrast-aa-large', evidence.aaLarge ? 'PASS' : 'FAIL');
+    setText('metric-aa', evidence.aa ? 'PASS' : 'FAIL'); setText('metric-aaa', evidence.aaa ? 'PASS' : 'FAIL');
+    setText('contrast-verdict', `Against ${evidence.ground}: AA normal ${evidence.aa ? 'passes' : 'fails'} (${ratioText}:1; needs 4.5:1). AA large ${evidence.aaLarge ? 'passes' : 'fails'} (needs 3:1). AAA normal ${evidence.aaa ? 'passes' : 'fails'} (needs 7:1).`);
+    setText('colour-readout', evidence.hex); setText('colour-subreadout', `Against ${evidence.ground} · ${ratioText}:1`);
+  }
+
+  function syncImageState() {
+    $('image-empty').hidden = imageState !== 'empty';
+    $('image-loading').hidden = imageState !== 'loading';
+    $('image-invalid').hidden = imageState !== 'invalid';
+    $('image-success').hidden = imageState !== 'success';
+    $('use-image-gradient').disabled = imageState !== 'success' || extractedColours.length < 2;
+    $('remove-image').disabled = imageState === 'empty';
+    syncBridgeConsent();
+    setImagePanelStatus(imageState === 'success' ? `${pad2(extractedColours.length)} READY` : imageState.toUpperCase(), imageState === 'invalid' ? 'error' : undefined);
+    if (imageState === 'success') drawImagePreview();
+  }
+
+  function syncBridgeConsent() {
+    const row = $('row-bridge-image-consent');
+    const button = $('allow-bridge-image-export');
+    const embedded = Boolean(bridge);
+    row.hidden = !embedded;
+    button.disabled = !embedded || imageState !== 'success' || !imageSource;
+    button.textContent = bridgeArtifactConsent && imageSource ? 'Embedded export allowed once' : 'Allow one embedded export';
+  }
+
+  function renderExtractedColours() {
+    $('image-palette').replaceChildren(...extractedPalette.map((entry, index) => {
+      const wrapper = document.createElement('span'); wrapper.className = 'atlas-palette-item';
+      const button = document.createElement('button');
+      button.className = 'instrument-swatch'; button.type = 'button'; button.style.background = entry.hex;
+      const share = Number.isFinite(entry.share) ? `${(entry.share * 100).toFixed(1)}%` : '—';
+      button.dataset.extractedColour = entry.hex; button.setAttribute('aria-label', `Inspect extracted colour ${index + 1}, ${entry.hex}, ${share} of visible pixels`);
+      button.title = `${entry.hex} · ${share}`;
+      const label = document.createElement('span'); label.className = 'atlas-palette-share'; label.textContent = share;
+      wrapper.append(button, label); return wrapper;
+    }));
+    setText('image-palette-count', `${pad2(extractedColours.length)} COLOURS`);
+  }
+
+  function extractCurrentImage() {
+    if (!imageSourceData) return;
+    extractedPalette = [];
+    extractedColours = [];
+    $('image-palette').replaceChildren();
+    try {
+      const result = engine.extractPalette(imageSourceData, configuration.imageColorCount, { seed: configuration.seed, maxSamples: 8192 });
+      extractedPalette = result.map(entry => {
+        const hex = validHex(typeof entry === 'string' ? entry : entry && (entry.hex || entry.color));
+        return hex ? { hex, share: typeof entry === 'object' && Number.isFinite(entry.share) ? entry.share : null, population: typeof entry === 'object' && Number.isFinite(entry.population) ? entry.population : null } : null;
+      }).filter(Boolean);
+      extractedColours = extractedPalette.map(entry => entry.hex);
+      if (!extractedColours.length) throw new Error('The engine returned no usable colours.');
+      extractedAtCount = configuration.imageColorCount;
+      renderExtractedColours();
+      imageState = 'success';
+      syncImageState();
+    } catch (error) {
+      extractedAtCount = configuration.imageColorCount;
+      imageSourceData = null;
+      imageState = 'invalid';
+      $('image-invalid').textContent = `Palette extraction failed: ${error.message}`;
+      syncImageState();
+    }
+  }
+
+  function syncControls(config) {
+    syncTabs(config.mode);
+    $('style').value = config.style; $('palette').value = config.palette; $('interpolation').value = config.interpolation;
+    setText('palette-state', titleCase(config.palette)); setText('interpolation-state', config.interpolation.toUpperCase());
+    syncGradientField(config); syncStyleVisibility(config);
+    syncRange('stop-count', 'value-stop-count', config.stopCount, pad2);
+    syncRange('angle', 'value-angle', config.angle, value => `${Math.round(value)}°`);
+    syncRange('focus-x', 'value-focus-x', config.focusX, value => Number(value).toFixed(2));
+    syncRange('focus-y', 'value-focus-y', config.focusY, value => Number(value).toFixed(2));
+    syncRange('softness', 'value-softness', config.softness, value => Number(value).toFixed(2));
+    syncRange('air-scale', 'value-air-scale', config.airScale, value => Number(value).toFixed(2));
+    syncRange('cube-layers', 'value-cube-layers', config.cubeLayers, pad2);
+    syncRange('cube-gap', 'value-cube-gap', config.cubeGap, value => Number(value).toFixed(3));
+    syncRange('speed', 'value-speed', config.speed, value => Number(value).toFixed(2));
+    syncRange('mono-range', 'value-mono-range', config.monoRange, value => Number(value).toFixed(2));
+    $('dither-pattern').value = config.ditherPattern;
+    syncRange('dither-scale', 'value-dither-scale', config.ditherScale, pad2);
+    syncRange('image-colour-count', 'value-image-colour-count', config.imageColorCount, pad2);
+    syncRange('space-yaw', 'value-space-yaw', config.spaceYaw, value => `${Math.round(value)}°`);
+    syncRange('space-pitch', 'value-space-pitch', config.spacePitch, value => `${Math.round(value) < 0 ? '−' : ''}${Math.abs(Math.round(value))}°`);
+    syncRange('point-size', 'value-point-size', config.pointSize, value => Number(value).toFixed(1));
+    $('export-format').value = config.exportFormat; $('export-width').value = config.exportWidth; $('export-height').value = config.exportHeight;
+    syncRange('jpeg-quality', 'value-jpeg-quality', config.jpegQuality, value => Number(value).toFixed(2));
+    $('row-jpeg-quality').hidden = config.exportFormat !== 'jpeg';
+    const nativeSvg = ['gradient', 'library'].includes(config.mode) && ['linear', 'radial', 'mono'].includes(config.style);
+    setText('export-kind', config.exportFormat === 'svg' ? (nativeSvg ? 'VECTOR' : 'RASTER SVG') : FORMAT_META[config.exportFormat][2]);
+    syncColourEvidence(config); syncImageState();
+    const visibleStops = config.style === 'dither' ? 2 : config.stopCount;
+    setText('gradient-readout', `${config.style.toUpperCase()} · ${config.interpolation.toUpperCase()} · ${pad2(visibleStops)} STOPS`);
+    setText('gradient-subreadout', `${titleCase(config.palette)} collection · ${Math.round(config.angle)}°`);
+    const sampledSpace = config.interpolation === 'linear-srgb' ? 'linear sRGB' : config.interpolation.toUpperCase();
+    setText('space-readout', 'CURRENT RAMP · OKLAB L/A/B');
+    setText('space-subreadout', `Sampled in ${sampledSpace} · Cartesian projection · Drag to orbit`);
+    setText('space-help', `Current ramp sampled in ${sampledSpace}, plotted on Cartesian OKLab L/a/b axes. Dragging changes the view only; the ranges and arrow keys provide the same result.`);
+    setText('chrome-mode', config.mode.toUpperCase()); setText('chrome-context', `${config.interpolation.toUpperCase()} / ${config.style.toUpperCase()}`);
+    if (imageSourceData && extractedAtCount !== config.imageColorCount) extractCurrentImage();
+  }
+
+  function applyConfiguration(next, action) {
+    configuration = next;
+    syncControls(next);
+    renderStudioCollections();
+    renderCurrent(true);
+    if (action !== 'initial') setStatus(`${next.mode.toUpperCase()} · READY`);
+  }
+
+  function nextVariant(current) {
+    const seed = (current.seed + 104729 + Math.floor(Math.random() * 895271)) % 1000000;
+    const colours = engine.generatePalette(seed, 4);
+    return { ...fixedSlotPatch(colours), palette: 'custom', seed, angle: (current.angle + 37 + seed % 97) % 361 };
+  }
+
+  function setControlsVisible(visible) {
+    panel.classList.toggle('hidden', !visible);
+    panel.inert = !visible;
+    panel.setAttribute('aria-hidden', String(!visible));
+    document.body.dataset.controls = visible ? 'visible' : 'hidden';
+    $('toggle-controls').setAttribute('aria-expanded', String(visible));
+    return { visible };
+  }
+
+  function renderArtifactCanvas(width, height, config) {
+    const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+    const context = canvas.getContext('2d', { willReadFrequently: config.exportFormat === 'tiff' });
+    const engineConfig = engineConfiguration(config);
+    if (config.mode === 'space') {
+      engine.renderSpace(context, width, height, engineConfig, { space: engineConfig.space, yaw: config.spaceYaw, pitch: config.spacePitch, zoom: 1, pointSize: config.pointSize });
+    } else if (config.mode === 'colour') {
+      engine.renderColour(context, width, height, engineConfig);
+    } else if (config.mode === 'image' && imageSource) {
+      context.fillStyle = config.background; context.fillRect(0, 0, width, height);
+      const sourceRatio = imageSourceSize[0] / imageSourceSize[1];
+      const targetRatio = width / height;
+      const drawWidth = targetRatio > sourceRatio ? height * sourceRatio : width;
+      const drawHeight = targetRatio > sourceRatio ? height : width / sourceRatio;
+      context.drawImage(imageSource, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
+      if (extractedColours.length) {
+        const stripHeight = Math.max(24, Math.round(height * 0.08));
+        extractedColours.forEach((colour, index) => { context.fillStyle = colour; context.fillRect(Math.floor(index * width / extractedColours.length), height - stripHeight, Math.ceil(width / extractedColours.length), stripHeight); });
+      }
+    } else {
+      engine.renderPreview(context, width, height, engineConfig, renderClock);
+    }
+    return { canvas, context };
+  }
+
+  function binaryObjectUrl(bytes, mime) {
+    const source = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes.buffer || bytes);
+    const objectUrl = URL.createObjectURL(new Blob([source], { type: mime }));
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 15000);
+    return objectUrl;
+  }
+
+  function paletteTokenCSS(colours) {
+    const lines = colours.map((colour, index) => `  --chroma-atlas-color-${index + 1}: ${colour};`);
+    return `.chroma-atlas {\n${lines.join('\n')}\n}`;
+  }
+
+  function rasterBackedSVG(rendered, width, height, label) {
+    const dataUrl = rendered.canvas.toDataURL('image/png');
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${label}"><image width="${width}" height="${height}" href="${dataUrl}"/></svg>`;
+  }
+
+  function createArtifact(payload = {}) {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new TypeError('Artifact options must be an object.');
+    const base = adapter.getConfiguration();
+    const patch = {};
+    if ('format' in payload) {
+      if (!adapterDefinition.exportFormats.includes(payload.format)) throw new RangeError(`Unsupported artifact format: ${String(payload.format)}`);
+      patch.exportFormat = payload.format;
+    }
+    if ('width' in payload) patch.exportWidth = payload.width;
+    if ('height' in payload) patch.exportHeight = payload.height;
+    if ('quality' in payload) patch.jpegQuality = payload.quality;
+    const config = adapterDefinition.normalize({ ...base, ...patch });
+    const [extension, mime] = FORMAT_META[config.exportFormat];
+    const width = config.exportWidth, height = config.exportHeight;
+    if (config.exportFormat === 'tiff' && width * height > MAX_TIFF_PIXELS) {
+      throw new RangeError('TIFF exports may not exceed eight megapixels in the portable browser build. Reduce width or height.');
+    }
+    if (config.mode === 'image' && (imageState !== 'success' || !imageSource)) throw new Error('Load a valid image and extract its palette before exporting the Image workspace.');
+    const artifactMode = config.mode === 'library' ? 'gradient' : config.mode;
+    const filename = `chroma-atlas-${artifactMode}-${config.style}-${config.seed}.${extension}`;
+    const engineConfig = engineConfiguration(config);
+    if (config.exportFormat === 'svg') {
+      const vectorGradient = artifactMode === 'gradient' && ['linear', 'radial', 'mono'].includes(config.style);
+      if (vectorGradient) return { text: engine.toSVG(width, height, engineConfig, renderClock), filename, mime, width, height };
+      const rendered = renderArtifactCanvas(width, height, { ...config, mode: artifactMode });
+      return { text: rasterBackedSVG(rendered, width, height, `Chroma Atlas ${artifactMode}`), filename, mime, width, height };
+    }
+    if (config.exportFormat === 'css') {
+      let text;
+      if (artifactMode === 'gradient') text = engine.serializeCSS(engineConfig);
+      else if (artifactMode === 'colour') text = `.chroma-atlas {\n  color: ${config.color1};\n  background-color: ${config.background};\n}`;
+      else if (artifactMode === 'image') text = paletteTokenCSS(extractedColours);
+      else text = paletteTokenCSS(engine.normaliseStops(engineConfig).map(stop => stop.color));
+      return { text, filename, mime, width, height };
+    }
+    if (config.exportFormat === 'json') {
+      const text = artifactMode === 'image'
+        ? JSON.stringify({ type: 'supermega.chroma-atlas.image-palette', version: 1, source: { name: imageSourceName, width: imageSourceSize[0], height: imageSourceSize[1] }, palette: extractedPalette, configuration: config }, null, 2)
+        : engine.serializePreset(engineConfig);
+      return { text, filename, mime, width, height };
+    }
+    const rendered = renderArtifactCanvas(width, height, config);
+    if (config.exportFormat === 'tiff') {
+      const bytes = engine.encodeTIFF(width, height, rendered.context.getImageData(0, 0, width, height));
+      return { objectUrl: binaryObjectUrl(bytes, mime), filename, mime, width, height };
+    }
+    return { dataUrl: rendered.canvas.toDataURL(mime, config.exportFormat === 'jpeg' ? config.jpegQuality : undefined), filename, mime, width, height };
+  }
+
+  function downloadArtifact(artifact) {
+    const anchor = document.createElement('a');
+    let objectUrl = '';
+    if (artifact.dataUrl) anchor.href = artifact.dataUrl;
+    else if (artifact.objectUrl) anchor.href = artifact.objectUrl;
+    else { objectUrl = URL.createObjectURL(new Blob([artifact.text], { type: artifact.mime })); anchor.href = objectUrl; }
+    anchor.download = artifact.filename; document.body.append(anchor); anchor.click(); anchor.remove();
+    if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    if (artifact.objectUrl) setTimeout(() => URL.revokeObjectURL(artifact.objectUrl), 1000);
+  }
+
+  async function copyText(text, success) {
+    let copied = false;
+    try {
+      if (!navigator.clipboard || !window.isSecureContext) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(text);
+      copied = true;
+    } catch (_) {
+      const field = document.createElement('textarea'); field.value = text; field.setAttribute('readonly', ''); field.style.position = 'fixed'; field.style.opacity = '0';
+      try { document.body.append(field); field.select(); copied = document.execCommand('copy') === true; }
+      catch (_) { copied = false; }
+      finally { field.remove(); }
+    }
+    if (!copied) { setStatus('COPY FAILED', 'error'); return false; }
+    setStatus(success || 'COPIED');
+    return true;
+  }
+
+  function normalizeLibraryEntry(entry) {
+    if (!entry || typeof entry.name !== 'string' || !entry.configuration || typeof entry.configuration !== 'object' || Array.isArray(entry.configuration)) return null;
+    const created = typeof entry.created === 'string' && Number.isFinite(Date.parse(entry.created)) ? entry.created : new Date().toISOString();
+    return {
+      id: String(entry.id || (crypto.randomUUID?.() || `${Date.now().toString(36)}-${Math.random()}`)).slice(0, 120),
+      name: entry.name.slice(0, 80),
+      created,
+      configuration: adapterDefinition.normalize(entry.configuration),
+    };
+  }
+
+  function setLibraryStorageMode(mode) {
+    libraryStorageMode = mode;
+    $('library-storage-label').textContent = mode === 'local' ? 'Saved locally' : 'This session';
+    $('library-status').dataset.instrumentTone = mode === 'local' ? '' : 'attention';
+  }
+
+  function getLibrary() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      if (!Array.isArray(parsed)) throw new TypeError('Saved library data is not a list.');
+      sessionLibrary = parsed.map(normalizeLibraryEntry).filter(Boolean).slice(0, LIBRARY_LIMIT);
+      setLibraryStorageMode('local');
+    } catch (_) {
+      setLibraryStorageMode('session');
+    }
+    return sessionLibrary.map(entry => ({ ...entry, configuration: { ...entry.configuration } }));
+  }
+
+  function writeLibrary(entries) {
+    sessionLibrary = entries.map(normalizeLibraryEntry).filter(Boolean).slice(0, LIBRARY_LIMIT);
+    let persisted = false;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionLibrary));
+      persisted = true;
+      setLibraryStorageMode('local');
+    } catch (_) {
+      setLibraryStorageMode('session');
+    }
+    renderSavedFavourites();
+    return { ok: true, persisted };
+  }
+
+  function saveSnapshot(openLibrary) {
+    const name = $('snapshot-name').value.trim() || `Atlas ${new Date().toLocaleDateString()}`;
+    const entries = getLibrary();
+    if (entries.length >= LIBRARY_LIMIT) { setStatus('LIBRARY FULL · DELETE A SNAPSHOT', 'error'); return; }
+    entries.unshift({ id: crypto.randomUUID?.() || `${Date.now().toString(36)}-${configuration.seed}-${Math.random()}`, name: name.slice(0, 80), created: new Date().toISOString(), configuration: adapter.getConfiguration() });
+    const result = writeLibrary(entries);
+    setStatus(result.persisted ? 'SNAPSHOT SAVED' : 'SNAPSHOT SAVED · SESSION ONLY', result.persisted ? 'active' : 'attention');
+    if (openLibrary) adapter.configure({ mode: 'library' });
+  }
+
+  function historyRow(entry, builtIn) {
+    const article = document.createElement('article'); article.className = 'instrument-history-item';
+    const copy = document.createElement('div'); copy.className = 'atlas-history-copy';
+    const name = document.createElement('strong'); name.textContent = entry.name;
+    const strip = document.createElement('div'); strip.className = 'atlas-library-strip instrument-gradient-strip'; strip.style.setProperty('--instrument-gradient-preview', gradientCss(entry.configuration));
+    copy.append(name, strip);
+    const status = document.createElement('span'); status.className = 'instrument-history-status instrument-tabular'; status.textContent = builtIn ? 'STUDIO' : new Date(entry.created).toLocaleDateString();
+    const actions = document.createElement('span'); actions.className = 'atlas-history-actions instrument-history-action';
+    const load = document.createElement('button'); load.className = 'instrument-action'; load.type = 'button'; load.textContent = 'Load'; load.dataset.loadCollection = builtIn ? entry.id : ''; load.dataset.loadSnapshot = builtIn ? '' : entry.id;
+    actions.append(load);
+    if (!builtIn) { const remove = document.createElement('button'); remove.className = 'instrument-action'; remove.type = 'button'; remove.textContent = 'Delete'; remove.dataset.deleteSnapshot = entry.id; actions.append(remove); }
+    article.append(copy, status, actions); return article;
+  }
+
+  function renderStudioCollections() {
+    $('studio-collections').replaceChildren(...PALETTE_NAMES.map(name => historyRow({ id: name, name: titleCase(name), configuration: { ...configuration, ...collectionPatch(name), style: 'linear' } }, true)));
+  }
+
+  function renderSavedFavourites() {
+    const entries = getLibrary();
+    $('saved-favourites').replaceChildren(...entries.map(entry => historyRow(entry, false)));
+    $('library-empty').hidden = entries.length > 0;
+    $('library-status').querySelector('.instrument-status-value').textContent = pad2(entries.length);
+  }
+
+  async function restoreLibrary(file) {
+    if (!file) return;
+    const token = ++restoreToken;
+    try {
+      const source = await file.text();
+      if (token !== restoreToken) return;
+      const envelope = JSON.parse(source);
+      if (!envelope || envelope.type !== 'supermega.chroma-atlas.library' || envelope.version !== 1 || !Array.isArray(envelope.items)) throw new Error('This is not a Chroma Atlas library backup.');
+      if (envelope.items.length > LIBRARY_LIMIT) throw new Error(`A library backup may contain at most ${LIBRARY_LIMIT} snapshots.`);
+      const items = envelope.items.map(entry => {
+        const normalized = normalizeLibraryEntry(entry);
+        if (!normalized) throw new Error('A saved item is malformed.');
+        return normalized;
+      });
+      if (token !== restoreToken) return;
+      const result = writeLibrary(items);
+      setStatus(result.persisted ? 'LIBRARY RESTORED' : 'LIBRARY RESTORED · SESSION ONLY', result.persisted ? 'active' : 'attention');
+    } catch (error) {
+      if (token !== restoreToken) return;
+      setStatus('RESTORE FAILED', 'error'); $('library-status').dataset.instrumentTone = 'error'; $('library-status').querySelector('.instrument-status-value').textContent = error.message;
+    }
+  }
+
+  function backupLibrary() {
+    const text = JSON.stringify({ type: 'supermega.chroma-atlas.library', version: 1, exportedAt: new Date().toISOString(), items: getLibrary() }, null, 2);
+    downloadArtifact({ text, filename: 'chroma-atlas-library.json', mime: 'application/json' }); setStatus('LIBRARY BACKED UP');
+  }
+
+  function clearImageMemory() {
+    if (imageSource && typeof imageSource.close === 'function') imageSource.close();
+    bridgeArtifactConsent = false;
+    imageSource = null; imageSourceData = null; imageSourceName = ''; imageSourceSize = [0, 0]; extractedColours = []; extractedPalette = []; extractedAtCount = 0; imageState = 'empty';
+  }
+
+  function removeImage() {
+    imageToken += 1;
+    clearImageMemory();
+    $('image-palette').replaceChildren(); $('image-file-work').value = ''; $('image-file-panel').value = ''; syncImageState(); setStatus('SOURCE REMOVED');
+  }
+
+  function imageDimensions(source) {
+    return [source.width || source.naturalWidth || 1, source.height || source.naturalHeight || 1];
+  }
+
+  async function decodeFallback(file) {
+    const dataUrl = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onerror = () => reject(reader.error); reader.onload = () => resolve(reader.result); reader.readAsDataURL(file); });
+    return new Promise((resolve, reject) => { const image = new Image(); image.onload = () => resolve(image); image.onerror = () => reject(new Error('The browser rejected this image.')); image.src = dataUrl; });
+  }
+
+  async function loadImage(file) {
+    const token = ++imageToken;
+    bridgeArtifactConsent = false;
+    const declaredType = file?.type === 'image/jpg' ? 'image/jpeg' : String(file?.type || '');
+    if (!file || !engine.IMAGE_MIME_TYPES.includes(declaredType)) { clearImageMemory(); imageState = 'invalid'; $('image-invalid').textContent = 'Choose a static PNG, JPEG, or WebP image. Other local files are not read.'; syncImageState(); return; }
+    if (!Number.isFinite(file.size) || file.size < 1 || file.size > MAX_IMAGE_BYTES) { clearImageMemory(); imageState = 'invalid'; $('image-invalid').textContent = 'Images must be non-empty and no larger than 20 MB.'; syncImageState(); return; }
+    imageState = 'loading'; syncImageState(); setStatus('DECODING IMAGE');
+    try {
+      const bytes = await file.arrayBuffer();
+      if (token !== imageToken) return;
+      if (bytes.byteLength !== file.size) throw new Error('Image bytes are incomplete.');
+      const metadata = engine.inspectStaticImage(new Uint8Array(bytes), declaredType);
+      const decoded = typeof createImageBitmap === 'function' ? await createImageBitmap(file) : await decodeFallback(file);
+      if (token !== imageToken) { if (typeof decoded.close === 'function') decoded.close(); return; }
+      const dimensions = imageDimensions(decoded);
+      if (dimensions[0] !== metadata.width || dimensions[1] !== metadata.height) {
+        if (typeof decoded.close === 'function') decoded.close();
+        throw new Error('Decoded image dimensions do not match its validated header.');
+      }
+      if (imageSource && typeof imageSource.close === 'function') imageSource.close();
+      imageSource = decoded; imageSourceName = file.name; imageSourceSize = dimensions;
+      const maximum = 720;
+      const scale = Math.min(1, maximum / Math.max(...imageSourceSize));
+      const width = Math.max(1, Math.round(imageSourceSize[0] * scale));
+      const height = Math.max(1, Math.round(imageSourceSize[1] * scale));
+      const analysis = document.createElement('canvas'); analysis.width = width; analysis.height = height;
+      const context = analysis.getContext('2d', { willReadFrequently: true }); context.drawImage(decoded, 0, 0, width, height);
+      imageSourceData = context.getImageData(0, 0, width, height);
+      $('image-caption').textContent = `${file.name} · ${imageSourceSize[0]} × ${imageSourceSize[1]}`;
+      extractCurrentImage();
+      if (imageState === 'success') { drawImagePreview(); setStatus('PALETTE EXTRACTED'); }
+      else setStatus('PALETTE EXTRACTION FAILED', 'error');
+    } catch (error) {
+      if (token !== imageToken) return;
+      clearImageMemory();
+      imageState = 'invalid'; $('image-invalid').textContent = `The image could not be decoded: ${error.message}`; syncImageState(); setStatus('IMAGE INVALID', 'error');
+    }
+  }
+
+  function bindDropZone(zone, input) {
+    const activate = event => { event.preventDefault(); if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'; zone.toggleAttribute('data-instrument-dropactive', true); };
+    zone.addEventListener('dragenter', activate); zone.addEventListener('dragover', activate);
+    zone.addEventListener('dragleave', event => { if (!zone.contains(event.relatedTarget)) zone.removeAttribute('data-instrument-dropactive'); });
+    zone.addEventListener('drop', event => { event.preventDefault(); zone.removeAttribute('data-instrument-dropactive'); loadImage(event.dataTransfer.files[0]); });
+    input.addEventListener('change', event => { loadImage(event.target.files[0]); event.target.value = ''; });
+  }
+
+  function bindColourField(pickerId, textId, key, customPalette) {
+    const picker = $(pickerId), text = $(textId);
+    picker.addEventListener('input', event => adapter.configure({ [key]: event.target.value, ...(customPalette ? { palette: 'custom' } : {}) }));
+    const commit = () => {
+      const value = validHex(text.value);
+      if (!value) { text.setAttribute('data-instrument-invalid', ''); setStatus('INVALID HEX', 'error'); return; }
+      text.removeAttribute('data-instrument-invalid'); adapter.configure({ [key]: value, ...(customPalette ? { palette: 'custom' } : {}) });
+    };
+    text.addEventListener('change', commit); text.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); commit(); } });
+    text.addEventListener('blur', () => { if (!validHex(text.value)) syncControls(adapter.getConfiguration()); });
+  }
+
+  function reverseGradient() {
+    const current = adapter.getConfiguration();
+    const slots = activeSlots(current.stopCount);
+    const source = slots.map(slot => ({ colour: current[`color${slot}`], position: current[`position${slot}`] })).reverse();
+    const patch = { palette: 'custom' };
+    slots.forEach((slot, index) => { patch[`color${slot}`] = source[index].colour; patch[`position${slot}`] = 1 - source[index].position; });
+    adapter.configure(patch);
+  }
+
+  function bindGradientHandles() {
+    let drag = null;
+    const update = (slot, clientX) => {
+      if (slot === 1 || slot === 4) return;
+      const rectangle = $('gradient-strip').getBoundingClientRect();
+      const current = adapter.getConfiguration();
+      const slots = activeSlots(current.stopCount);
+      const slotIndex = slots.indexOf(slot);
+      const previousSlot = slots[slotIndex - 1];
+      const nextSlot = slots[slotIndex + 1];
+      const minimum = previousSlot ? current[`position${previousSlot}`] + 0.01 : 0;
+      const maximum = nextSlot ? current[`position${nextSlot}`] - 0.01 : 1;
+      const value = clamp((clientX - rectangle.left) / rectangle.width, minimum, maximum);
+      adapter.configure({ [`position${slot}`]: Number(value.toFixed(3)), palette: 'custom' });
+    };
+    $('gradient-strip').querySelectorAll('[data-slot]').forEach(handle => {
+      const slot = Number(handle.dataset.slot);
+      handle.addEventListener('pointerdown', event => { if (slot === 1 || slot === 4) return; drag = { handle, slot }; handle.setPointerCapture(event.pointerId); update(slot, event.clientX); });
+      handle.addEventListener('pointermove', event => { if (drag && drag.handle === handle) update(slot, event.clientX); });
+      const end = () => { drag = null; };
+      handle.addEventListener('pointerup', end); handle.addEventListener('pointercancel', end);
+      handle.addEventListener('keydown', event => {
+        const direction = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 }[event.key];
+        if (!direction || slot === 1 || slot === 4) return;
+        event.preventDefault(); const current = adapter.getConfiguration(); const step = event.shiftKey ? 0.001 : event.altKey ? 0.1 : 0.01;
+        adapter.configure({ [`position${slot}`]: current[`position${slot}`] + direction * step, palette: 'custom' });
+      });
+    });
+  }
+
+  function bindSpaceOrbit() {
+    const canvas = canvases.space;
+    let drag = null;
+    canvas.addEventListener('pointerdown', event => { const current = adapter.getConfiguration(); drag = { x: event.clientX, y: event.clientY, yaw: current.spaceYaw, pitch: current.spacePitch }; canvas.setPointerCapture(event.pointerId); canvas.dataset.dragging = 'true'; });
+    canvas.addEventListener('pointermove', event => { if (!drag) return; adapter.configure({ spaceYaw: drag.yaw + (event.clientX - drag.x) * 0.45, spacePitch: drag.pitch - (event.clientY - drag.y) * 0.35 }); });
+    const end = () => { drag = null; canvas.dataset.dragging = 'false'; };
+    canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
+    canvas.addEventListener('keydown', event => {
+      const delta = { ArrowLeft: [-3, 0], ArrowRight: [3, 0], ArrowUp: [0, 3], ArrowDown: [0, -3] }[event.key];
+      if (event.key === 'Home') { event.preventDefault(); adapter.configure({ spaceYaw: adapter.getSchema().defaults.spaceYaw, spacePitch: adapter.getSchema().defaults.spacePitch }); return; }
+      if (!delta) return; event.preventDefault(); const current = adapter.getConfiguration(); adapter.configure({ spaceYaw: current.spaceYaw + delta[0], spacePitch: current.spacePitch + delta[1] });
+    });
+  }
+
+  function bindControls() {
+    workspaceTabs.addEventListener('instrument:tabs-change', event => { if (MODES.includes(event.detail.value)) adapter.configure({ mode: event.detail.value }); });
+    $('style').addEventListener('change', event => adapter.configure({ style: event.target.value }));
+    $('interpolation').addEventListener('change', event => adapter.configure({ interpolation: event.target.value }));
+    $('palette').addEventListener('change', event => {
+      if (event.target.value === 'custom') adapter.configure({ palette: 'custom' });
+      else adapter.configure({ palette: event.target.value });
+    });
+    $('dither-pattern').addEventListener('change', event => adapter.configure({ ditherPattern: event.target.value }));
+    $('export-format').addEventListener('change', event => adapter.configure({ exportFormat: event.target.value }));
+    const rangeBindings = {
+      'stop-count': 'stopCount', angle: 'angle', 'focus-x': 'focusX', 'focus-y': 'focusY', softness: 'softness', 'air-scale': 'airScale',
+      'cube-layers': 'cubeLayers', 'cube-gap': 'cubeGap', speed: 'speed', 'mono-range': 'monoRange', 'dither-scale': 'ditherScale',
+      'image-colour-count': 'imageColorCount', 'space-yaw': 'spaceYaw', 'space-pitch': 'spacePitch', 'point-size': 'pointSize', 'jpeg-quality': 'jpegQuality',
+    };
+    Object.entries(rangeBindings).forEach(([id, key]) => $(id).addEventListener('input', event => adapter.configure({ [key]: Number(event.target.value) })));
+    ['export-width', 'export-height'].forEach(id => $(id).addEventListener('change', event => adapter.configure({ [id === 'export-width' ? 'exportWidth' : 'exportHeight']: Number(event.target.value) })));
+    for (let slot = 1; slot <= 4; slot++) {
+      bindColourField(`color-picker-${slot}`, `color-${slot}`, `color${slot}`, true);
+      $(`position-${slot}`).addEventListener('change', event => adapter.configure({ [`position${slot}`]: Number(event.target.value) / 100, palette: 'custom' }));
+    }
+    bindColourField('colour-picker', 'colour-hex', 'color1', true);
+    bindColourField('background-picker', 'background-hex', 'background', false);
+    bindGradientHandles(); bindSpaceOrbit();
+    bindDropZone($('image-drop-zone-work'), $('image-file-work')); bindDropZone($('image-drop-zone-panel'), $('image-file-panel'));
+    $('image-palette').addEventListener('click', event => { const button = event.target.closest('[data-extracted-colour]'); if (button) adapter.configure({ mode: 'colour', palette: 'custom', color1: button.dataset.extractedColour }); });
+    $('use-image-gradient').addEventListener('click', () => {
+      if (extractedColours.length < 2) return;
+      const count = Math.min(4, extractedColours.length);
+      const picked = Array.from({ length: count }, (_, index) => extractedColours[Math.round(index * (extractedColours.length - 1) / (count - 1))]);
+      adapter.configure({ ...fixedSlotPatch(picked), mode: 'gradient', style: 'linear', palette: 'custom' });
+    });
+    $('remove-image').addEventListener('click', removeImage);
+    $('allow-bridge-image-export').addEventListener('click', () => {
+      if (!bridge || imageState !== 'success' || !imageSource) return;
+      bridgeArtifactConsent = true; syncBridgeConsent(); setStatus('ONE EMBEDDED IMAGE EXPORT ALLOWED', 'attention');
+    });
+    $('reverse').addEventListener('click', reverseGradient);
+    $('randomize').addEventListener('click', () => adapter.execute('randomize'));
+    $('pause').addEventListener('click', () => adapter.execute(paused ? 'resume' : 'pause'));
+    $('defaults').addEventListener('click', () => adapter.execute('reset-configuration'));
+    $('atlas-controls-title').addEventListener('dblclick', () => adapter.execute('reset-configuration'));
+    $('reset-space').addEventListener('click', () => adapter.configure({ spaceYaw: adapter.getSchema().defaults.spaceYaw, spacePitch: adapter.getSchema().defaults.spacePitch }));
+    $('copy-config').addEventListener('click', () => { const result = adapter.execute('copy-config'); if (result.ok) copyText(result.value.serialized, 'CONFIG COPIED'); });
+    $('copy-all-codes').addEventListener('click', () => copyText(colourEvidence(adapter.getConfiguration()).codes.map(([label, value]) => `${label}: ${value}`).join('\n'), 'CODES COPIED'));
+    $('copy-contrast').addEventListener('click', () => { const evidence = colourEvidence(adapter.getConfiguration()); copyText(`${evidence.hex} on ${evidence.ground}: ${evidence.ratio.toFixed(2)}:1. AA normal ${evidence.aa ? 'pass' : 'fail'}; AA large ${evidence.aaLarge ? 'pass' : 'fail'}; AAA normal ${evidence.aaa ? 'pass' : 'fail'}.`, 'EVIDENCE COPIED'); });
+    $('colour-codes').addEventListener('click', event => { const button = event.target.closest('[data-copy-value]'); if (button) copyText(button.dataset.copyValue, 'CODE COPIED'); });
+    $('save-snapshot').addEventListener('click', () => saveSnapshot(false)); $('save-current').addEventListener('click', () => saveSnapshot(true));
+    $('backup-library').addEventListener('click', backupLibrary);
+    $('restore-library').addEventListener('change', event => { restoreLibrary(event.target.files[0]); event.target.value = ''; });
+    $('studio-collections').addEventListener('click', event => {
+      const button = event.target.closest('[data-load-collection]');
+      if (button) adapter.configure({ palette: button.dataset.loadCollection, mode: 'gradient', style: 'linear' });
+    });
+    $('saved-favourites').addEventListener('click', event => {
+      const load = event.target.closest('[data-load-snapshot]'); const remove = event.target.closest('[data-delete-snapshot]');
+      if (load) { const entry = getLibrary().find(item => item.id === load.dataset.loadSnapshot); if (entry) adapter.configure(entry.configuration); }
+      if (remove) { const result = writeLibrary(getLibrary().filter(item => item.id !== remove.dataset.deleteSnapshot)); setStatus(result.persisted ? 'SNAPSHOT DELETED' : 'SNAPSHOT DELETED · SESSION ONLY', result.persisted ? 'active' : 'attention'); }
+    });
+    $('export').addEventListener('click', () => { const result = adapter.execute('create-artifact'); if (!result.ok) { setStatus(result.error?.message || 'EXPORT FAILED', 'error'); return; } downloadArtifact(result.value); setStatus(`${result.value.filename.toUpperCase()} READY`); });
+    $('hide-controls').addEventListener('click', () => adapter.execute('hide-controls'));
+    $('toggle-controls').addEventListener('click', () => adapter.execute(panel.classList.contains('hidden') ? 'show-controls' : 'hide-controls'));
+    addEventListener('keydown', event => {
+      const editable = event.target instanceof HTMLElement && (event.target.matches('input,select,textarea,button') || event.target.isContentEditable);
+      if (editable) return;
+      if (event.key === 'h' || event.key === 'H') adapter.execute(panel.classList.contains('hidden') ? 'show-controls' : 'hide-controls');
+      if (event.key === 'v' || event.key === 'V') adapter.execute('randomize');
+      if (event.key === 'e' || event.key === 'E') $('export').click();
+      if (event.key === ' ' && ['air', 'cube'].includes(configuration.style)) { event.preventDefault(); adapter.execute(paused ? 'resume' : 'pause'); }
+    });
+  }
+
+  function queryPatch() {
+    const query = new URLSearchParams(location.search);
+    const schema = adapter.getSchema();
+    const patch = {};
+    Object.entries(schema.fields).forEach(([key, field]) => {
+      if (!query.has(key)) return;
+      patch[key] = field.type === 'number' || field.type === 'integer' ? Number(query.get(key)) : query.get(key);
+    });
+    const requestedPalette = query.get('preset') || query.get('palette');
+    if (PALETTE_NAMES.includes(requestedPalette) && !['color1', 'color2', 'color3', 'color4'].some(key => query.has(key))) Object.assign(patch, collectionPatch(requestedPalette));
+    if (reducedMotion.matches) patch.speed = 0;
+    return patch;
+  }
+
+  function boot() {
+    const instrumentState = window.SUPERMEGA_INSTRUMENT.createState();
+    instrumentState.appearance.grain = false; instrumentState.shell.overviewVisible = false;
+    materials = window.SUPERMEGA_INSTRUMENT.enhance(document.body, instrumentState);
+    adapter = adapterDefinition.create({
+      applyConfiguration,
+      createArtifact,
+      hideControls: () => setControlsVisible(false),
+      nextVariant,
+      pause: () => { paused = true; $('pause').textContent = 'Play'; setStatus(`${configuration.style.toUpperCase()} · HELD`); return { paused: true }; },
+      resume: () => {
+        if (reducedMotion.matches) { paused = true; $('pause').textContent = 'Play'; setStatus('REDUCED MOTION · HELD', 'attention'); return { paused: true, reducedMotion: true }; }
+        paused = false; $('pause').textContent = 'Pause'; setStatus(`${configuration.style.toUpperCase()} · LIVE`); return { paused: false };
+      },
+      showControls: () => setControlsVisible(true),
+    });
+    rangeContract = window.SUPERMEGA_INSTRUMENT_ADAPTERS.core.installRangeContract(document);
+    bindControls(); renderSavedFavourites();
+    applyConfiguration(adapter.getConfiguration(), 'initial');
+    const deepLink = queryPatch(); if (Object.keys(deepLink).length) adapter.configure(deepLink);
+    if (new URLSearchParams(location.search).get('controls') === 'hidden') adapter.execute('hide-controls'); else setControlsVisible(true);
+    resizeObserver = new ResizeObserver(() => renderCurrent(true)); resizeObserver.observe(document.querySelector('.atlas-surface'));
+    frameHandle = requestAnimationFrame(frame);
+    window.CHROMA_ATLAS_ADAPTER = adapter;
+    window.CHROMA_ATLAS_PAGE = Object.freeze({ getExtractedColours: () => [...extractedColours], getExtractedPalette: () => extractedPalette.map(entry => ({ ...entry })), getImageState: () => imageState, renderCurrent: () => renderCurrent(true) });
+    window.CHROMA_ATLAS_RANGE_CONTRACT = rangeContract;
+    if (window.parent !== window) {
+      bridge = window.CHROMA_ATLAS_BRIDGE = window.SUPERMEGA_INSTRUMENT_ADAPTERS.core.installBridge(adapter, {
+        authorizeRequest: ({ action }) => {
+          if (action !== 'create-artifact' || !imageSource || adapter.getConfiguration().mode !== 'image') return true;
+          if (!bridgeArtifactConsent) return false;
+          bridgeArtifactConsent = false; syncBridgeConsent(); return true;
+        },
+        strict: true,
+      });
+      syncBridgeConsent();
+    }
+    setStatus(reducedMotion.matches ? 'READY · REDUCED MOTION' : 'READY');
+  }
+
+  reducedMotion.addEventListener?.('change', event => {
+    if (event.matches) { paused = true; if (adapter) adapter.configure({ speed: 0 }); }
+    setStatus(event.matches ? 'REDUCED MOTION · HELD' : 'MOTION AVAILABLE');
+  });
+  addEventListener('beforeunload', () => {
+    imageToken += 1; if (imageSource && typeof imageSource.close === 'function') imageSource.close();
+    if (frameHandle) cancelAnimationFrame(frameHandle); resizeObserver?.disconnect(); rangeContract?.destroy(); bridge?.destroy(); materials?.destroy?.();
+  }, { once: true });
+
+  try { boot(); } catch (error) { console.error(error); setStatus('BOOT FAILED', 'error'); }
+})();
+</script>
+</body>
+</html>

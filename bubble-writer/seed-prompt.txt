@@ -1,0 +1,98 @@
+Build a tool that writes a phrase into a frame as bubble lettering, one letter
+at a time. Everything below is geometry you generate — no font of bubble letters
+exists in this, and none is needed.
+
+THE LETTERFORM
+
+Bubble letters are not a typeface, they are an operation. Per letter:
+
+1. Rasterise the glyph from a THIN face (weight ~300) into an offscreen tile.
+   Starting from a heavy face is the obvious first move and it is wrong: dilation
+   preserves topology, so a face whose counters are already small loses them and
+   every letter collapses into the same blob. Bubble letters are drawn by writing
+   the word thin and tracing a fat outline around it — do the same.
+2. Compute an exact signed Euclidean distance transform of the glyph mask
+   (Felzenszwalb–Huttenlocher: lower envelope of parabolas, one pass per axis,
+   negative inside).
+3. Extract the contour with marching squares at iso = inflate, interpolating
+   each edge crossing so it is sub-pixel. Resolve the two saddle cases with the
+   average of the four corners or contours will cross.
+4. Link the segments into closed loops, resample to even arc length, smooth.
+
+That gives a true offset curve, which means `inflate` is a real distance in em
+units and the look survives any letter size. Test it: offsetting a convex shape
+by r must add exactly perimeter·r + πr² of area (Steiner's formula). A blurred
+bitmap thresholded until it looks right cannot pass that at several radii at once.
+
+Dilation alone still returns the source face with rounded corners, because
+offsetting a straight stem gives a straight stem. The sides of real bubble
+letters bow. Add the thing the form is named after — a balloon:
+
+5. Relax each loop under surface tension (each point pulled toward the mean of
+   its neighbours) plus internal pressure (each point pushed along its outward
+   normal). Tension alone is a smoothing flow that converges every loop on a
+   circle and forgets the letter, so tether each point to within ~0.6 × inflate
+   of where dilation put it. That clamp is the whole difference between a
+   swollen R and an oval.
+
+Marching squares emits every loop with the material on the left, so one normal
+formula pushes outer loops outward and counters inward — the hole tightens while
+the body swells, which is why counters end up as almond slits. Drop any counter
+whose circularity (4πA/P²) falls below ~0.12: past that it is a sliver that
+draws as a stray hook rather than a mark.
+
+THE COMPOSITION
+
+One sentence, broken across lines, laid in a zigzag cascade down a frame of a
+declared ratio — lines overlapping, each at its own size and horizontal position.
+Not a scatter of separate words. Lay the block out at unit scale and fit the
+whole thing to the frame in one pass; scaling line by line lets a long phrase
+walk off the bottom.
+
+Give the frame real edges (16:9, 1:1, 4:5, 9:16) and centre it in the area the
+reader can actually see — if a control panel covers part of the window, measure
+the panel's EDGE, not its width. Export exactly the frame.
+
+Outline weight must be constant across the whole composition: express it in
+frame pixels once and divide it back out by each line's own scale, or a word set
+twice as large is drawn twice as heavily.
+
+THE ANIMATION
+
+Letters arrive in reading order. A letter does not fade or slide in:
+
+- ink dots gather at the letter's centre, and the letter INFLATES around them,
+  starting from roughly a dot and overshooting slightly before it settles
+  (easeOutBack — the overshoot is the pop; without it a letter merely grows and
+  reads as a zoom);
+- once landed it never fully stops moving: a small continuous jiggle in scale,
+  tilt and drift, each letter on its own phase;
+- it leaves the way it arrived, reversed — deflating while the same cluster of
+  dots scatters back out of it.
+
+The dots are INK. They have no opacity, ever. They shrink and they move; a mark
+on paper exists or it does not, and a fading dot reads as a screen effect. Draw
+them under the letters so a growing letter's fill closes over the cluster it
+came from. Give dots only to the animations that earn them — a letter that drops
+in did not come from anywhere, and dots under it read as debris.
+
+Offer a few entrances (inflate, pop, drop, rise, swing) and exits (deflate,
+burst, drop, shrink), a hold, and a loop.
+
+CONTROLS WORTH HAVING
+
+Phrase; face, weight, inflate, plump, tracking, outline weight, wobble; entrance,
+exit, write rate, line lead, pop, hold, exit rate, dots, dot size, jiggle, speed,
+loop; frame ratio, align, cascade, overlap, size variation, tilt, margin, seed;
+ink and paper as real colour pickers with an optional gradient across the whole
+piece; and a randomize that rolls all of it — including the frame and the face —
+while always keeping the phrase.
+
+CREDIT
+
+This is a study of Tracy Ma's bubble-letter animation "Do You Remember The First
+Time?" made for the Blonded team (2019), with placement behaviour recovered from
+the published source of The New York Times' "Gen X Is A Mess" (2019, draw-on by
+Aliza Aufrichtig). Their letters are drawn by hand; what this builds is a
+generator that produces that class of lettering for any text. Do not copy their
+artwork. Credit the reference in whatever you make.

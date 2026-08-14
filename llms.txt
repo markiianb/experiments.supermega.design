@@ -1,6 +1,12 @@
 # SUPERMEGA Experiments
 > Weekly visual experiments by SUPERMEGA Design (https://supermega.design). Plain HTML/CSS/JS, no build step.
 
+## Bubble Writer
+- [Open the instrument](https://experiments.supermega.design/bubble-writer/): bubble lettering generated as geometry, written into a frame one letter at a time
+- The letterform is an operation, not a typeface — an exact signed distance transform of a thin glyph, contoured by marching squares at a true offset distance, then relaxed like a balloon under surface tension and internal pressure
+- Credited study of Tracy Ma's bubble-letter animation for Blonded (2019); the placement behaviour was recovered from the published source of the NYT's Gen X Is A Mess (2019). Their letters are hand-drawn, these are generated, and none of their artwork or code is used
+- [Seed prompt](https://experiments.supermega.design/bubble-writer/seed-prompt.txt): a self-contained prompt for coding agents — paste it into your agent to rebuild and adapt this system
+
 ## Computer Graphics and Art
 - [Open the collection](https://experiments.supermega.design/cga76/): sixteen instruments derived from Computer Graphics and Art, vol. 1 no. 2, May 1976
 - Each one is a clean-room study written from the issue's published descriptions — no scans ship, no source lines are traced
@@ -11,5 +17,11 @@
 - [Open](https://experiments.supermega.design/pixel-garden/): the live tool
 - [Seed prompt](https://experiments.supermega.design/pixel-garden/seed-prompt.txt): a self-contained prompt for coding agents — paste it into your agent to rebuild and adapt this system
 - [Engine](https://experiments.supermega.design/pixel-garden/core/pixel-core.js): dependency-free source, with [sprites](https://experiments.supermega.design/pixel-garden/core/sprites.js)
+
+## Chroma Atlas
+- [Open](https://experiments.supermega.design/chroma-atlas/): the full colour and gradient instrument
+- [Seed prompt](https://experiments.supermega.design/chroma-atlas/seed-prompt.txt): a self-contained clean-room rebuild brief
+- [Engine](https://experiments.supermega.design/chroma-atlas/chroma-atlas-core.js): dependency-free colour math, renderer, extraction, spatial projection, and encoders
+- Credited behavioral study of Japanese Gradients for UI by Nuevo; no source, data, assets, copy, or visual design reused
 
 Free to use in your projects; a link back is appreciated.
