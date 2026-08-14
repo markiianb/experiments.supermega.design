@@ -39,7 +39,7 @@
 		speed: 1,
 		stroke: 0.014,
 		style: "outline",
-		text: "MAKE\nSOMETHING\nWORTH\nREMEMBERING",
+		text: "MAKE\nSOMETHING\nGREAT",
 		tilt: 0.3,
 		tracking: -0.05,
 		weight: 300,

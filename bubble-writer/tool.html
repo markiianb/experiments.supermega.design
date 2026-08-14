@@ -1,0 +1,757 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="supermega-instrument-release" content="0.1.0-1ff60f2032a6" />
+<title>SUPERMEGA — Bubble Writer</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2' y='2' width='12' height='12' fill='%23f61515'/%3E%3C/svg%3E" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2' y='2' width='12' height='12' fill='%23f61515'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="../_kit/releases/0.1.0-1ff60f2032a6/instrument.css" />
+<link rel="stylesheet" href="../_system/experiment-host.css" />
+<style>
+  @font-face{font-family:"Tanker";src:url("../_system/fonts/Tanker-Regular.woff2") format("woff2");font-display:block}
+  .hero{position:fixed;inset:0;overflow:hidden;background:#0B0B0D}
+  /* breadcrumb: the same trail the landing page and the directory use, so a
+     tool opened cold still says where it sits */
+  .bw-crumb{display:flex;align-items:center;gap:var(--instrument-space-2)}
+  .bw-crumb a{color:#e0e0e0;text-decoration:none}
+  .bw-crumb a:hover{color:#fff}
+  .bw-sep{color:#6f6f6f}
+  .bw-here{color:#a8a8a8}
+  .hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  /* A five-option group cannot shrink below its own labels, so inside a row it
+     spills out of the grid cell and over the row label. These sit full width
+     under their label instead.
+
+     The panel's horizontal inset lives on .instrument-row, not on the panel or
+     the group — so a block that is NOT a row has to carry that same inset
+     itself or it sits flush against the panel edge while every row beside it is
+     indented. .bw-stack is exactly that: a row's padding and rhythm, without a
+     row's three-column grid.
+
+     The buttons are a grid, not wrapped flex: with flex-wrap a lone item on the
+     last line stretches to the full width and reads as a heading rather than a
+     button. auto-fit columns keep every option the same size however they land. */
+  .bw-stack{padding-inline:var(--instrument-space-3);margin-block-start:var(--instrument-space-2)}
+  .bw-stack > .instrument-row-label{display:block;margin-block-end:var(--instrument-space-1)}
+  .bw-choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(4.6rem,1fr));gap:var(--instrument-space-1)}
+  .bw-choice .instrument-action{min-inline-size:0}
+  .bw-stack > .instrument-textarea{margin-block-end:var(--instrument-space-2)}
+  .bw-stack > .instrument-help{margin-block:0}
+</style>
+</head>
+<body data-system="instrument" data-instrument-release="0.1.0-1ff60f2032a6" data-instrument-polarity="ink" data-instrument-grid="off" data-instrument-grain="off" data-instrument-density="normal" data-instrument-motion="system" data-controls="visible">
+  <script>if(new URLSearchParams(location.search).get('instrument-embed')==='1')document.body.dataset.instrumentEmbed='true';</script>
+
+  <section class="hero instrument-renderer-surface">
+    <canvas id="c"></canvas>
+  </section>
+
+  <header class="instrument-renderer-chrome">
+    <div class="instrument-renderer-chrome-zone bw-crumb"><span class="instrument-identity-mark" aria-hidden="true"></span><a href="https://supermega.design">SUPERMEGA</a><span class="bw-sep">/</span><a href="../">EXPERIMENTS</a><span class="bw-sep">/</span><span class="bw-here">BUBBLE WRITER</span></div>
+    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--middle"><span>WORK</span><span>WRITTEN ANIMATION</span></div>
+    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">EX-BUBBLE-02</span><button class="instrument-action" id="toggle" type="button">Controls</button></div>
+  </header>
+  <div class="instrument-renderer-hud instrument-renderer-hud--top">Ink dots gather, the letter grows around them · R replays · E exports</div>
+  <div class="instrument-renderer-hud instrument-renderer-hud--bottom" id="stat">WRITING · OUTLINE</div>
+  <div class="instrument-renderer-credit">Study of Tracy Ma’s bubble-letter animation “Do You Remember The First Time?” for Blonded (2019), and the scatter code published with the NYT’s “Gen X Is A Mess” (2019, draw-on Aliza Aufrichtig). Theirs is drawn by hand; ours is generated. Not their artwork.</div>
+
+  <aside class="instrument-renderer-panel" id="panel" aria-label="Bubble Writer controls">
+    <section class="instrument-panel">
+      <header class="instrument-panel-header">
+        <h2 class="instrument-panel-title" id="scatter-controls-title">Bubble Writer</h2>
+        <div class="instrument-panel-actions"><button class="instrument-action" id="b-defaults" type="button" title="Restore configuration defaults">Defaults</button><button class="instrument-action" id="b-hide" type="button">Hide</button></div>
+      </header>
+      <p class="instrument-renderer-panel-lede">One phrase, cascaded down the frame, written a letter at a time.</p>
+
+      <div class="instrument-renderer-section">Phrase</div>
+      <div class="instrument-group">
+        <div class="bw-stack">
+        <label class="instrument-row-label" for="f-text">Text</label>
+        <textarea class="instrument-control instrument-textarea" id="f-text" rows="4" spellcheck="false" aria-describedby="h-text">MAKE
+SOMETHING
+GREAT</textarea>
+        <p class="instrument-help" id="h-text">One line per break. Each line lands in its own place in the cascade.</p>
+        </div>
+      </div>
+
+      <div class="instrument-renderer-section">Type</div>
+      <div class="instrument-group">
+        <div class="bw-stack">
+          <label class="instrument-row-label">Face</label>
+          <div class="bw-choice" id="f-face"><button class="instrument-action" data-face="grotesk" aria-pressed="true" type="button">Grotesk</button><button class="instrument-action" data-face="tanker" aria-pressed="false" type="button">Tanker</button><button class="instrument-action" data-face="serif" aria-pressed="false" type="button">Serif</button><button class="instrument-action" data-face="mono" aria-pressed="false" type="button">Mono</button></div>
+        </div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-weight">Weight</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-weight" min="100" max="700" step="25" value="300"></div><output class="instrument-row-value instrument-tabular" id="v-weight" for="s-weight">300</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-inflate">Inflate</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-inflate" min="0.02" max="0.16" step="0.005" value="0.07"></div><output class="instrument-row-value instrument-tabular" id="v-inflate" for="s-inflate">0.070</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-plump">Plump</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-plump" min="0" max="1" step="0.01" value="0.90"></div><output class="instrument-row-value instrument-tabular" id="v-plump" for="s-plump">0.90</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-track">Tracking</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-track" min="-0.3" max="0.1" step="0.005" value="-0.05"></div><output class="instrument-row-value instrument-tabular" id="v-track" for="s-track">-0.050</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-stroke">Outline</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-stroke" min="0.002" max="0.05" step="0.001" value="0.014"></div><output class="instrument-row-value instrument-tabular" id="v-stroke" for="s-stroke">0.014</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-wobble">Wobble</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-wobble" min="0" max="0.02" step="0.0005" value="0.005"></div><output class="instrument-row-value instrument-tabular" id="v-wobble" for="s-wobble">0.0050</output></div>
+      </div>
+
+      <div class="instrument-renderer-section">Motion</div>
+      <div class="instrument-group">
+        <div class="bw-stack">
+          <label class="instrument-row-label">Entrance</label>
+          <div class="bw-choice" id="f-entrance"><button class="instrument-action" data-entrance="inflate" aria-pressed="true" type="button">Inflate</button><button class="instrument-action" data-entrance="pop" aria-pressed="false" type="button">Pop</button><button class="instrument-action" data-entrance="drop" aria-pressed="false" type="button">Drop</button><button class="instrument-action" data-entrance="rise" aria-pressed="false" type="button">Rise</button><button class="instrument-action" data-entrance="swing" aria-pressed="false" type="button">Swing</button></div>
+        </div>
+        <div class="bw-stack">
+          <label class="instrument-row-label">Exit</label>
+          <div class="bw-choice" id="f-exit"><button class="instrument-action" data-exit="deflate" aria-pressed="true" type="button">Deflate</button><button class="instrument-action" data-exit="burst" aria-pressed="false" type="button">Burst</button><button class="instrument-action" data-exit="drop" aria-pressed="false" type="button">Drop</button><button class="instrument-action" data-exit="shrink" aria-pressed="false" type="button">Shrink</button></div>
+        </div>
+        <div class="instrument-row"><span class="instrument-row-label">Loop</span><div class="instrument-row-control instrument-renderer-choice" id="f-loop"><button class="instrument-action" data-loop="once" aria-pressed="false" type="button">Once</button><button class="instrument-action" data-loop="cycle" aria-pressed="true" type="button">Cycle</button><button class="instrument-action" data-loop="hold" aria-pressed="false" type="button">Stay</button></div><span></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-write">Write rate</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-write" min="1" max="20" step="0.5" value="7"></div><output class="instrument-row-value instrument-tabular" id="v-write" for="s-write">7.0</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-pop">Pop</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-pop" min="0" max="1" step="0.01" value="0.60"></div><output class="instrument-row-value instrument-tabular" id="v-pop" for="s-pop">0.60</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-dots">Dots</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-dots" min="0" max="1" step="0.01" value="0.50"></div><output class="instrument-row-value instrument-tabular" id="v-dots" for="s-dots">0.50</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-dotsize">Dot size</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-dotsize" min="0" max="1" step="0.01" value="0.50"></div><output class="instrument-row-value instrument-tabular" id="v-dotsize" for="s-dotsize">0.50</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-lead">Line lead</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-lead" min="0" max="1" step="0.01" value="0.25"></div><output class="instrument-row-value instrument-tabular" id="v-lead" for="s-lead">0.25</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-hold">Hold</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-hold" min="0" max="5" step="0.1" value="1.4"></div><output class="instrument-row-value instrument-tabular" id="v-hold" for="s-hold">1.4</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-erase">Exit rate</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-erase" min="1" max="30" step="0.5" value="14"></div><output class="instrument-row-value instrument-tabular" id="v-erase" for="s-erase">14.0</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-jiggle">Jiggle</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-jiggle" min="0" max="1" step="0.01" value="0.30"></div><output class="instrument-row-value instrument-tabular" id="v-jiggle" for="s-jiggle">0.30</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-speed">Speed</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-speed" min="0" max="3" step="0.05" value="1"></div><output class="instrument-row-value instrument-tabular" id="v-speed" for="s-speed">1.00</output></div>
+        <div class="instrument-row"><span class="instrument-row-label">Run</span><div class="instrument-row-control instrument-renderer-actions"><button class="instrument-action" id="b-pause" type="button">Pause</button><button class="instrument-action" id="b-replay" type="button">Replay</button></div><span></span></div>
+      </div>
+
+      <div class="instrument-renderer-section">Layout</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><span class="instrument-row-label">Frame</span><div class="instrument-row-control instrument-renderer-choice" id="f-aspect"><button class="instrument-action" data-aspect="16:9" aria-pressed="true" type="button">16:9</button><button class="instrument-action" data-aspect="1:1" aria-pressed="false" type="button">1:1</button><button class="instrument-action" data-aspect="4:5" aria-pressed="false" type="button">4:5</button><button class="instrument-action" data-aspect="9:16" aria-pressed="false" type="button">9:16</button></div><span></span></div>
+        <div class="instrument-row"><span class="instrument-row-label">Align</span><div class="instrument-row-control instrument-renderer-choice" id="f-align"><button class="instrument-action" data-align="cascade" aria-pressed="true" type="button">Cascade</button><button class="instrument-action" data-align="left" aria-pressed="false" type="button">Left</button><button class="instrument-action" data-align="centre" aria-pressed="false" type="button">Centre</button><button class="instrument-action" data-align="right" aria-pressed="false" type="button">Right</button></div><span></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-cascade">Cascade</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-cascade" min="0" max="1" step="0.01" value="0.50"></div><output class="instrument-row-value instrument-tabular" id="v-cascade" for="s-cascade">0.50</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-overlap">Overlap</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-overlap" min="0.45" max="1.15" step="0.01" value="0.78"></div><output class="instrument-row-value instrument-tabular" id="v-overlap" for="s-overlap">0.78</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-vary">Size vary</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-vary" min="0" max="1" step="0.01" value="0.45"></div><output class="instrument-row-value instrument-tabular" id="v-vary" for="s-vary">0.45</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-tilt">Tilt</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-tilt" min="0" max="1" step="0.01" value="0.30"></div><output class="instrument-row-value instrument-tabular" id="v-tilt" for="s-tilt">0.30</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-margin">Margin</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-margin" min="0" max="0.25" step="0.005" value="0.06"></div><output class="instrument-row-value instrument-tabular" id="v-margin" for="s-margin">0.060</output></div>
+        <div class="instrument-row"><span class="instrument-row-label">Hand</span><div class="instrument-row-control instrument-renderer-actions"><button class="instrument-action" id="b-reseed" type="button" title="Lay the composition again from a new seed">Reseed</button><button class="instrument-action" id="b-variant" type="button" title="Roll everything except the phrase">Randomize</button></div><span class="instrument-row-value instrument-tabular" id="v-seed">7</span></div>
+      </div>
+
+      <div class="instrument-renderer-section">Ink</div>
+      <div class="instrument-group">
+        <div class="bw-stack">
+          <label class="instrument-row-label">Style</label>
+          <div class="bw-choice" id="f-style"><button class="instrument-action" data-style="outline" aria-pressed="true" type="button">Outline</button><button class="instrument-action" data-style="solid" aria-pressed="false" type="button">Solid</button><button class="instrument-action" data-style="shadow" aria-pressed="false" type="button">Shadow</button><button class="instrument-action" data-style="halo" aria-pressed="false" type="button">Halo</button><button class="instrument-action" data-style="sticker" aria-pressed="false" type="button">Sticker</button></div>
+        </div>
+        <div class="instrument-row"><span class="instrument-row-label">Presets</span><div class="instrument-row-control instrument-renderer-swatches" id="f-preset"><button class="instrument-swatch instrument-renderer-swatch" type="button" data-ink="#101014" data-paper="#FBFAF7" aria-label="Black on paper" style="background:#101014"></button><button class="instrument-swatch instrument-renderer-swatch" type="button" data-ink="#F61515" data-paper="#FBFAF7" aria-label="SUPERMEGA red on paper" style="background:#F61515"></button><button class="instrument-swatch instrument-renderer-swatch" type="button" data-ink="#FBFAF7" data-paper="#101014" aria-label="Paper on black" style="background:#FBFAF7"></button><button class="instrument-swatch instrument-renderer-swatch" type="button" data-ink="#FBFAF7" data-paper="#F61515" aria-label="Paper on red" style="background:#8d1010"></button><button class="instrument-swatch instrument-renderer-swatch" type="button" data-ink="#C8FF00" data-paper="#101014" aria-label="Acid on black" style="background:#C8FF00"></button><button class="instrument-swatch instrument-renderer-swatch" type="button" data-ink="#FF3D8B" data-paper="#FFF3E6" aria-label="Candy pink" style="background:#FF3D8B"></button></div><span></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="h-ink">Ink</label><div class="instrument-row-control"><div class="instrument-color-field"><span class="instrument-color-swatch"><input class="instrument-color-picker" type="color" id="p-ink" value="#101014" aria-label="Ink colour"></span><input class="instrument-control instrument-text-field instrument-color-hex" type="text" id="h-ink" value="#101014" spellcheck="false"></div></div><span></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="h-paper">Paper</label><div class="instrument-row-control"><div class="instrument-color-field"><span class="instrument-color-swatch"><input class="instrument-color-picker" type="color" id="p-paper" value="#FBFAF7" aria-label="Paper colour"></span><input class="instrument-control instrument-text-field instrument-color-hex" type="text" id="h-paper" value="#FBFAF7" spellcheck="false"></div></div><span></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="f-gradient">Gradient</label><div class="instrument-row-control"><input class="instrument-switch" id="f-gradient" role="switch" type="checkbox"></div><span class="instrument-row-value instrument-tabular" id="v-gradient">OFF</span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="h-ink2">Ink two</label><div class="instrument-row-control"><div class="instrument-color-field"><span class="instrument-color-swatch"><input class="instrument-color-picker" type="color" id="p-ink2" value="#F61515" aria-label="Second ink colour"></span><input class="instrument-control instrument-text-field instrument-color-hex" type="text" id="h-ink2" value="#F61515" spellcheck="false"></div></div><span></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-angle">Angle</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-angle" min="0" max="360" step="1" value="90"></div><output class="instrument-row-value instrument-tabular" id="v-angle" for="s-angle">90</output></div>
+      </div>
+
+      <div class="instrument-renderer-section">Artifact</div>
+      <div class="instrument-group">
+        <div class="instrument-row"><span class="instrument-row-label">Frame</span><div class="instrument-row-control"><button class="instrument-action" id="b-png" type="button">Export PNG</button></div><span class="instrument-row-value instrument-tabular">PNG</span></div>
+      </div>
+      <div class="instrument-status" id="adapter-status" role="status" data-instrument-tone="active"><span class="instrument-status-mark" aria-hidden="true"></span><span>Adapter</span><span class="instrument-status-value instrument-tabular">READY</span></div>
+    </section>
+  </aside>
+
+  <div class="instrument-material-grid" aria-hidden="true"></div><div class="instrument-material-grain" aria-hidden="true"></div>
+
+<script src="../_kit/releases/0.1.0-1ff60f2032a6/instrument-runtime.js"></script>
+<script src="../_system/adapters/adapter-core.js"></script>
+<script src="../_system/adapters/bubble-scatter.js"></script>
+<script src="../bubble-graffiti/bubble-core.js"></script>
+<script src="../bubble-graffiti/scatter-core.js"></script>
+
+<script>
+/* =============================================================================
+   Bubble Writer — one phrase, written into a frame a letter at a time.
+
+   Read off the reference animation frame by frame:
+
+   1. It is ONE SENTENCE, broken across lines and hand-laid in a zigzag down the
+      frame — lines overlapping, each at its own size and place.
+   2. A letter does not fade or slide in. Ink dots gather at its centre and the
+      letter grows around them.
+   3. It leaves the same way, reversed: the letter shrinks back towards nothing
+      and the dots scatter out of it.
+
+   The dots are INK. They have no opacity, ever — they are marks on paper, and a
+   mark either exists or it does not. They shrink and they move; they never fade,
+   because a fading dot reads as a screen effect and this has to read as ink.
+   ========================================================================== */
+(() => {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const $ = id => document.getElementById(id);
+  const setV = (id, value) => { const node = $(id); if (node) node.textContent = value; };
+  const bubble = window.SUPERMEGA_BUBBLE;
+  const mulberry = window.SUPERMEGA_SCATTER.mulberry;
+
+  const FACES = {
+    grotesk: '"Helvetica Neue", Inter, system-ui, Arial, sans-serif',
+    mono: 'ui-monospace, "SF Mono", Menlo, monospace',
+    serif: 'Georgia, "Times New Roman", Times, serif',
+    tanker: '"Tanker", "Arial Black", sans-serif',
+  };
+  const ASPECTS = { '1:1': 1, '16:9': 16 / 9, '4:5': 4 / 5, '9:16': 9 / 16 };
+  const DOT = 0.05;          // the size a letter starts at: a dot, not nothing
+  const LEAD = 0.16;         // seconds the dots gather before the letter grows
+  const DOT_OUT = 0.42;      // seconds the scattered dots survive on the way out
+  const ENTER = 0.34;        // seconds one letter takes to arrive
+
+  const S = { ...window.SUPERMEGA_INSTRUMENT_ADAPTERS.bubbleScatter.defaults, paused: false };
+  let lines = [];
+  let letters = 0;
+  let clock = 0;
+
+  /* ---------- the artboard, centred in what you can actually see ---------- */
+  const stage = () => {
+    // Measure the BOUNDARY, not the element. The panel's box is sized from a CSS
+    // variable and can be wider than the strip it actually paints, which quietly
+    // over-reserves space and pushes the whole artboard left. Its left edge is
+    // the only thing that is always true — and when the panel is hidden it is
+    // translated off the right edge, so this reads as zero with no special case.
+    const embedded = document.body.dataset.instrumentEmbed === 'true';
+    const edge = embedded ? innerWidth : $('panel').getBoundingClientRect().left;
+    const reserved = Math.max(0, Math.min(innerWidth * 0.45, innerWidth - edge));
+    return { height: innerHeight, width: Math.max(240, innerWidth - reserved), x: 0, y: 0 };
+  };
+  const board = () => {
+    const area = stage();
+    const ratio = ASPECTS[S.aspect] || ASPECTS['16:9'];
+    let width = area.width * 0.92;
+    let height = width / ratio;
+    const limit = area.height * 0.92;
+    if (height > limit) { height = limit; width = height * ratio; }
+    return { height, width, x: area.x + (area.width - width) / 2, y: area.y + (area.height - height) / 2 };
+  };
+
+  /* ---------- the cascade ---------- */
+  const compose = () => {
+    const frame = board();
+    const inset = S.margin;
+    const usableWidth = frame.width * (1 - inset * 2);
+    const usableHeight = frame.height * (1 - inset * 2);
+    const random = mulberry(S.seed);
+    const source = S.text.split('\n').map(t => t.trim()).filter(Boolean);
+    letters = 0;
+
+    lines = source.map((text) => {
+      const built = bubble.phrase(text, {
+        fontStack: FACES[S.face], inflate: S.inflate, jitter: 0.02, lean: 0.03,
+        plump: S.plump, seed: S.seed, tracking: S.tracking, weight: S.weight, wobble: S.wobble,
+      });
+      const count = built.letters.length;
+      letters += count;
+      return {
+        built, count,
+        tilt: (random() * 2 - 1) * S.tilt * 0.07,
+        wander: random() * 2 - 1,
+        widthFraction: 0.62 * (1 - S.sizeVary * 0.35 + random() * S.sizeVary * 0.7),
+      };
+    }).filter(line => line.count > 0);
+
+    // Lay the block out at unit scale first, then fit the whole thing at once.
+    // Scaling line by line lets a long phrase walk off the bottom, and the point
+    // of a declared frame is that the work stays inside its own edges.
+    let cursor = 0;
+    let minX = Infinity;
+    let maxX = -Infinity;
+    for (const line of lines) {
+      const boxWidth = usableWidth * line.widthFraction;
+      line.scale = boxWidth / (line.built.bounds.width || 1);
+      line.height = (line.built.bounds.height || 1) * line.scale;
+      line.width = boxWidth;
+      if (S.align === 'left') line.left = 0;
+      else if (S.align === 'right') line.left = usableWidth - boxWidth;
+      else if (S.align === 'centre') line.left = (usableWidth - boxWidth) / 2;
+      else line.left = usableWidth * 0.5 + line.wander * S.cascade * usableWidth * 0.42 - boxWidth / 2;
+      line.top = cursor;
+      cursor += line.height * S.overlap;
+      minX = Math.min(minX, line.left);
+      maxX = Math.max(maxX, line.left + boxWidth);
+    }
+    const blockHeight = cursor + (lines.length ? lines[lines.length - 1].height * (1 - S.overlap) : 0);
+    const blockWidth = Math.max(1, maxX - minX);
+    const fit = Math.min(1, usableHeight / Math.max(1, blockHeight), usableWidth / blockWidth);
+    const offsetY = frame.height * inset + (usableHeight - blockHeight * fit) / 2;
+    const offsetX = frame.width * inset + (usableWidth - blockWidth * fit) / 2 - minX * fit;
+    for (const line of lines) {
+      line.scale *= fit;
+      line.x = line.left * fit + offsetX;
+      line.y = line.top * fit + offsetY;
+      line.width *= fit;
+      line.height *= fit;
+    }
+  };
+
+  /* ---------- the timeline ---------- */
+  const before = (index) => { let n = 0; for (let i = 0; i < index; i++) n += lines[i].count; return n; };
+  const lineStart = (index) => (before(index) * (1 - S.lineStagger)) / Math.max(0.1, S.write);
+  const writeEnd = () => lines.reduce((latest, line, i) => Math.max(latest, lineStart(i) + line.count / Math.max(0.1, S.write) + ENTER), 0);
+  const eraseStart = () => writeEnd() + S.hold;
+  const eraseEnd = () => eraseStart() + letters / Math.max(0.1, S.erase) + DOT_OUT;
+  const cycleLength = () => eraseEnd() + 0.4;
+  const letterAt = (li, j) => lineStart(li) + j / Math.max(0.1, S.write);
+  const letterGone = (li, j) => eraseStart() + (before(li) + j) / Math.max(0.1, S.erase);
+
+  // easeOutBack: starts at 0, overshoots past 1, settles. The overshoot IS the
+  // pop; without it a letter merely grows and reads as a zoom.
+  const popCurve = (t, amount) => {
+    if (t >= 1) return 1;
+    if (t <= 0) return 0;
+    const s = 1.70158 * (0.35 + amount * 1.4);
+    const u = t - 1;
+    return 1 + u * u * ((s + 1) * u + s);
+  };
+  const easeOut = t => 1 - Math.pow(1 - Math.max(0, Math.min(1, t)), 3);
+
+  /* ---------- ink dots ---------- */
+  // Symmetrical by construction: the same cluster gathers inward before a letter
+  // and scatters outward after it. Solid ink, shrinking — never alpha.
+  const dotCluster = (li, j) => {
+    const count = Math.round(1 + S.dots * 5);
+    const out = [];
+    for (let k = 0; k < count; k++) {
+      const r = mulberry((li * 8191 + j * 271 + k * 53) >>> 0);
+      out.push({ angle: r() * Math.PI * 2, reach: 0.35 + r() * 0.65, size: 0.55 + r() * 0.9 });
+    }
+    return out;
+  };
+
+  // Dots belong to particular animations, not to all of them. A letter that
+  // inflates came from somewhere and the dots are where it came from; a letter
+  // that drops in did not, and sprinkling dots under it just looks like debris.
+  const ENTRANCE_DOTS = new Set(['inflate']);
+  const EXIT_DOTS = new Set(['deflate', 'burst']);
+
+  const drawDots = (target, now) => {
+    if (S.dots <= 0) return;
+    const gathers = ENTRANCE_DOTS.has(S.entrance);
+    const scatters = EXIT_DOTS.has(S.exit);
+    if (!gathers && !scatters) return;
+    const erasing = S.loop !== 'hold';
+    lines.forEach((line, li) => {
+      for (let j = 0; j < line.count; j++) {
+        const item = line.built.letters[j];
+        const cx = line.x + (item.x + item.cx - line.built.bounds.minX) * line.scale;
+        const cy = line.y + (item.y + item.cy - line.built.bounds.minY) * line.scale;
+        const unit = line.height * 0.5;
+
+        // Gathering in: dots start spread and close on the centre, then the
+        // letter grows over them.
+        const arrive = letterAt(li, j);
+        const gatherFrom = arrive - LEAD;
+        if (gathers && now >= gatherFrom && now < arrive + ENTER * 0.5) {
+          const t = Math.min(1, (now - gatherFrom) / (LEAD + ENTER * 0.5));
+          for (const dot of dotCluster(li, j)) {
+            const spread = (1 - easeOut(t)) * dot.reach * unit * 0.5 * (0.4 + S.dots);
+            const radius = dot.size * unit * 0.05 * S.dotSize * (1 - t * 0.55);
+            if (radius <= 0.2) continue;
+            target.beginPath();
+            target.arc(cx + Math.cos(dot.angle) * spread, cy + Math.sin(dot.angle) * spread, radius, 0, Math.PI * 2);
+            target.fill();
+          }
+        }
+
+        // Scattering out: the same cluster, running the other way.
+        if (!erasing || !scatters) continue;
+        const gone = letterGone(li, j);
+        if (now >= gone && now < gone + DOT_OUT) {
+          const t = (now - gone) / DOT_OUT;
+          for (const dot of dotCluster(li, j)) {
+            const spread = easeOut(t) * dot.reach * unit * 0.75 * (0.4 + S.dots);
+            const radius = dot.size * unit * 0.05 * S.dotSize * (1 - t);
+            if (radius <= 0.2) continue;
+            target.beginPath();
+            target.arc(cx + Math.cos(dot.angle) * spread, cy + Math.sin(dot.angle) * spread - t * unit * 0.1, radius, 0, Math.PI * 2);
+            target.fill();
+          }
+        }
+      }
+    });
+  };
+
+  /* ---------- ink, flat or gradient ---------- */
+  // A gradient has to run across the WHOLE composition, but each line is drawn
+  // under its own rotation and scale. So the board-space endpoints are pushed
+  // back through that transform and the gradient is built in the line's own
+  // coordinates — which keeps it continuous from one line to the next.
+  const toLocal = (line, px, py) => {
+    const ux = px - (line.x + line.width / 2);
+    const uy = py - (line.y + line.height / 2);
+    const c = Math.cos(-line.tilt);
+    const s = Math.sin(-line.tilt);
+    const vx = (ux * c - uy * s + line.width / 2) / line.scale;
+    const vy = (ux * s + uy * c + line.height / 2) / line.scale;
+    return { x: vx + line.built.bounds.minX, y: vy + line.built.bounds.minY };
+  };
+  const inkFor = (target, line, frame) => {
+    if (!S.gradient) return S.ink;
+    const rad = (S.angle * Math.PI) / 180;
+    const half = Math.hypot(frame.width, frame.height) / 2;
+    const cx = frame.width / 2;
+    const cy = frame.height / 2;
+    const a = toLocal(line, cx - Math.cos(rad) * half, cy - Math.sin(rad) * half);
+    const b = toLocal(line, cx + Math.cos(rad) * half, cy + Math.sin(rad) * half);
+    const gradient = target.createLinearGradient(a.x, a.y, b.x, b.y);
+    gradient.addColorStop(0, S.ink);
+    gradient.addColorStop(1, S.ink2);
+    return gradient;
+  };
+  const flatInk = (target, frame) => {
+    if (!S.gradient) return S.ink;
+    const rad = (S.angle * Math.PI) / 180;
+    const half = Math.hypot(frame.width, frame.height) / 2;
+    const gradient = target.createLinearGradient(
+      frame.width / 2 - Math.cos(rad) * half, frame.height / 2 - Math.sin(rad) * half,
+      frame.width / 2 + Math.cos(rad) * half, frame.height / 2 + Math.sin(rad) * half,
+    );
+    gradient.addColorStop(0, S.ink);
+    gradient.addColorStop(1, S.ink2);
+    return gradient;
+  };
+
+  /* ---------- paint ---------- */
+  const fit = () => {
+    const ratio = Math.min(devicePixelRatio || 1, 2);
+    canvas.width = Math.round(innerWidth * ratio);
+    canvas.height = Math.round(innerHeight * ratio);
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  };
+
+  const paintBoard = (target, frame, now) => {
+    const erasing = S.loop !== 'hold';
+    // One outline weight for the whole piece. `stroke` is a fraction of a
+    // reference cap height (half the frame), turned into board pixels once —
+    // then each line divides it back out by its own scale, so a word set twice
+    // as large is not drawn twice as heavily.
+    const strokePx = S.stroke * frame.height * 0.5;
+
+    // Dots go down first, so a growing letter's fill covers the cluster it grew
+    // out of — the letter really does close over its own dots.
+    target.fillStyle = flatInk(target, frame);
+    drawDots(target, now);
+
+    lines.forEach((line, li) => {
+      const written = (now - lineStart(li)) * Math.max(0.1, S.write);
+      if (written <= 0) return;
+      const ink = inkFor(target, line, frame);
+
+      const letterFx = (index, fraction) => {
+        let scale = 1;
+        let rotate = 0;
+        let y = 0;
+        const t = fraction;
+        if (S.entrance === 'inflate') scale = DOT + (1 - DOT) * popCurve(t, S.pop);
+        else if (S.entrance === 'pop') scale = popCurve(t, S.pop);
+        else if (S.entrance === 'drop') y = -(1 - easeOut(t)) * 0.7;
+        else if (S.entrance === 'rise') y = (1 - easeOut(t)) * 0.7;
+        else { rotate = (1 - easeOut(t)) * 0.6; scale = 0.55 + 0.45 * easeOut(t); }
+
+        if (erasing) {
+          const out = (now - letterGone(li, index)) / 0.26;
+          if (out >= 1) return { scale: 0.0001 };
+          if (out > 0) {
+            if (S.exit === 'deflate') scale *= (1 - out) * (1 - out);
+            else if (S.exit === 'burst') scale *= out < 0.12 ? 1 : 0.0001;
+            else if (S.exit === 'drop') y += out * out * 1.4;
+            else scale *= 1 - out;
+          }
+        }
+        if (S.jiggle > 0 && fraction >= 1) {
+          const phase = li * 1.9 + index * 0.7;
+          scale *= 1 + S.jiggle * 0.028 * Math.sin(now * 2.1 + phase);
+          rotate += S.jiggle * 0.045 * Math.sin(now * 1.7 + phase * 1.3);
+          y += S.jiggle * 0.01 * Math.sin(now * 1.3 + phase * 0.6);
+        }
+        return { rotate, scale: Math.max(0.0001, scale), y };
+      };
+
+      target.save();
+      target.translate(line.x + line.width / 2, line.y + line.height / 2);
+      target.rotate(line.tilt);
+      target.translate(-line.width / 2, -line.height / 2);
+      target.scale(line.scale, line.scale);
+      target.translate(-line.built.bounds.minX, -line.built.bounds.minY);
+
+      const progress = Math.min(1, written / line.count);
+      const pass = (options) => bubble.drawPhrase(target, line.built, { letterFx, progress, whole: true, ...options });
+      const w = strokePx / line.scale;
+
+      if (S.style === 'outline') pass({ fill: S.paper, lineWidth: w, stroke: ink });
+      else if (S.style === 'solid') pass({ fill: ink, lineWidth: w * 0.9, stroke: S.paper });
+      else if (S.style === 'shadow') {
+        target.save(); target.translate(w * 2.4, w * 3.1);
+        pass({ fill: ink, lineWidth: w, stroke: ink });
+        target.restore();
+        pass({ fill: S.paper, lineWidth: w, stroke: ink });
+      } else if (S.style === 'halo') {
+        pass({ fill: null, lineWidth: w * 6, stroke: S.paper });
+        pass({ fill: S.paper, lineWidth: w, stroke: ink });
+      } else {
+        pass({ fill: null, lineWidth: w * 9, stroke: S.paper });
+        pass({ fill: ink, lineWidth: w * 1.2, stroke: ink });
+      }
+      target.restore();
+    });
+  };
+
+  const paint = (target, now) => {
+    const frame = board();
+    target.fillStyle = '#0B0B0D';
+    target.fillRect(0, 0, innerWidth, innerHeight);
+    target.save();
+    target.beginPath();
+    target.rect(frame.x, frame.y, frame.width, frame.height);
+    target.clip();
+    target.fillStyle = S.paper;
+    target.fillRect(frame.x, frame.y, frame.width, frame.height);
+    target.translate(frame.x, frame.y);
+    paintBoard(target, frame, now);
+    target.restore();
+  };
+
+  let last = performance.now();
+  const frame = (stamp) => {
+    const delta = Math.min(0.05, (stamp - last) / 1000);
+    last = stamp;
+    if (!S.paused) clock += delta * S.speed;
+    if (S.loop === 'cycle' && clock > cycleLength()) clock = 0;
+    if (S.loop === 'once' && clock > eraseEnd()) clock = eraseEnd();
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    paint(ctx, clock);
+    requestAnimationFrame(frame);
+  };
+
+  /* ---------- artifacts ---------- */
+  const createArtifact = () => {
+    const box = board();
+    const scale = 2;
+    const off = document.createElement('canvas');
+    off.width = Math.round(box.width * scale);
+    off.height = Math.round(box.height * scale);
+    const target = off.getContext('2d');
+    target.scale(scale, scale);
+    target.fillStyle = S.paper;
+    target.fillRect(0, 0, box.width, box.height);
+    target.save();
+    target.beginPath();
+    target.rect(0, 0, box.width, box.height);
+    target.clip();
+    paintBoard(target, box, Math.max(0, eraseStart() - 0.01));
+    target.restore();
+    return { dataUrl: off.toDataURL('image/png'), filename: `bubble-writer-${S.style}-${S.aspect.replace(':', 'x')}.png`, height: off.height, mime: 'image/png', width: off.width };
+  };
+
+  const clearTags = () => { clock = 0; return { tags: 0 }; };
+
+  /* ---------- wiring ---------- */
+  const setControlsVisible = visible => {
+    $('panel').classList.toggle('hidden', !visible);
+    document.body.dataset.controls = visible ? 'visible' : 'hidden';
+    $('toggle').setAttribute('aria-pressed', String(visible));
+    compose();
+    return { visible };
+  };
+  const setPressed = (selector, match) => document.querySelectorAll(selector).forEach(el => {
+    el.setAttribute('aria-pressed', String(match(el)));
+  });
+  const phase = () => {
+    if (clock < writeEnd()) return 'WRITING';
+    if (S.loop === 'hold' || clock < eraseStart()) return 'HELD';
+    return 'LEAVING';
+  };
+  function syncStat() { setV('stat', `${S.paused ? 'PAUSED' : phase()} · ${S.style.toUpperCase()}`); }
+
+  const syncControls = c => {
+    setPressed('#f-style [data-style]', el => el.dataset.style === c.style);
+    setPressed('#f-face [data-face]', el => el.dataset.face === c.face);
+    setPressed('#f-entrance [data-entrance]', el => el.dataset.entrance === c.entrance);
+    setPressed('#f-exit [data-exit]', el => el.dataset.exit === c.exit);
+    setPressed('#f-loop [data-loop]', el => el.dataset.loop === c.loop);
+    setPressed('#f-aspect [data-aspect]', el => el.dataset.aspect === c.aspect);
+    setPressed('#f-align [data-align]', el => el.dataset.align === c.align);
+    setPressed('#f-preset [data-ink]', el => el.dataset.ink.toLowerCase() === c.ink && el.dataset.paper.toLowerCase() === c.paper);
+    if ($('f-text').value !== c.text) $('f-text').value = c.text;
+    for (const [picker, hex, value] of [['p-ink', 'h-ink', c.ink], ['p-paper', 'h-paper', c.paper], ['p-ink2', 'h-ink2', c.ink2]]) {
+      $(picker).value = value;
+      if ($(hex).value.trim().toLowerCase() !== value) $(hex).value = value;
+    }
+    $('f-gradient').checked = c.gradient;
+    setV('v-gradient', c.gradient ? 'ON' : 'OFF');
+    setV('v-seed', String(c.seed));
+    const values = {
+      's-angle': [c.angle, 'v-angle', 0], 's-cascade': [c.cascade, 'v-cascade', 2],
+      's-dots': [c.dots, 'v-dots', 2], 's-dotsize': [c.dotSize, 'v-dotsize', 2],
+      's-erase': [c.erase, 'v-erase', 1], 's-hold': [c.hold, 'v-hold', 1],
+      's-inflate': [c.inflate, 'v-inflate', 3], 's-jiggle': [c.jiggle, 'v-jiggle', 2],
+      's-lead': [c.lineStagger, 'v-lead', 2], 's-margin': [c.margin, 'v-margin', 3],
+      's-overlap': [c.overlap, 'v-overlap', 2], 's-plump': [c.plump, 'v-plump', 2],
+      's-pop': [c.pop, 'v-pop', 2], 's-speed': [c.speed, 'v-speed', 2],
+      's-stroke': [c.stroke, 'v-stroke', 3], 's-tilt': [c.tilt, 'v-tilt', 2],
+      's-track': [c.tracking, 'v-track', 3], 's-vary': [c.sizeVary, 'v-vary', 2],
+      's-weight': [c.weight, 'v-weight', 0], 's-wobble': [c.wobble, 'v-wobble', 4],
+      's-write': [c.write, 'v-write', 1],
+    };
+    Object.entries(values).forEach(([id, [value, output, decimals]]) => {
+      $(id).value = value;
+      setV(output, Number(value).toFixed(decimals));
+    });
+  };
+
+  // Motion and colour can be tuned while it runs. Anything that changes the
+  // letterform or the composition lays it out again and replays from the top.
+  const COMPOSE_KEYS = ['align', 'aspect', 'cascade', 'face', 'inflate', 'margin', 'overlap', 'plump', 'seed', 'sizeVary', 'text', 'tilt', 'tracking', 'weight', 'wobble'];
+  const applyConfiguration = c => {
+    const relayout = COMPOSE_KEYS.some(key => S[key] !== c[key]);
+    Object.assign(S, c);
+    if (relayout || !lines.length) { compose(); clock = 0; }
+    syncControls(c);
+    syncStat();
+  };
+
+  /* ---------- randomize ---------- */
+  // Rolls the whole instrument except the three things that are the user's
+  // decision rather than the machine's: the PHRASE, the output frame, and how
+  // fast they want to watch it. Everything that makes the piece look and move
+  // the way it does is fair game.
+  const INK_PAIRS = [
+    ['#101014', '#FBFAF7'], ['#F61515', '#FBFAF7'], ['#FBFAF7', '#101014'],
+    ['#FBFAF7', '#F61515'], ['#C8FF00', '#101014'], ['#FF3D8B', '#FFF3E6'],
+    ['#0A2A6B', '#EFEAD8'], ['#1B4D2E', '#F3F1E7'], ['#101014', '#F2C230'],
+    ['#4B1AC7', '#F7F2FF'], ['#FF5C00', '#1A1208'],
+  ];
+  const one = list => list[Math.floor(Math.random() * list.length)];
+  const span = (lo, hi, places = 2) => Number((lo + Math.random() * (hi - lo)).toFixed(places));
+
+  const randomVariant = () => {
+    // Curated pairs, not random hex: two random colours are usually mud, and a
+    // randomizer that mostly produces mud stops being worth pressing.
+    const [ink, paper] = one(INK_PAIRS);
+    const gradient = Math.random() < 0.35;
+    const entrance = one(['inflate', 'pop', 'drop', 'rise', 'swing']);
+    return {
+      align: one(['cascade', 'cascade', 'cascade', 'left', 'centre', 'right']),
+      angle: Math.floor(Math.random() * 360),
+      // The frame is part of the look, not just an output setting — a square
+      // and a 9:16 compose completely differently, so the dice rolls it too.
+      aspect: one(['16:9', '16:9', '1:1', '4:5', '9:16']),
+      cascade: span(0.15, 1),
+      dotSize: span(0.25, 1),
+      dots: span(0.2, 1),
+      entrance,
+      erase: span(4, 26, 1),
+      exit: one(['deflate', 'burst', 'drop', 'shrink']),
+      face: one(['grotesk', 'tanker', 'serif', 'mono']),
+      gradient,
+      hold: span(0.4, 2.6, 1),
+      ink,
+      ink2: one(INK_PAIRS)[0],
+      inflate: span(0.045, 0.11, 3),
+      jiggle: span(0, 0.7),
+      lineStagger: span(0, 0.7),
+      overlap: span(0.55, 1.05),
+      paper,
+      plump: span(0.55, 1),
+      pop: span(0.2, 1),
+      seed: 1 + Math.floor(Math.random() * 9999),
+      sizeVary: span(0, 0.9),
+      stroke: span(0.008, 0.024, 3),
+      style: one(['outline', 'outline', 'solid', 'shadow', 'halo', 'sticker']),
+      tilt: span(0, 0.8),
+      tracking: span(-0.14, 0.02, 3),
+      weight: 100 + Math.round(Math.random() * 10) * 25,
+      wobble: span(0, 0.012, 4),
+    };
+  };
+
+  const adapter = window.SUPERMEGA_INSTRUMENT_ADAPTERS.bubbleScatter.create({
+    applyConfiguration,
+    clearTags,
+    createArtifact,
+    hideControls: () => setControlsVisible(false),
+    nextVariant: () => randomVariant(),
+    pause: () => { S.paused = true; $('b-pause').textContent = 'Play'; syncStat(); return { paused: true }; },
+    resume: () => { S.paused = false; $('b-pause').textContent = 'Pause'; syncStat(); return { paused: false }; },
+    showControls: () => setControlsVisible(true),
+  });
+
+  const rangeContract = window.SUPERMEGA_INSTRUMENT_ADAPTERS.core.installRangeContract(document);
+  addEventListener('resize', () => { fit(); compose(); });
+
+  const choice = (id, key) => $(id).querySelectorAll(`[data-${key}]`).forEach(b =>
+    b.addEventListener('click', () => adapter.configure({ [key]: b.dataset[key] })));
+  choice('f-style', 'style'); choice('f-face', 'face'); choice('f-entrance', 'entrance');
+  choice('f-exit', 'exit'); choice('f-loop', 'loop'); choice('f-aspect', 'aspect'); choice('f-align', 'align');
+
+  $('f-preset').querySelectorAll('[data-ink]').forEach(b =>
+    b.addEventListener('click', () => adapter.configure({ ink: b.dataset.ink, paper: b.dataset.paper })));
+  $('f-text').addEventListener('input', e => adapter.configure({ text: e.target.value }));
+  $('f-gradient').addEventListener('change', e => adapter.configure({ gradient: e.target.checked }));
+  // The adapter is stateless about colour: it cannot know a "last good" value,
+  // so anything it cannot read falls back to the default. Typing "#1", "#12"…
+  // would therefore flash the work black on every keystroke. The guard belongs
+  // here — a half-typed hex is simply not sent until it is a colour.
+  const COMPLETE_HEX = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/iu;
+  for (const [picker, hex, key] of [['p-ink', 'h-ink', 'ink'], ['p-paper', 'h-paper', 'paper'], ['p-ink2', 'h-ink2', 'ink2']]) {
+    $(picker).addEventListener('input', e => adapter.configure({ [key]: e.target.value }));
+    $(hex).addEventListener('input', e => {
+      if (COMPLETE_HEX.test(e.target.value.trim())) adapter.configure({ [key]: e.target.value });
+    });
+  }
+
+  const rangeBindings = {
+    's-angle': 'angle', 's-cascade': 'cascade', 's-dots': 'dots', 's-dotsize': 'dotSize',
+    's-erase': 'erase', 's-hold': 'hold', 's-inflate': 'inflate', 's-jiggle': 'jiggle',
+    's-lead': 'lineStagger', 's-margin': 'margin', 's-overlap': 'overlap', 's-plump': 'plump',
+    's-pop': 'pop', 's-speed': 'speed', 's-stroke': 'stroke', 's-tilt': 'tilt',
+    's-track': 'tracking', 's-vary': 'sizeVary', 's-weight': 'weight', 's-wobble': 'wobble',
+    's-write': 'write',
+  };
+  Object.entries(rangeBindings).forEach(([id, key]) =>
+    $(id).addEventListener('input', e => adapter.configure({ [key]: Number(e.target.value) })));
+
+  $('b-reseed').addEventListener('click', () => adapter.execute('reseed-renderer'));
+  $('b-replay').addEventListener('click', () => { clock = 0; });
+  $('b-pause').addEventListener('click', () => adapter.execute(S.paused ? 'resume' : 'pause'));
+  $('b-variant').addEventListener('click', () => adapter.execute('randomize'));
+  $('b-defaults').addEventListener('click', () => adapter.execute('reset-configuration'));
+  $('scatter-controls-title').addEventListener('dblclick', () => adapter.execute('reset-configuration'));
+  $('b-hide').addEventListener('click', () => adapter.execute('hide-controls'));
+  $('toggle').addEventListener('click', () => adapter.execute($('panel').classList.contains('hidden') ? 'show-controls' : 'hide-controls'));
+  $('b-png').addEventListener('click', () => {
+    const result = adapter.execute('create-artifact');
+    if (!result.ok) return;
+    const anchor = document.createElement('a');
+    anchor.href = result.value.dataUrl;
+    anchor.download = result.value.filename;
+    anchor.click();
+  });
+
+  addEventListener('keydown', event => {
+    const editable = event.target instanceof HTMLElement && (event.target.matches('input, select, textarea') || event.target.isContentEditable);
+    if (editable) return;
+    if (event.key === 'h' || event.key === 'H') adapter.execute($('panel').classList.contains('hidden') ? 'show-controls' : 'hide-controls');
+    if (event.key === 'r' || event.key === 'R') clock = 0;
+    if (event.key === 'v' || event.key === 'V') adapter.execute('randomize');
+    if (event.key === 'e' || event.key === 'E') $('b-png').click();
+    if (event.key === ' ') { event.preventDefault(); adapter.execute(S.paused ? 'resume' : 'pause'); }
+  });
+
+  const instrumentState = window.SUPERMEGA_INSTRUMENT.createState();
+  instrumentState.appearance.grain = false;
+  instrumentState.shell.overviewVisible = false;
+  window.BUBBLE_SCATTER_MATERIALS = window.SUPERMEGA_INSTRUMENT.enhance(document.body, instrumentState);
+  window.BUBBLE_SCATTER_ADAPTER = adapter;
+  window.BUBBLE_SCATTER_RANGE_CONTRACT = rangeContract;
+  window.BUBBLE_WRITER_STATE = () => ({ clock, cycle: cycleLength(), eraseStart: eraseStart(), letters, lines: lines.length, writeEnd: writeEnd() });
+  window.BUBBLE_WRITER_SEEK = (t) => { clock = t; };
+  window.BUBBLE_WRITER_BOARD = () => board();
+  if (window.parent !== window) window.BUBBLE_SCATTER_BRIDGE = window.SUPERMEGA_INSTRUMENT_ADAPTERS.core.installBridge(adapter);
+
+  const ready = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  Promise.resolve(ready).then(() => {
+    fit();
+    applyConfiguration(adapter.getConfiguration());
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) adapter.configure({ jiggle: 0, speed: 0 });
+    requestAnimationFrame(frame);
+    window.BUBBLE_SCATTER_READY = true;
+  });
+})();
+</script>
+</body>
+</html>

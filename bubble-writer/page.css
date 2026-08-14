@@ -1,0 +1,138 @@
+/* Bubble Writer — landing page.
+   Same vocabulary as the other experiment landings (cga76, pixel-garden): a
+   sticky breadcrumb, a masthead, a lede, then the work. The difference is that
+   this experiment is one tool rather than a collection, so the grid of cards is
+   replaced by a single full-width plate. */
+
+@font-face {
+	font-family: "Tanker";
+	src: url("../_system/fonts/Tanker-Regular.woff2") format("woff2");
+	font-display: swap;
+}
+
+html,
+body {
+	margin: 0;
+	min-block-size: 100%;
+}
+
+body[data-system="instrument"] {
+	background: #d9d5cc;
+}
+
+/* --- breadcrumb ---------------------------------------------------------- */
+[data-system="instrument"] .pg-chrome {
+	position: sticky;
+	top: 0;
+	z-index: 3;
+	display: flex;
+	align-items: center;
+	gap: var(--instrument-space-2);
+	min-block-size: 48px;
+	padding-inline: var(--instrument-space-4);
+	overflow-x: auto;
+	background: #161616;
+	font-family: "Tanker", var(--instrument-font-sans);
+	font-size: var(--instrument-font-size-small);
+	letter-spacing: var(--instrument-letter-spacing-label);
+	white-space: nowrap;
+}
+[data-system="instrument"] .pg-chrome-mark {
+	flex: 0 0 auto;
+	inline-size: var(--instrument-space-4);
+	block-size: var(--instrument-space-4);
+	margin-inline-end: var(--instrument-space-2);
+	background: #f61515;
+}
+[data-system="instrument"] .pg-chrome a { color: #e0e0e0; text-decoration: none; }
+[data-system="instrument"] .pg-chrome a:hover { color: #fff; }
+[data-system="instrument"] .pg-chrome-sep { color: #6f6f6f; }
+[data-system="instrument"] .pg-chrome-tool { color: #a8a8a8; }
+[data-instrument-embed="true"] .pg-chrome { display: none; }
+
+/* --- page ---------------------------------------------------------------- */
+[data-system="instrument"] .pg-index {
+	position: relative;
+	z-index: 1;
+	max-inline-size: 1080px;
+	margin: 0 auto;
+	padding: var(--instrument-space-12) var(--instrument-space-6);
+}
+[data-system="instrument"] .pg-masthead {
+	margin: 0 0 var(--instrument-space-4);
+	color: #101418;
+	font-family: "Tanker", var(--instrument-font-sans);
+	font-size: clamp(2.6rem, 7vw, 5rem);
+	font-weight: 400;
+	line-height: 0.94;
+	letter-spacing: -0.01em;
+	text-transform: uppercase;
+}
+[data-system="instrument"] .pg-lede {
+	max-inline-size: 64ch;
+	margin: 0 0 var(--instrument-space-8);
+	color: #101418;
+	font-size: var(--instrument-font-size-reading);
+	line-height: var(--instrument-line-height-relaxed);
+}
+
+/* --- the single plate ---------------------------------------------------- */
+[data-system="instrument"] .bw-plate {
+	display: block;
+	color: var(--instrument-color-text);
+	background: var(--instrument-color-surface);
+	box-shadow: var(--instrument-shadow-rule);
+	text-decoration: none;
+	transition: box-shadow var(--instrument-duration-fast) var(--instrument-ease-standard);
+}
+[data-system="instrument"] a.bw-plate:hover { box-shadow: var(--instrument-shadow-rule-strong); }
+[data-system="instrument"] a.bw-plate:focus-visible { outline: 0; box-shadow: var(--instrument-shadow-focus); }
+[data-system="instrument"] .bw-plate-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--instrument-space-4);
+	padding: var(--instrument-space-3) var(--instrument-space-4);
+	font-family: "Tanker", var(--instrument-font-sans);
+	font-size: var(--instrument-font-size-small);
+	letter-spacing: var(--instrument-letter-spacing-label);
+	text-transform: uppercase;
+}
+[data-system="instrument"] .bw-plate-open { color: #a8a8a8; }
+[data-system="instrument"] .bw-shot {
+	display: block;
+	inline-size: 100%;
+	block-size: auto;
+	border-block: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* --- notes --------------------------------------------------------------- */
+[data-system="instrument"] .bw-notes {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+	gap: var(--instrument-space-6);
+	margin-block-start: var(--instrument-space-8);
+}
+[data-system="instrument"] .bw-note h2 {
+	margin: 0 0 var(--instrument-space-2);
+	color: #101418;
+	font-family: "Tanker", var(--instrument-font-sans);
+	font-size: var(--instrument-font-size-small);
+	font-weight: 400;
+	letter-spacing: var(--instrument-letter-spacing-label);
+	text-transform: uppercase;
+}
+[data-system="instrument"] .bw-note p {
+	margin: 0;
+	color: #2a2f35;
+	font-size: var(--instrument-font-size-small);
+	line-height: var(--instrument-line-height-relaxed);
+}
+[data-system="instrument"] .bw-credit {
+	max-inline-size: 72ch;
+	margin-block-start: var(--instrument-space-10);
+	color: #4a4f55;
+	font-size: var(--instrument-font-size-small);
+	line-height: var(--instrument-line-height-relaxed);
+}
+[data-system="instrument"] .bw-credit a { color: #2a2f35; }
