@@ -18,10 +18,4 @@
 - [Seed prompt](https://experiments.supermega.design/pixel-garden/seed-prompt.txt): a self-contained prompt for coding agents — paste it into your agent to rebuild and adapt this system
 - [Engine](https://experiments.supermega.design/pixel-garden/core/pixel-core.js): dependency-free source, with [sprites](https://experiments.supermega.design/pixel-garden/core/sprites.js)
 
-## Chroma Atlas
-- [Open](https://experiments.supermega.design/chroma-atlas/): the full colour and gradient instrument
-- [Seed prompt](https://experiments.supermega.design/chroma-atlas/seed-prompt.txt): a self-contained clean-room rebuild brief
-- [Engine](https://experiments.supermega.design/chroma-atlas/chroma-atlas-core.js): dependency-free colour math, renderer, extraction, spatial projection, and encoders
-- Credited behavioral study of Japanese Gradients for UI by Nuevo; no source, data, assets, copy, or visual design reused
-
 Free to use in your projects; a link back is appreciated.
