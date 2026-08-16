@@ -30,7 +30,11 @@
   .bw-choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(4.6rem,1fr));gap:var(--instrument-space-1)}
   .bw-choice .instrument-action{min-inline-size:0}
   .bw-stack > .instrument-textarea{margin-block-end:var(--instrument-space-2)}
-  .bw-stack > .instrument-help{margin-block:0}
+  /* The page's one station-level action, per the kit's GlassButton rule. The
+     component ships as a 48px square; this instance carries a label, so it
+     takes the stack's full width. Geometry only — the glass stays the kit's. */
+  .bw-big{inline-size:100%;margin-block-end:var(--instrument-space-2)}
+  .bw-big .instrument-action-glass{inline-size:100%}
 </style>
 </head>
 <body data-system="instrument" data-instrument-release="0.1.0-1ff60f2032a6" data-instrument-polarity="ink" data-instrument-grid="off" data-instrument-grain="off" data-instrument-density="normal" data-instrument-motion="system" data-controls="visible">
@@ -42,7 +46,7 @@
 
   <header class="instrument-renderer-chrome">
     <div class="instrument-renderer-chrome-zone experiment-brand"><span class="experiment-brand-mark" aria-hidden="true"></span><a data-crumb="root" href="https://supermega.design">SUPERMEGA</a><span class="experiment-brand-sep" aria-hidden="true">/</span><a href="../">EXPERIMENTS</a><span class="experiment-brand-sep" aria-hidden="true">/</span><span class="experiment-brand-here">BUBBLE WRITER</span></div>
-    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--middle"><span>WORK</span><span>WRITTEN ANIMATION</span></div>
+    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--middle"></div>
     <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">EX-BUBBLE-02</span><button class="instrument-action" id="toggle" type="button">Controls</button></div>
   </header>
   <div class="instrument-renderer-hud instrument-renderer-hud--top">Ink dots gather, the letter grows around them · R replays · E exports</div>
@@ -55,16 +59,21 @@
         <h2 class="instrument-panel-title" id="scatter-controls-title">Bubble Writer</h2>
         <div class="instrument-panel-actions"><button class="instrument-action" id="b-defaults" type="button" title="Restore configuration defaults">Defaults</button><button class="instrument-action" id="b-hide" type="button">Hide</button></div>
       </header>
-      <p class="instrument-renderer-panel-lede">One phrase, cascaded down the frame, written a letter at a time.</p>
 
       <div class="instrument-renderer-section">Phrase</div>
       <div class="instrument-group">
         <div class="bw-stack">
         <label class="instrument-row-label" for="f-text">Text</label>
-        <textarea class="instrument-control instrument-textarea" id="f-text" rows="4" spellcheck="false" aria-describedby="h-text">MAKE
+        <textarea class="instrument-control instrument-textarea" id="f-text" rows="4" spellcheck="false">MAKE
 SOMETHING
 GREAT</textarea>
-        <p class="instrument-help" id="h-text">One line per break. Each line lands in its own place in the cascade.</p>
+        </div>
+      </div>
+
+      <div class="instrument-renderer-section">Randomise</div>
+      <div class="instrument-group">
+        <div class="bw-stack">
+          <span class="instrument-action-glass-wrap bw-big"><button class="instrument-action-glass" id="b-random-big" type="button" title="Roll everything except the phrase"><span class="instrument-action-glass-content">Randomise</span></button><span class="instrument-action-glass-shadow" aria-hidden="true"></span></span>
         </div>
       </div>
 
@@ -75,11 +84,11 @@ GREAT</textarea>
           <div class="bw-choice" id="f-face"><button class="instrument-action" data-face="grotesk" aria-pressed="true" type="button">Grotesk</button><button class="instrument-action" data-face="tanker" aria-pressed="false" type="button">Tanker</button><button class="instrument-action" data-face="serif" aria-pressed="false" type="button">Serif</button><button class="instrument-action" data-face="mono" aria-pressed="false" type="button">Mono</button></div>
         </div>
         <div class="instrument-row"><label class="instrument-row-label" for="s-weight">Weight</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-weight" min="100" max="700" step="25" value="300"></div><output class="instrument-row-value instrument-tabular" id="v-weight" for="s-weight">300</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-inflate">Inflate</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-inflate" min="0.02" max="0.16" step="0.005" value="0.07"></div><output class="instrument-row-value instrument-tabular" id="v-inflate" for="s-inflate">0.070</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-plump">Plump</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-plump" min="0" max="1" step="0.01" value="0.90"></div><output class="instrument-row-value instrument-tabular" id="v-plump" for="s-plump">0.90</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-track">Tracking</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-track" min="-0.3" max="0.1" step="0.005" value="-0.05"></div><output class="instrument-row-value instrument-tabular" id="v-track" for="s-track">-0.050</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-stroke">Outline</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-stroke" min="0.002" max="0.05" step="0.001" value="0.014"></div><output class="instrument-row-value instrument-tabular" id="v-stroke" for="s-stroke">0.014</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-wobble">Wobble</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-wobble" min="0" max="0.02" step="0.0005" value="0.005"></div><output class="instrument-row-value instrument-tabular" id="v-wobble" for="s-wobble">0.0050</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-inflate">Inflate</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-inflate" min="0.02" max="0.16" step="0.005" value="0.085"></div><output class="instrument-row-value instrument-tabular" id="v-inflate" for="s-inflate">0.085</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-plump">Plump</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-plump" min="0" max="1" step="0.01" value="0.95"></div><output class="instrument-row-value instrument-tabular" id="v-plump" for="s-plump">0.95</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-track">Tracking</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-track" min="-0.3" max="0.1" step="0.005" value="-0.09"></div><output class="instrument-row-value instrument-tabular" id="v-track" for="s-track">-0.090</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-stroke">Outline</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-stroke" min="0.002" max="0.05" step="0.001" value="0.026"></div><output class="instrument-row-value instrument-tabular" id="v-stroke" for="s-stroke">0.026</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-wobble">Wobble</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-wobble" min="0" max="0.02" step="0.0005" value="0.007"></div><output class="instrument-row-value instrument-tabular" id="v-wobble" for="s-wobble">0.0070</output></div>
       </div>
 
       <div class="instrument-renderer-section">Motion</div>
@@ -107,14 +116,20 @@ GREAT</textarea>
 
       <div class="instrument-renderer-section">Layout</div>
       <div class="instrument-group">
-        <div class="instrument-row"><span class="instrument-row-label">Frame</span><div class="instrument-row-control instrument-renderer-choice" id="f-aspect"><button class="instrument-action" data-aspect="16:9" aria-pressed="true" type="button">16:9</button><button class="instrument-action" data-aspect="1:1" aria-pressed="false" type="button">1:1</button><button class="instrument-action" data-aspect="4:5" aria-pressed="false" type="button">4:5</button><button class="instrument-action" data-aspect="9:16" aria-pressed="false" type="button">9:16</button></div><span></span></div>
-        <div class="instrument-row"><span class="instrument-row-label">Align</span><div class="instrument-row-control instrument-renderer-choice" id="f-align"><button class="instrument-action" data-align="cascade" aria-pressed="true" type="button">Cascade</button><button class="instrument-action" data-align="left" aria-pressed="false" type="button">Left</button><button class="instrument-action" data-align="centre" aria-pressed="false" type="button">Centre</button><button class="instrument-action" data-align="right" aria-pressed="false" type="button">Right</button></div><span></span></div>
+        <div class="bw-stack">
+          <label class="instrument-row-label">Frame</label>
+          <div class="bw-choice" id="f-aspect"><button class="instrument-action" data-aspect="16:9" aria-pressed="true" type="button">16:9</button><button class="instrument-action" data-aspect="1:1" aria-pressed="false" type="button">1:1</button><button class="instrument-action" data-aspect="4:5" aria-pressed="false" type="button">4:5</button><button class="instrument-action" data-aspect="9:16" aria-pressed="false" type="button">9:16</button></div>
+        </div>
+        <div class="bw-stack">
+          <label class="instrument-row-label">Align</label>
+          <div class="bw-choice" id="f-align"><button class="instrument-action" data-align="cascade" aria-pressed="true" type="button">Cascade</button><button class="instrument-action" data-align="left" aria-pressed="false" type="button">Left</button><button class="instrument-action" data-align="centre" aria-pressed="false" type="button">Centre</button><button class="instrument-action" data-align="right" aria-pressed="false" type="button">Right</button></div>
+        </div>
         <div class="instrument-row"><label class="instrument-row-label" for="s-cascade">Cascade</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-cascade" min="0" max="1" step="0.01" value="0.50"></div><output class="instrument-row-value instrument-tabular" id="v-cascade" for="s-cascade">0.50</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-overlap">Overlap</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-overlap" min="0.45" max="1.15" step="0.01" value="0.78"></div><output class="instrument-row-value instrument-tabular" id="v-overlap" for="s-overlap">0.78</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-overlap">Overlap</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-overlap" min="0.45" max="1.15" step="0.01" value="0.86"></div><output class="instrument-row-value instrument-tabular" id="v-overlap" for="s-overlap">0.86</output></div>
         <div class="instrument-row"><label class="instrument-row-label" for="s-vary">Size vary</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-vary" min="0" max="1" step="0.01" value="0.45"></div><output class="instrument-row-value instrument-tabular" id="v-vary" for="s-vary">0.45</output></div>
         <div class="instrument-row"><label class="instrument-row-label" for="s-tilt">Tilt</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-tilt" min="0" max="1" step="0.01" value="0.30"></div><output class="instrument-row-value instrument-tabular" id="v-tilt" for="s-tilt">0.30</output></div>
         <div class="instrument-row"><label class="instrument-row-label" for="s-margin">Margin</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-margin" min="0" max="0.25" step="0.005" value="0.06"></div><output class="instrument-row-value instrument-tabular" id="v-margin" for="s-margin">0.060</output></div>
-        <div class="instrument-row"><span class="instrument-row-label">Hand</span><div class="instrument-row-control instrument-renderer-actions"><button class="instrument-action" id="b-reseed" type="button" title="Lay the composition again from a new seed">Reseed</button><button class="instrument-action" id="b-variant" type="button" title="Roll everything except the phrase">Randomize</button></div><span class="instrument-row-value instrument-tabular" id="v-seed">7</span></div>
+        <div class="instrument-row"><span class="instrument-row-label">Hand</span><div class="instrument-row-control instrument-renderer-actions"><button class="instrument-action" id="b-reseed" type="button" title="Lay the composition again from a new seed">Reseed</button></div><span class="instrument-row-value instrument-tabular" id="v-seed">7</span></div>
       </div>
 
       <div class="instrument-renderer-section">Ink</div>
@@ -133,7 +148,10 @@ GREAT</textarea>
 
       <div class="instrument-renderer-section">Artifact</div>
       <div class="instrument-group">
-        <div class="instrument-row"><span class="instrument-row-label">Frame</span><div class="instrument-row-control"><button class="instrument-action" id="b-png" type="button">Export PNG</button></div><span class="instrument-row-value instrument-tabular">PNG</span></div>
+        <div class="bw-stack">
+          <span class="instrument-action-glass-wrap bw-big"><button class="instrument-action-glass" id="b-png" type="button" title="Export the frame as PNG"><span class="instrument-action-glass-content">Export PNG</span></button><span class="instrument-action-glass-shadow" aria-hidden="true"></span></span>
+          <div class="bw-choice"><button class="instrument-action" id="b-video" type="button" title="Record one full cycle as WebM video">Video</button><button class="instrument-action" id="b-gif" type="button" title="Render one full cycle as a looping GIF">GIF</button></div>
+        </div>
       </div>
       <div class="instrument-status" id="adapter-status" role="status" data-instrument-tone="active"><span class="instrument-status-mark" aria-hidden="true"></span><span>Adapter</span><span class="instrument-status-value instrument-tabular">READY</span></div>
     </section>
@@ -234,7 +252,7 @@ GREAT</textarea>
 
     lines = source.map((text) => {
       const built = bubble.phrase(text, {
-        fontStack: FACES[S.face], inflate: S.inflate, jitter: 0.02, lean: 0.03,
+        fontStack: FACES[S.face], inflate: S.inflate, jitter: 0.05, lean: 0.045,
         plump: S.plump, seed: S.seed, tracking: S.tracking, weight: S.weight, wobble: S.wobble,
       });
       const count = built.letters.length;
@@ -429,9 +447,15 @@ GREAT</textarea>
     target.fillStyle = flatInk(target, frame);
     drawDots(target, now);
 
-    lines.forEach((line, li) => {
+    // The reference stacks in READING order: the first letter sits on top and
+    // every following letter tucks behind it — between lines too. So lines
+    // paint last-first here and letters paint in reverse inside drawPhrase,
+    // while the timeline still arrives first-to-last: a new letter inflates
+    // BEHIND the ones already standing, exactly as the video reads.
+    for (let li = lines.length - 1; li >= 0; li--) {
+      const line = lines[li];
       const written = (now - lineStart(li)) * Math.max(0.1, S.write);
-      if (written <= 0) return;
+      if (written <= 0) continue;
       const ink = inkFor(target, line, frame);
 
       const letterFx = (index, fraction) => {
@@ -461,6 +485,9 @@ GREAT</textarea>
           rotate += S.jiggle * 0.045 * Math.sin(now * 1.7 + phase * 1.3);
           y += S.jiggle * 0.01 * Math.sin(now * 1.3 + phase * 0.6);
         }
+        // A hand never draws two letters the same size. A small seeded puff
+        // per letter — static, not animated — is much of the reference's charm.
+        scale *= 0.94 + mulberry((li * 8191 + index * 271 + 7) >>> 0)() * 0.12;
         return { rotate, scale: Math.max(0.0001, scale), y };
       };
 
@@ -472,11 +499,18 @@ GREAT</textarea>
       target.translate(-line.built.bounds.minX, -line.built.bounds.minY);
 
       const progress = Math.min(1, written / line.count);
-      const pass = (options) => bubble.drawPhrase(target, line.built, { letterFx, progress, whole: true, ...options });
+      const pass = (options) => bubble.drawPhrase(target, line.built, { letterFx, order: 'reverse', progress, whole: true, ...options });
       const w = strokePx / line.scale;
 
       if (S.style === 'outline') pass({ fill: S.paper, lineWidth: w, stroke: ink });
-      else if (S.style === 'solid') pass({ fill: ink, lineWidth: w * 0.9, stroke: S.paper });
+      else if (S.style === 'solid') {
+        // Solid has no dark outline to separate letters, so overlapping ink
+        // fuses into one silhouette. A paper knockout under the line carves it
+        // out of the line behind, and a thicker per-letter paper stroke keeps
+        // the channels readable between letters within the word.
+        pass({ fill: null, lineWidth: w * 3.5, stroke: S.paper });
+        pass({ fill: ink, lineWidth: w * 1.4, stroke: S.paper });
+      }
       else if (S.style === 'shadow') {
         target.save(); target.translate(w * 2.4, w * 3.1);
         pass({ fill: ink, lineWidth: w, stroke: ink });
@@ -490,7 +524,7 @@ GREAT</textarea>
         pass({ fill: ink, lineWidth: w * 1.2, stroke: ink });
       }
       target.restore();
-    });
+    }
   };
 
   const paint = (target, now) => {
@@ -545,6 +579,187 @@ GREAT</textarea>
     paintBoard(target, box, Math.max(0, eraseStart() - 0.01));
     target.restore();
     return { dataUrl: off.toDataURL('image/png'), filename: `bubble-writer-${S.style}-${S.aspect.replace(':', 'x')}.png`, height: off.height, mime: 'image/png', width: off.width };
+  };
+
+  /* ---------- motion artifacts ----------
+     paintBoard is a pure function of time, so an export REPLAYS the cycle into
+     an offscreen board rather than grabbing the screen: video records that
+     replay in real time through MediaRecorder; the GIF walks fixed timesteps
+     offline and is encoded here byte for byte — the lab ships no dependencies,
+     and GIF89a is small enough to own. */
+  const exportSpan = () => (S.loop === 'hold' ? writeEnd() + S.hold : cycleLength());
+  const exportSurface = (maxWidth) => {
+    const box = board();
+    const scale = Math.min(2, maxWidth / box.width);
+    const off = document.createElement('canvas');
+    off.width = Math.round(box.width * scale);
+    off.height = Math.round(box.height * scale);
+    return { box, off, scale, target: off.getContext('2d', { willReadFrequently: true }) };
+  };
+  const drawExportFrame = (surface, t) => {
+    const { box, scale, target } = surface;
+    target.setTransform(scale, 0, 0, scale, 0, 0);
+    target.fillStyle = S.paper;
+    target.fillRect(0, 0, box.width, box.height);
+    target.save();
+    target.beginPath();
+    target.rect(0, 0, box.width, box.height);
+    target.clip();
+    paintBoard(target, box, t);
+    target.restore();
+  };
+  const saveBlob = (blob, filename) => {
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  };
+  let exporting = false;
+
+  const recordVideo = () => {
+    if (exporting || typeof MediaRecorder === 'undefined') return;
+    exporting = true;
+    const button = $('b-video');
+    const rate = S.speed > 0.05 ? S.speed : 1;
+    const span = Math.min(30, exportSpan() / rate);
+    const surface = exportSurface(1920);
+    const mime = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m));
+    const recorder = new MediaRecorder(surface.off.captureStream(30), { mimeType: mime, videoBitsPerSecond: 8e6 });
+    const parts = [];
+    recorder.ondataavailable = e => { if (e.data.size) parts.push(e.data); };
+    recorder.onstop = () => {
+      saveBlob(new Blob(parts, { type: 'video/webm' }), `bubble-writer-${S.aspect.replace(':', 'x')}.webm`);
+      exporting = false;
+      button.textContent = 'Video';
+    };
+    drawExportFrame(surface, 0);
+    recorder.start();
+    const started = performance.now();
+    const step = () => {
+      const t = (performance.now() - started) / 1000;
+      button.textContent = `Rec ${Math.min(99, Math.round((t / span) * 100))}%`;
+      if (t >= span) { recorder.stop(); return; }
+      drawExportFrame(surface, t * rate);
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+
+  // A 6×7×6 colour cube (252 entries): flat ink under antialiasing needs no
+  // better palette, and a fixed cube keeps quantization a table lookup.
+  const GIF_PALETTE = (() => {
+    const pal = new Uint8Array(768);
+    for (let r = 0; r < 6; r++) for (let g = 0; g < 7; g++) for (let b = 0; b < 6; b++) {
+      const i = (r * 42 + g * 6 + b) * 3;
+      pal[i] = Math.round(r * 51);
+      pal[i + 1] = Math.round((g * 255) / 6);
+      pal[i + 2] = Math.round(b * 51);
+    }
+    return pal;
+  })();
+  const quantize = (data) => {
+    const out = new Uint8Array(data.length / 4);
+    for (let i = 0, p = 0; p < out.length; i += 4, p++) {
+      out[p] = Math.round(data[i] / 51) * 42 + Math.round((data[i + 1] * 6) / 255) * 6 + Math.round(data[i + 2] / 51);
+    }
+    return out;
+  };
+  const gifLzw = (pixels) => {
+    const out = [];
+    let buffer = 0;
+    let bits = 0;
+    const emit = (code, size) => {
+      buffer |= code << bits;
+      bits += size;
+      while (bits >= 8) { out.push(buffer & 255); buffer >>= 8; bits -= 8; }
+    };
+    const CLEAR = 256;
+    const EOI = 257;
+    let dict;
+    let next;
+    let size;
+    const reset = () => { dict = new Map(); next = EOI + 1; size = 9; };
+    reset();
+    emit(CLEAR, size);
+    let prev = pixels[0];
+    for (let i = 1; i < pixels.length; i++) {
+      const key = (prev << 8) | pixels[i];
+      const hit = dict.get(key);
+      if (hit !== undefined) { prev = hit; continue; }
+      emit(prev, size);
+      if (next === 4096) { emit(CLEAR, size); reset(); }
+      else {
+        // Widen BEFORE storing, when the code about to be assigned needs the
+        // extra bit — widening after the store desyncs the decoder one code
+        // early and the stream stops decoding. Proven against ffmpeg.
+        if (next >= (1 << size)) size += 1;
+        dict.set(key, next);
+        next += 1;
+      }
+      prev = pixels[i];
+    }
+    emit(prev, size);
+    emit(EOI, size);
+    if (bits > 0) out.push(buffer & 255);
+    return out;
+  };
+  const encodeGif = (frames, width, height, delay) => {
+    const bytes = [];
+    const push16 = v => bytes.push(v & 255, (v >> 8) & 255);
+    for (const ch of 'GIF89a') bytes.push(ch.charCodeAt(0));
+    push16(width);
+    push16(height);
+    bytes.push(0xF7, 0, 0);
+    for (const b of GIF_PALETTE) bytes.push(b);
+    bytes.push(0x21, 0xFF, 11);
+    for (const ch of 'NETSCAPE2.0') bytes.push(ch.charCodeAt(0));
+    bytes.push(3, 1, 0, 0, 0);
+    for (const frame of frames) {
+      bytes.push(0x21, 0xF9, 4, 4, delay & 255, (delay >> 8) & 255, 0, 0);
+      bytes.push(0x2C);
+      push16(0);
+      push16(0);
+      push16(width);
+      push16(height);
+      bytes.push(0, 8);
+      const data = gifLzw(frame);
+      for (let off = 0; off < data.length; off += 255) {
+        const n = Math.min(255, data.length - off);
+        bytes.push(n);
+        for (let j = 0; j < n; j++) bytes.push(data[off + j]);
+      }
+      bytes.push(0);
+    }
+    bytes.push(0x3B);
+    return new Uint8Array(bytes);
+  };
+
+  const recordGif = async () => {
+    if (exporting) return;
+    exporting = true;
+    const button = $('b-gif');
+    const rate = S.speed > 0.05 ? S.speed : 1;
+    const fps = 12;
+    const span = Math.min(15, exportSpan() / rate);
+    const surface = exportSurface(640);
+    const frames = [];
+    const count = Math.max(1, Math.ceil(span * fps));
+    for (let i = 0; i < count; i++) {
+      drawExportFrame(surface, (i / fps) * rate);
+      frames.push(quantize(surface.target.getImageData(0, 0, surface.off.width, surface.off.height).data));
+      if (i % 8 === 7) {
+        button.textContent = `GIF ${Math.round((i / count) * 100)}%`;
+        await new Promise(r => requestAnimationFrame(r));
+      }
+    }
+    button.textContent = 'Encoding…';
+    await new Promise(r => requestAnimationFrame(r));
+    const bytes = encodeGif(frames, surface.off.width, surface.off.height, Math.round(100 / fps));
+    saveBlob(new Blob([bytes], { type: 'image/gif' }), `bubble-writer-${S.aspect.replace(':', 'x')}.gif`);
+    exporting = false;
+    button.textContent = 'GIF';
   };
 
   const clearTags = () => { clock = 0; return { tags: 0 }; };
@@ -628,13 +843,38 @@ GREAT</textarea>
   const one = list => list[Math.floor(Math.random() * list.length)];
   const span = (lo, hi, places = 2) => Number((lo + Math.random() * (hi - lo)).toFixed(places));
 
+  // The dice may not roll mush. Some combinations are illegible by
+  // construction — solid ink at high inflate with tight lines fuses into one
+  // black mass — so the roll is clamped after the fact, the same reasoning as
+  // curated ink pairs: a randomizer that often produces garbage stops being
+  // worth pressing.
+  const legible = (variant) => {
+    // Inflate and plump both swell the form; past a joint point the letter
+    // forgets its own topology and every glyph becomes the same rounded slab
+    // (NOTES pins ~0.11 inflate as the edge of the form). Whatever the style,
+    // keep the pair inside the readable band, and stop huge letters from
+    // coinciding by flooring tracking and line spacing as inflation rises.
+    if (variant.inflate > 0.085) variant.plump = Math.min(variant.plump, 0.8);
+    if (variant.inflate > 0.095) {
+      variant.tracking = Math.max(variant.tracking, -0.06);
+      variant.overlap = Math.max(variant.overlap, 0.82);
+    }
+    if (variant.style === 'solid' || variant.style === 'sticker') {
+      variant.inflate = Math.min(variant.inflate, 0.09);
+      variant.overlap = Math.max(variant.overlap, 0.8);
+      variant.tracking = Math.max(variant.tracking, -0.08);
+      variant.sizeVary = Math.min(variant.sizeVary, 0.55);
+    }
+    return variant;
+  };
+
   const randomVariant = () => {
     // Curated pairs, not random hex: two random colours are usually mud, and a
     // randomizer that mostly produces mud stops being worth pressing.
     const [ink, paper] = one(INK_PAIRS);
     const gradient = Math.random() < 0.35;
     const entrance = one(['inflate', 'pop', 'drop', 'rise', 'swing']);
-    return {
+    return legible({
       align: one(['cascade', 'cascade', 'cascade', 'left', 'centre', 'right']),
       angle: Math.floor(Math.random() * 360),
       // The frame is part of the look, not just an output setting — a square
@@ -651,22 +891,22 @@ GREAT</textarea>
       hold: span(0.4, 2.6, 1),
       ink,
       ink2: one(INK_PAIRS)[0],
-      inflate: span(0.045, 0.11, 3),
+      inflate: span(0.06, 0.105, 3),
       jiggle: span(0, 0.7),
       lineStagger: span(0, 0.7),
-      overlap: span(0.55, 1.05),
+      overlap: span(0.62, 1.05),
       paper,
-      plump: span(0.55, 1),
+      plump: span(0.55, 0.95),
       pop: span(0.2, 1),
       seed: 1 + Math.floor(Math.random() * 9999),
       sizeVary: span(0, 0.9),
-      stroke: span(0.008, 0.024, 3),
+      stroke: span(0.014, 0.034, 3),
       style: one(['outline', 'outline', 'solid', 'shadow', 'halo', 'sticker']),
       tilt: span(0, 0.8),
-      tracking: span(-0.14, 0.02, 3),
+      tracking: span(-0.12, -0.02, 3),
       weight: 100 + Math.round(Math.random() * 10) * 25,
       wobble: span(0, 0.012, 4),
-    };
+    });
   };
 
   const adapter = window.SUPERMEGA_INSTRUMENT_ADAPTERS.bubbleScatter.create({
@@ -718,7 +958,7 @@ GREAT</textarea>
   $('b-reseed').addEventListener('click', () => adapter.execute('reseed-renderer'));
   $('b-replay').addEventListener('click', () => { clock = 0; });
   $('b-pause').addEventListener('click', () => adapter.execute(S.paused ? 'resume' : 'pause'));
-  $('b-variant').addEventListener('click', () => adapter.execute('randomize'));
+  $('b-random-big').addEventListener('click', () => adapter.execute('randomize'));
   $('b-defaults').addEventListener('click', () => adapter.execute('reset-configuration'));
   $('scatter-controls-title').addEventListener('dblclick', () => adapter.execute('reset-configuration'));
   $('b-hide').addEventListener('click', () => adapter.execute('hide-controls'));
@@ -731,6 +971,8 @@ GREAT</textarea>
     anchor.download = result.value.filename;
     anchor.click();
   });
+  $('b-video').addEventListener('click', recordVideo);
+  $('b-gif').addEventListener('click', recordGif);
 
   addEventListener('keydown', event => {
     const editable = event.target instanceof HTMLElement && (event.target.matches('input, select, textarea') || event.target.isContentEditable);
@@ -761,6 +1003,26 @@ GREAT</textarea>
     requestAnimationFrame(frame);
     window.BUBBLE_SCATTER_READY = true;
   });
+})();
+</script>
+<script>
+/* Dev-only: the Agentation annotation toolbar, for markup sessions against the
+   local server. Guarded to localhost so the published page never loads it. */
+(() => {
+  if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return;
+  const s = document.createElement('script');
+  s.type = 'module';
+  s.id = 'agentation-loader';
+  s.textContent = `
+    import React from 'https://esm.sh/react@18.3.1';
+    import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client?deps=react@18.3.1';
+    import { Agentation } from 'https://esm.sh/agentation@3.0.2?deps=react@18.3.1,react-dom@18.3.1';
+    const mount = document.createElement('div');
+    mount.id = 'agentation-root';
+    document.body.appendChild(mount);
+    createRoot(mount).render(React.createElement(Agentation, { endpoint: 'http://localhost:4747' }));
+  `;
+  document.head.appendChild(s);
 })();
 </script>
 </body>

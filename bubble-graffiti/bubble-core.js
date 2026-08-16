@@ -614,14 +614,21 @@
 		// filled from the first frame, and the raw fraction is handed to
 		// letterFx to drive size instead. That is the difference between a
 		// letter being traced by a pen and a bubble being inflated.
-		const { fill = null, letterFx = null, lineWidth = 0.014, progress = 1, stroke = null, whole = false } = options;
+		//
+		// `order` decides who occludes whom. Forward paints later letters over
+		// earlier ones — the NYT draw-on, where each new letter lands on top.
+		// Reverse paints the FIRST letter on top and tucks every following
+		// letter behind it — the Blonded stacking, and the way a hand actually
+		// draws bubble lettering. The timeline is unchanged either way; only
+		// the paint order flips.
+		const { fill = null, letterFx = null, lineWidth = 0.014, order = "forward", progress = 1, stroke = null, whole = false } = options;
 		if (!built || !built.letters.length) return;
 		ctx.lineWidth = lineWidth;
 		ctx.lineJoin = "round";
 		ctx.lineCap = "round";
 		const drawn = progress * built.letters.length;
 
-		built.letters.forEach((item, index) => {
+		const paintLetter = (item, index) => {
 			const fraction = Math.max(0, Math.min(1, drawn - index));
 			if (fraction <= 0) return;
 			ctx.save();
@@ -655,7 +662,13 @@
 				ctx.stroke(path);
 			}
 			ctx.restore();
-		});
+		};
+
+		if (order === "reverse") {
+			for (let i = built.letters.length - 1; i >= 0; i--) paintLetter(built.letters[i], i);
+		} else {
+			built.letters.forEach(paintLetter);
+		}
 	}
 
 	// Bounds are taken from the transformed outlines, not the advances, because
