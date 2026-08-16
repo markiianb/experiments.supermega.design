@@ -6,29 +6,11 @@
 <meta name="supermega-instrument-release" content="0.1.0-1ff60f2032a6" />
 <title>SUPERMEGA — Bubble Writer</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2' y='2' width='12' height='12' fill='%23f61515'/%3E%3C/svg%3E" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2' y='2' width='12' height='12' fill='%23f61515'/%3E%3C/svg%3E" />
 <link rel="stylesheet" href="../_kit/releases/0.1.0-1ff60f2032a6/instrument.css" />
 <link rel="stylesheet" href="../_system/experiment-host.css" />
 <style>
   @font-face{font-family:"Tanker";src:url("../_system/fonts/Tanker-Regular.woff2") format("woff2");font-display:block}
   .hero{position:fixed;inset:0;overflow:hidden;background:#0B0B0D}
-  /* breadcrumb: the same trail the landing page and the directory use, so a
-     tool opened cold still says where it sits */
-  /* The trail must never wrap into the zone beside it — a breadcrumb that grows
-     a second line pushes the chrome's middle zone straight through it. It stays
-     on one line, and the descriptive middle zone is what gives way when space
-     runs short, because it is the only part that carries no navigation. */
-  .bw-crumb{display:flex;align-items:center;gap:var(--instrument-space-2);min-inline-size:0;white-space:nowrap;overflow:hidden}
-  .bw-crumb a{color:#e0e0e0;text-decoration:none}
-  .bw-crumb a:hover{color:#fff}
-  .bw-sep{color:#6f6f6f}
-  .bw-here{color:#a8a8a8;overflow:hidden;text-overflow:ellipsis}
-  @media (max-inline-size: 1180px){
-    .instrument-renderer-chrome-zone--middle{display:none}
-  }
-  @media (max-inline-size: 720px){
-    .bw-crumb a[data-crumb="root"],.bw-crumb .bw-sep:first-of-type{display:none}
-  }
   .hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
   /* A five-option group cannot shrink below its own labels, so inside a row it
      spills out of the grid cell and over the row label. These sit full width
@@ -59,7 +41,7 @@
   </section>
 
   <header class="instrument-renderer-chrome">
-    <div class="instrument-renderer-chrome-zone bw-crumb"><span class="instrument-identity-mark" aria-hidden="true"></span><a href="https://supermega.design" data-crumb="root">SUPERMEGA</a><span class="bw-sep">/</span><a href="../">EXPERIMENTS</a><span class="bw-sep">/</span><span class="bw-here">BUBBLE WRITER</span></div>
+    <div class="instrument-renderer-chrome-zone experiment-brand"><span class="experiment-brand-mark" aria-hidden="true"></span><a data-crumb="root" href="https://supermega.design">SUPERMEGA</a><span class="experiment-brand-sep" aria-hidden="true">/</span><a href="../">EXPERIMENTS</a><span class="experiment-brand-sep" aria-hidden="true">/</span><span class="experiment-brand-here">BUBBLE WRITER</span></div>
     <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--middle"><span>WORK</span><span>WRITTEN ANIMATION</span></div>
     <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">EX-BUBBLE-02</span><button class="instrument-action" id="toggle" type="button">Controls</button></div>
   </header>

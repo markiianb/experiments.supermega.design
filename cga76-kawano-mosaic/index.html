@@ -24,7 +24,7 @@
   .kawano-mobile-credit{display:none}
   .kawano-paint-row{display:grid;grid-template-columns:1fr 1fr;gap:var(--instrument-space-2);padding:var(--instrument-space-2) var(--instrument-space-3)}
 	.kawano-paint-row label{display:grid;gap:var(--instrument-space-1)}
-	.cga76-breadcrumb{display:inline-flex;align-items:center;gap:var(--instrument-space-2);color:inherit;text-decoration:none}.cga76-breadcrumb:hover{color:var(--instrument-color-text)}.cga76-breadcrumb-sep{color:var(--instrument-color-text-faint)}
+	
 	[data-system="instrument"] .instrument-renderer-credit{inset-block-end:calc(var(--instrument-dock-min-height) + var(--instrument-space-6) + var(--instrument-space-2))}
 	body[data-system="instrument"] .instrument-renderer-hud.kawano-safe-hud{inline-size:fit-content;max-inline-size:min(52rem,calc(100vw - var(--instrument-space-6)));padding:.45rem .65rem;border-inline-start:3px solid #f61515;color:#f1eadf;background:rgba(9,9,11,.9);line-height:1.35;mix-blend-mode:normal}
 	.kawano-visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
@@ -47,7 +47,7 @@
     <p id="kawano-canvas-summary" class="kawano-visually-hidden">Five-state mosaic loading.</p>
   </main>
   <header class="instrument-renderer-chrome">
-    <div class="instrument-renderer-chrome-zone"><span class="instrument-identity-mark" aria-hidden="true"></span><a class="cga76-breadcrumb" href="../cga76/" aria-label="Back to the Computer Graphics and Art 1976 collection"><span>SUPERMEGA</span><span class="cga76-breadcrumb-sep">/</span><span>CGA 1976</span></a></div>
+    <div class="instrument-renderer-chrome-zone experiment-brand"><span class="experiment-brand-mark" aria-hidden="true"></span><a data-crumb="root" href="https://supermega.design">SUPERMEGA</a><span class="experiment-brand-sep" aria-hidden="true">/</span><a href="../">EXPERIMENTS</a><span class="experiment-brand-sep" aria-hidden="true">/</span><a href="../cga76/" aria-label="Back to the Computer Graphics and Art 1976 collection">CGA 1976</a></div>
     <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--middle"><span>09 · KAWANO MOSAIC</span><span>HIROSHI KAWANO</span></div>
     <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">CREDITED STUDY</span><button class="instrument-action" id="toggle-controls" type="button" aria-controls="kawano-panel">Controls</button></div>
   </header>

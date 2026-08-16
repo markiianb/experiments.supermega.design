@@ -39,8 +39,12 @@ body[data-system="instrument"][data-controls="visible"] .instrument-renderer-sur
 	inset-block-start: 0;
 	inset-inline: 0;
 	display: grid;
+	/* The first column holds the brand trail, which is navigation and must
+	   never clip. No tool shows the overview rail, so locking this column to
+	   the rail's width only truncated long trails; the descriptive middle
+	   zone is what gives way instead (see the media rules below). */
 	grid-template-columns:
-		var(--instrument-overview-width)
+		max-content
 		minmax(0, 1fr)
 		var(--instrument-renderer-inspector-width);
 	align-items: stretch;
@@ -96,6 +100,81 @@ body[data-system="instrument"][data-controls="visible"] .instrument-renderer-sur
 	margin-inline-end: var(--instrument-space-2);
 	background: var(--instrument-color-accent);
 	border-radius: var(--instrument-identity-mark-radius);
+}
+
+/* ---------------------------------------------------------------------------
+   Brand trail — the gallery masthead carried into every tool.
+
+   One definition here, because fifty pages each carrying their own crumb CSS
+   is fifty chances to drift (bw-crumb and cga76-breadcrumb had already
+   diverged). Same Tanker face and square accent mark as .gallery-brand in
+   gallery.css; the trail reads SUPERMEGA / EXPERIMENTS / TOOL.
+   ------------------------------------------------------------------------ */
+@font-face {
+	font-family: "Tanker";
+	src: url("fonts/Tanker-Regular.woff2") format("woff2");
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+[data-system="instrument"] .experiment-brand {
+	gap: var(--instrument-space-2);
+	overflow: hidden;
+	font-family: "Tanker", var(--instrument-font-sans);
+	font-weight: var(--instrument-font-weight-regular);
+	letter-spacing: var(--instrument-letter-spacing-label);
+	white-space: nowrap;
+}
+
+[data-system="instrument"] .experiment-brand a {
+	color: var(--instrument-color-text);
+	text-decoration: none;
+}
+
+[data-system="instrument"] .experiment-brand a:hover {
+	color: var(--instrument-color-accent);
+}
+
+[data-system="instrument"] .experiment-brand-mark {
+	flex: none;
+	display: inline-block;
+	inline-size: var(--instrument-space-4);
+	block-size: var(--instrument-space-4);
+	background: var(--instrument-color-accent);
+}
+
+[data-system="instrument"] .experiment-brand-sep {
+	color: var(--instrument-color-text-faint);
+	font-family: var(--instrument-font-mono);
+}
+
+[data-system="instrument"] .experiment-brand-here {
+	overflow: hidden;
+	color: var(--instrument-color-text-muted);
+	text-overflow: ellipsis;
+}
+
+/* The trail must never wrap or clip into the zone beside it. The middle zone
+   is the only chrome that carries no navigation, so it is what gives way
+   first; when space runs out entirely, the root crumb goes too.
+   NOTE: media queries take width, not inline-size — max-inline-size is not a
+   media feature and the whole rule is silently dropped (this exact typo is
+   why the original bubble-writer rule never fired). */
+@media (max-width: 1180px) {
+	/* visibility, not display: removing the zone from the grid would slide the
+	   end zone into the middle column by auto-placement. The kit's own 767px
+	   rule may display:none it because that layout drops to two columns. */
+	[data-system="instrument"] .instrument-renderer-chrome-zone--middle {
+		visibility: hidden;
+	}
+}
+
+@media (max-width: 720px) {
+	[data-system="instrument"] .experiment-brand [data-crumb="root"],
+	[data-system="instrument"] .experiment-brand [data-crumb="root"] + .experiment-brand-sep {
+		display: none;
+	}
 }
 
 [data-system="instrument"] .instrument-renderer-panel {
