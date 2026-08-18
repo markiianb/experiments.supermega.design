@@ -239,6 +239,73 @@ body[data-system="instrument"][data-controls="visible"] .instrument-renderer-sur
 	text-transform: uppercase;
 }
 
+/* A disclosure inside a renderer panel is a SECTION, and it speaks in the
+   section band's voice — the same uppercase wash as .instrument-renderer-
+   section, label left, a quiet +/− on the right edge (the reference grammar).
+   The kit's default summary is a document-scale header with an accent marker;
+   a tool panel needs the denser section register, and this is the renderer
+   context's own layer to say so.
+   The kit now owns this as data-instrument-variant="section" (super-interface-
+   kit 0bf752f); when the lab re-pins a release that ships it, pages can set
+   the attribute and this whole block retires. */
+[data-system="instrument"] .instrument-renderer-panel .instrument-disclosure {
+	background: transparent;
+}
+
+/* The wash band is the whole boundary; the kit's rule lines above and below
+   each disclosure would double it. */
+[data-system="instrument"] .instrument-renderer-panel .instrument-disclosure::before,
+[data-system="instrument"] .instrument-renderer-panel .instrument-disclosure::after {
+	content: none;
+}
+
+[data-system="instrument"] .instrument-renderer-panel .instrument-disclosure > summary {
+	align-items: center;
+	min-block-size: var(--instrument-space-6);
+	padding: 0 var(--instrument-space-3);
+	color: var(--instrument-color-text-muted);
+	background: var(--instrument-section-wash);
+	font-size: var(--instrument-font-size-label);
+	line-height: var(--instrument-space-6);
+	text-transform: uppercase;
+}
+
+[data-system="instrument"] .instrument-renderer-panel .instrument-disclosure > summary::before {
+	content: none;
+}
+
+[data-system="instrument"] .instrument-renderer-panel .instrument-disclosure > summary::after {
+	margin-inline-start: auto;
+	color: var(--instrument-color-text-faint);
+	content: "+";
+	font-family: var(--instrument-font-mono);
+}
+
+[data-system="instrument"] .instrument-renderer-panel .instrument-disclosure[open] > summary::after {
+	content: "−";
+}
+
+[data-system="instrument"] .instrument-renderer-panel .instrument-disclosure > summary:focus-visible {
+	outline: var(--instrument-rule-width) solid var(--instrument-color-rule-strong);
+	outline-offset: calc(var(--instrument-rule-width) * -1);
+}
+
+/* The band already separates; the body keeps only its breathing room.
+   The reference rhythm is a 6px beat — head, 6px, row, 6px, row, 6px, next
+   head — so the body carries half a space unit and the first block drops its
+   own top margin instead of stacking on the band. */
+[data-system="instrument"] .instrument-renderer-panel .instrument-disclosure-body::before {
+	content: none;
+}
+
+[data-system="instrument"] .instrument-renderer-panel .instrument-disclosure-body {
+	padding: calc(var(--instrument-space-3) / 2) var(--instrument-space-3);
+}
+
+[data-system="instrument"] .instrument-renderer-panel .instrument-disclosure-body .instrument-group > :first-child {
+	margin-block-start: 0;
+}
+
 [data-system="instrument"] .instrument-renderer-choice,
 [data-system="instrument"] .instrument-renderer-actions,
 [data-system="instrument"] .instrument-renderer-swatches {

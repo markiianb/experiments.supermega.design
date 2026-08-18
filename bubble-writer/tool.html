@@ -37,6 +37,18 @@
      last line stretches to the full width and reads as a heading rather than a
      button. auto-fit columns keep every option the same size however they land. */
   .bw-stack{padding-inline:var(--instrument-space-3);margin-block-start:var(--instrument-space-2)}
+  /* Inside a disclosure the body carries the horizontal inset, so rows and
+     stacks drop their own — otherwise everything double-indents. */
+  .instrument-disclosure-body .instrument-row,
+  .instrument-disclosure-body .bw-stack{padding-inline:0}
+  /* The mini value field's width is the consumer's to set (the kit's own
+     colour field does the same); sized for the widest value plus a unit. */
+  /* The panel is 320px against vmax's ~512, so the row budget is tight:
+     fixed slider, and the field sheds its inner padding to fit "-0.090 em". */
+  [data-system="instrument"] .instrument-renderer-panel{--instrument-field-label-width:64px}
+  [data-system="instrument"] .instrument-row .bw-mini{flex:none;inline-size:88px;min-inline-size:88px}
+  [data-system="instrument"] .bw-mini .instrument-mini-input{flex:1 1 auto;inline-size:100%;min-inline-size:0}
+  [data-system="instrument"] .instrument-renderer-panel .instrument-row .instrument-range{inline-size:120px}
   .bw-stack > .instrument-row-label{display:block;margin-block-end:var(--instrument-space-1)}
   .bw-choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(4.6rem,1fr));gap:var(--instrument-space-1)}
   .bw-choice .instrument-action{min-inline-size:0}
@@ -69,7 +81,9 @@
         <div class="instrument-panel-actions"><button class="instrument-action" id="b-defaults" type="button" title="Restore configuration defaults">Defaults</button><button class="instrument-action" id="b-hide" type="button">Hide</button></div>
       </header>
 
-      <div class="instrument-renderer-section">Phrase</div>
+      <details class="instrument-disclosure" open>
+        <summary><span class="instrument-disclosure-label">Phrase</span></summary>
+        <div class="instrument-disclosure-body">
       <div class="instrument-group">
         <div class="bw-stack">
         <label class="instrument-row-label" for="f-text">Text</label>
@@ -78,29 +92,44 @@ SOMETHING
 GREAT</textarea>
         </div>
       </div>
+        </div>
+      </details>
 
-      <div class="instrument-renderer-section">Randomise</div>
+
+      <details class="instrument-disclosure" open>
+        <summary><span class="instrument-disclosure-label">Randomise</span></summary>
+        <div class="instrument-disclosure-body">
       <div class="instrument-group">
         <div class="bw-stack">
           <span class="instrument-action-glass-wrap bw-big"><button class="instrument-action-glass" id="b-random-big" type="button" title="Roll everything except the phrase"><span class="instrument-action-glass-content">Randomise</span></button><span class="instrument-action-glass-shadow" aria-hidden="true"></span></span>
         </div>
       </div>
+        </div>
+      </details>
 
-      <div class="instrument-renderer-section">Type</div>
+
+      <details class="instrument-disclosure" open>
+        <summary><span class="instrument-disclosure-label">Type</span></summary>
+        <div class="instrument-disclosure-body">
       <div class="instrument-group">
         <div class="bw-stack">
           <label class="instrument-row-label">Face</label>
           <div class="bw-choice" id="f-face"><button class="instrument-action" data-face="grotesk" aria-pressed="true" type="button">Grotesk</button><button class="instrument-action" data-face="tanker" aria-pressed="false" type="button">Tanker</button><button class="instrument-action" data-face="serif" aria-pressed="false" type="button">Serif</button><button class="instrument-action" data-face="mono" aria-pressed="false" type="button">Mono</button></div>
         </div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-weight">Weight</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-weight" min="100" max="700" step="25" value="300"></div><output class="instrument-row-value instrument-tabular" id="v-weight" for="s-weight">300</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-inflate">Inflate</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-inflate" min="0.02" max="0.12" step="0.005" value="0.085"></div><output class="instrument-row-value instrument-tabular" id="v-inflate" for="s-inflate">0.085</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-plump">Plump</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-plump" min="0" max="1" step="0.01" value="0.95"></div><output class="instrument-row-value instrument-tabular" id="v-plump" for="s-plump">0.95</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-track">Tracking</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-track" min="-0.3" max="0.1" step="0.005" value="-0.09"></div><output class="instrument-row-value instrument-tabular" id="v-track" for="s-track">-0.090</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-stroke">Outline</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-stroke" min="0.002" max="0.05" step="0.001" value="0.026"></div><output class="instrument-row-value instrument-tabular" id="v-stroke" for="s-stroke">0.026</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-wobble">Wobble</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-wobble" min="0" max="0.02" step="0.0005" value="0.007"></div><output class="instrument-row-value instrument-tabular" id="v-wobble" for="s-wobble">0.0070</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-weight">Weight</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-weight" min="100" max="700" step="25" value="300"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-weight" readonly tabindex="-1" value="300"></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-inflate">Inflate</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-inflate" min="0.02" max="0.12" step="0.005" value="0.085"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-inflate" readonly tabindex="-1" value="0.085"></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-plump">Plump</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-plump" min="0" max="1" step="0.01" value="0.95"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-plump" readonly tabindex="-1" value="0.95"></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-track">Tracking</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-track" min="-0.3" max="0.1" step="0.005" value="-0.09"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-track" readonly tabindex="-1" value="-0.090"></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-stroke">Outline</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-stroke" min="0.002" max="0.05" step="0.001" value="0.026"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-stroke" readonly tabindex="-1" value="0.026"></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-wobble">Wobble</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-wobble" min="0" max="0.02" step="0.0005" value="0.007"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-wobble" readonly tabindex="-1" value="0.0070"></span></div>
       </div>
+        </div>
+      </details>
 
-      <div class="instrument-renderer-section">Motion</div>
+
+      <details class="instrument-disclosure" open>
+        <summary><span class="instrument-disclosure-label">Motion</span></summary>
+        <div class="instrument-disclosure-body">
       <div class="instrument-group">
         <div class="bw-stack">
           <label class="instrument-row-label">Entrance</label>
@@ -111,19 +140,24 @@ GREAT</textarea>
           <div class="bw-choice" id="f-exit"><button class="instrument-action" data-exit="deflate" aria-pressed="true" type="button">Deflate</button><button class="instrument-action" data-exit="burst" aria-pressed="false" type="button">Burst</button><button class="instrument-action" data-exit="drop" aria-pressed="false" type="button">Drop</button><button class="instrument-action" data-exit="shrink" aria-pressed="false" type="button">Shrink</button></div>
         </div>
         <div class="instrument-row"><span class="instrument-row-label">Loop</span><div class="instrument-row-control instrument-renderer-choice" id="f-loop"><button class="instrument-action" data-loop="once" aria-pressed="false" type="button">Once</button><button class="instrument-action" data-loop="cycle" aria-pressed="true" type="button">Cycle</button><button class="instrument-action" data-loop="hold" aria-pressed="false" type="button">Stay</button></div><span></span></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-write">Write rate</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-write" min="1" max="20" step="0.5" value="7"></div><output class="instrument-row-value instrument-tabular" id="v-write" for="s-write">7.0</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-pop">Pop</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-pop" min="0" max="1" step="0.01" value="0.60"></div><output class="instrument-row-value instrument-tabular" id="v-pop" for="s-pop">0.60</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-dots">Dots</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-dots" min="0" max="1" step="0.01" value="0.50"></div><output class="instrument-row-value instrument-tabular" id="v-dots" for="s-dots">0.50</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-dotsize">Dot size</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-dotsize" min="0" max="1" step="0.01" value="0.50"></div><output class="instrument-row-value instrument-tabular" id="v-dotsize" for="s-dotsize">0.50</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-lead">Line lead</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-lead" min="0" max="1" step="0.01" value="0.25"></div><output class="instrument-row-value instrument-tabular" id="v-lead" for="s-lead">0.25</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-hold">Hold</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-hold" min="0" max="5" step="0.1" value="1.4"></div><output class="instrument-row-value instrument-tabular" id="v-hold" for="s-hold">1.4</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-erase">Exit rate</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-erase" min="1" max="30" step="0.5" value="14"></div><output class="instrument-row-value instrument-tabular" id="v-erase" for="s-erase">14.0</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-jiggle">Jiggle</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-jiggle" min="0" max="1" step="0.01" value="0.30"></div><output class="instrument-row-value instrument-tabular" id="v-jiggle" for="s-jiggle">0.30</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-speed">Speed</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-speed" min="0" max="3" step="0.05" value="1"></div><output class="instrument-row-value instrument-tabular" id="v-speed" for="s-speed">1.00</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-write">Write rate</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-write" min="1" max="20" step="0.5" value="7"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-write" readonly tabindex="-1" value="7.0"><span class="instrument-mini-suffix">/s</span></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-pop">Pop</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-pop" min="0" max="1" step="0.01" value="0.60"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-pop" readonly tabindex="-1" value="0.60"></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-dots">Dots</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-dots" min="0" max="1" step="0.01" value="0.50"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-dots" readonly tabindex="-1" value="0.50"></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-dotsize">Dot size</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-dotsize" min="0" max="1" step="0.01" value="0.50"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-dotsize" readonly tabindex="-1" value="0.50"></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-lead">Line lead</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-lead" min="0" max="1" step="0.01" value="0.25"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-lead" readonly tabindex="-1" value="0.25"></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-hold">Hold</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-hold" min="0" max="5" step="0.1" value="1.4"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-hold" readonly tabindex="-1" value="1.4"><span class="instrument-mini-suffix">s</span></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-erase">Exit rate</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-erase" min="1" max="30" step="0.5" value="14"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-erase" readonly tabindex="-1" value="14.0"><span class="instrument-mini-suffix">/s</span></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-jiggle">Jiggle</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-jiggle" min="0" max="1" step="0.01" value="0.30"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-jiggle" readonly tabindex="-1" value="0.30"></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-speed">Speed</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-speed" min="0" max="3" step="0.05" value="1"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-speed" readonly tabindex="-1" value="1.00"><span class="instrument-mini-suffix">×</span></span></div>
         <div class="instrument-row"><span class="instrument-row-label">Run</span><div class="instrument-row-control instrument-renderer-actions"><button class="instrument-action" id="b-pause" type="button">Pause</button><button class="instrument-action" id="b-replay" type="button">Replay</button></div><span></span></div>
       </div>
+        </div>
+      </details>
 
-      <div class="instrument-renderer-section">Layout</div>
+
+      <details class="instrument-disclosure" open>
+        <summary><span class="instrument-disclosure-label">Layout</span></summary>
+        <div class="instrument-disclosure-body">
       <div class="instrument-group">
         <div class="bw-stack">
           <label class="instrument-row-label">Frame</label>
@@ -133,15 +167,20 @@ GREAT</textarea>
           <label class="instrument-row-label">Align</label>
           <div class="bw-choice" id="f-align"><button class="instrument-action" data-align="cascade" aria-pressed="true" type="button">Cascade</button><button class="instrument-action" data-align="left" aria-pressed="false" type="button">Left</button><button class="instrument-action" data-align="centre" aria-pressed="false" type="button">Centre</button><button class="instrument-action" data-align="right" aria-pressed="false" type="button">Right</button></div>
         </div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-cascade">Cascade</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-cascade" min="0" max="1" step="0.01" value="0.50"></div><output class="instrument-row-value instrument-tabular" id="v-cascade" for="s-cascade">0.50</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-overlap">Overlap</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-overlap" min="0.45" max="1.15" step="0.01" value="0.86"></div><output class="instrument-row-value instrument-tabular" id="v-overlap" for="s-overlap">0.86</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-vary">Size vary</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-vary" min="0" max="1" step="0.01" value="0.45"></div><output class="instrument-row-value instrument-tabular" id="v-vary" for="s-vary">0.45</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-tilt">Tilt</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-tilt" min="0" max="1" step="0.01" value="0.30"></div><output class="instrument-row-value instrument-tabular" id="v-tilt" for="s-tilt">0.30</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-margin">Margin</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-margin" min="0" max="0.25" step="0.005" value="0.06"></div><output class="instrument-row-value instrument-tabular" id="v-margin" for="s-margin">0.060</output></div>
-        <div class="instrument-row"><span class="instrument-row-label">Hand</span><div class="instrument-row-control instrument-renderer-actions"><button class="instrument-action" id="b-reseed" type="button" title="Lay the composition again from a new seed">Reseed</button></div><span class="instrument-row-value instrument-tabular" id="v-seed">7</span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-cascade">Cascade</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-cascade" min="0" max="1" step="0.01" value="0.50"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-cascade" readonly tabindex="-1" value="0.50"></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-overlap">Overlap</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-overlap" min="0.45" max="1.15" step="0.01" value="0.86"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-overlap" readonly tabindex="-1" value="0.86"></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-vary">Size vary</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-vary" min="0" max="1" step="0.01" value="0.45"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-vary" readonly tabindex="-1" value="0.45"></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-tilt">Tilt</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-tilt" min="0" max="1" step="0.01" value="0.30"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-tilt" readonly tabindex="-1" value="0.30"></span></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-margin">Margin</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-margin" min="0" max="0.25" step="0.005" value="0.06"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-margin" readonly tabindex="-1" value="0.060"></span></div>
+        <div class="instrument-row"><span class="instrument-row-label">Hand</span><div class="instrument-row-control instrument-renderer-actions"><button class="instrument-action" id="b-reseed" type="button" title="Lay the composition again from a new seed">Reseed</button></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-seed" readonly tabindex="-1" value="7"></span></div>
       </div>
+        </div>
+      </details>
 
-      <div class="instrument-renderer-section">Ink</div>
+
+      <details class="instrument-disclosure" open>
+        <summary><span class="instrument-disclosure-label">Ink</span></summary>
+        <div class="instrument-disclosure-body">
       <div class="instrument-group">
         <div class="bw-stack">
           <label class="instrument-row-label">Style</label>
@@ -152,16 +191,24 @@ GREAT</textarea>
         <div class="instrument-row"><label class="instrument-row-label" for="h-paper">Paper</label><div class="instrument-row-control"><div class="instrument-color-field"><span class="instrument-color-swatch"><input class="instrument-color-picker" type="color" id="p-paper" value="#FBFAF7" aria-label="Paper colour"></span><input class="instrument-control instrument-text-field instrument-color-hex" type="text" id="h-paper" value="#FBFAF7" spellcheck="false"></div></div><span></span></div>
         <div class="instrument-row"><label class="instrument-row-label" for="f-gradient">Gradient</label><div class="instrument-row-control"><input class="instrument-switch" id="f-gradient" role="switch" type="checkbox"></div><span class="instrument-row-value instrument-tabular" id="v-gradient">OFF</span></div>
         <div class="instrument-row"><label class="instrument-row-label" for="h-ink2">Ink two</label><div class="instrument-row-control"><div class="instrument-color-field"><span class="instrument-color-swatch"><input class="instrument-color-picker" type="color" id="p-ink2" value="#F61515" aria-label="Second ink colour"></span><input class="instrument-control instrument-text-field instrument-color-hex" type="text" id="h-ink2" value="#F61515" spellcheck="false"></div></div><span></span></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-angle">Angle</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-angle" min="0" max="360" step="1" value="90"></div><output class="instrument-row-value instrument-tabular" id="v-angle" for="s-angle">90</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-angle">Angle</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-angle" min="0" max="360" step="1" value="90"></div><span class="instrument-row-value instrument-mini-field bw-mini" data-instrument-align="right"><input class="instrument-mini-input instrument-tabular" id="v-angle" readonly tabindex="-1" value="90"><span class="instrument-mini-suffix">°</span></span></div>
       </div>
+        </div>
+      </details>
 
-      <div class="instrument-renderer-section">Artifact</div>
+
+      <details class="instrument-disclosure" open>
+        <summary><span class="instrument-disclosure-label">Artifact</span></summary>
+        <div class="instrument-disclosure-body">
       <div class="instrument-group">
         <div class="bw-stack">
           <span class="instrument-action-glass-wrap bw-big"><button class="instrument-action-glass" id="b-png" type="button" title="Export the frame as PNG"><span class="instrument-action-glass-content">Export PNG</span></button><span class="instrument-action-glass-shadow" aria-hidden="true"></span></span>
           <div class="bw-choice"><button class="instrument-action" id="b-video" type="button" title="Record one full cycle as WebM video">Video</button><button class="instrument-action" id="b-gif" type="button" title="Render one full cycle as a looping GIF">GIF</button></div>
         </div>
       </div>
+        </div>
+      </details>
+
       <div class="instrument-status" id="adapter-status" role="status" data-instrument-tone="active"><span class="instrument-status-mark" aria-hidden="true"></span><span>Adapter</span><span class="instrument-status-value instrument-tabular">READY</span></div>
     </section>
   </aside>
@@ -195,7 +242,7 @@ GREAT</textarea>
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d');
   const $ = id => document.getElementById(id);
-  const setV = (id, value) => { const node = $(id); if (node) node.textContent = value; };
+  const setV = (id, value) => { const node = $(id); if (!node) return; if (node.tagName === 'INPUT') node.value = value; else node.textContent = value; };
   const bubble = window.SUPERMEGA_BUBBLE;
   const mulberry = window.SUPERMEGA_SCATTER.mulberry;
 
