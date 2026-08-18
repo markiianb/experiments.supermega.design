@@ -1,0 +1,83 @@
+Build a tool that generates nested-shape colour-step images — the Homage to the
+Square family: concentric flat rings stepping through a colour ramp, the
+convergence point pulled off its axis so the image reads as a well. One HTML
+file, Canvas2D, no dependencies. Everything below is the mechanism; the control
+panel around it is yours.
+
+THE RINGS
+
+N rings (3–16), ring 0 filling the frame, each later ring smaller and on top.
+There are two nesting models and they are not the same picture:
+
+1. SCALE — every ring is a similar copy: half-extents = frame half-extents × s(i).
+   This is the Albers model; rings keep the frame's proportions.
+2. INSET — equal bands: subtract the same distance d(i) from both half-extents.
+   This is what the classic nested-rectangle posters actually do — check one:
+   band widths stay ~constant in pixels while the rings shrink, so on a portrait
+   frame the innermost rectangle goes tall and thin. A scaled copy cannot do that.
+
+Ease the progression: with u = i/(N-1), use e = u^pace. pace > 1 keeps the first
+bands thin (the reference frame measures ≈ 1.15); pace < 1 widens them inward.
+s(i) runs 1 → inner (the innermost ring's relative size, ~0.05–0.6).
+
+THE DRIFT
+
+The well converges somewhere; that somewhere is a parameter, not the centre.
+Per ring, per axis: offset = drift × e × slack, where slack = frame half-extent
+minus ring half-extent. Ring 0 has no slack and never moves; the innermost ring
+moves furthest. Drag on the canvas should write drift directly (double-click to
+recentre). Seeded per-ring jitter adds wobble on the same slack.
+
+THE SHAPES
+
+Rounded rect, ellipse, hexagon, triangle, diamond. Build each ring as a Path2D
+in local coordinates scaled anisotropically to the ring box — the hexagon is
+(hw·cos, hh·sin) at 90°+k·60°, not a regular polygon — then addPath it through a
+DOMMatrix translate+rotate into world space. One world-space path per ring means
+fill and clip share the same geometry. Twist = per-step rotation in degrees.
+
+CONTAINMENT
+
+With drift, non-rectangular rings can honestly cross their parent's edge:
+slack is computed on the bounding box, and a triangle does not fill its box.
+Offer both behaviours. Free: let them overlap (paper-collage look). Clip: after
+filling ring i, ctx.clip(path) — clips accumulate inside one save/restore, so
+every later ring is confined to the intersection of all its ancestors and the
+well nests strictly.
+
+THE RAMP
+
+Two or three colour stops, outer → (mid) → inner. Blend per-channel in RGB, or
+convert to HSL and interpolate — but hue needs a path decision:
+  short: dh = ((h2 − h1 + 540) % 360) − 180
+  long:  dh − 360 if dh ≥ 0 else dh + 360   (the rainbow trick)
+A grey endpoint has no hue of its own — borrow the other stop's hue or the ramp
+sweeps through arbitrary colours on its way to grey. Apply a gamma curve to the
+position before sampling; a direction flip is just t → 1−t. Worth knowing: the
+classic blue nested-rectangle posters are HSL ramps, not RGB — the RGB midpoint
+of the sampled endpoints misses the sampled middle ring, the HSL midpoint lands
+on it. Preview the ramp in the UI by sampling the real blend function, not with
+a CSS gradient, or the HSL paths will lie.
+
+LIGHT AND MOTION
+
+Sheen: per-ring linear gradient from the ring colour lightened to darkened,
+along an angle fixed to the page (compute the gradient line in world space).
+Shadow: canvas shadowBlur + directional offsets per ring, skipping ring 0 —
+stacked paper. Grain: a small seeded grey-noise tile drawn as a repeating
+pattern with composite 'overlay'. Flow: animate the colour position with a
+triangle wave, pos = pingpong(t + phase) where pingpong(x) folds x into [0,1] —
+at phase 0 it is the identity, so the still image and the first animation frame
+agree exactly. Honor prefers-reduced-motion by zeroing flow.
+
+EXPORT AND RANDOM
+
+Export renders the same paint function into an offscreen canvas at exact chosen
+pixels (an aspect ratio × a long-edge size), never by scaling the screen canvas.
+Randomize twice, differently: Dice rerolls only the seed (jitter and grain).
+Shuffle deals a curated look — pick a palette strategy (mono dark→light of one
+hue; duo across the wheel; ember black→saturated→pale through a mid stop; pale
+light→deep), build the stops in HSL with an enforced lightness gap so contrast
+survives, weight rectangles over the other shapes, and make twist, sheen,
+shadow, and jitter occasional rather than constant. Uniform randomness across
+all parameters produces mud; curation is the feature.
