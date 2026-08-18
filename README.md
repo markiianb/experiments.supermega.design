@@ -6,7 +6,6 @@ Do not edit here — edit the vault, rerun the build, commit, push.
 Live: https://experiments.supermega.design/
 
 Published experiments:
-- [Colour Well](/colour-well/) — since 2026-08-18
 - [Bubble Writer](/bubble-writer/) — since 2026-08-14
 - [Computer Graphics and Art](/cga76/) — since 2026-08-05
 - [Pixel Garden Lab](/pixel-garden/) — since 2026-07-29

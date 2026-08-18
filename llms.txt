@@ -1,12 +1,6 @@
 # SUPERMEGA Experiments
 > Weekly visual experiments by SUPERMEGA Design (https://supermega.design). Plain HTML/CSS/JS, no build step.
 
-## Colour Well
-- [Open the instrument](https://experiments.supermega.design/colour-well/): concentric shapes stepping through a colour ramp, the convergence point pulled off its axis
-- The nesting is a choice of model, not a scale factor — equal-band inset (what the classic posters actually do; inner rectangles go tall) or similar-scaled Albers copies — and the default cobalt configuration reproduces a measured reference frame, ramp provably HSL rather than RGB
-- Rings are world-space Path2D fills; Clip mode accumulates each ring's path as a clip region so the well nests strictly even when the centre drifts
-- [Seed prompt](https://experiments.supermega.design/colour-well/seed-prompt.txt): a self-contained prompt for coding agents — paste it into your agent to rebuild and adapt this system
-
 ## Bubble Writer
 - [Open the instrument](https://experiments.supermega.design/bubble-writer/): bubble lettering generated as geometry, written into a frame one letter at a time
 - The letterform is an operation, not a typeface — an exact signed distance transform of a thin glyph, contoured by marching squares at a true offset distance, then relaxed like a balloon under surface tension and internal pressure
