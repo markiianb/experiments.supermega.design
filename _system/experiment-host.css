@@ -8,6 +8,12 @@ body[data-system="instrument"] {
 
 body[data-system="instrument"] {
 	--instrument-renderer-inspector-width: var(--instrument-inspector-width);
+	/* Focus is ATTENTION, not alarm. The kit's pinned releases alias the focus
+	   band to the identity accent, which makes every focused field look like
+	   the invalid state. Fixed at the source in super-interface-kit
+	   (tokens.css, 2026-08-18); this override carries the decision to every
+	   already-pinned release. Red stays reserved for invalid. */
+	--instrument-color-focus: var(--instrument-color-text);
 	position: relative;
 	background: #000000;
 }

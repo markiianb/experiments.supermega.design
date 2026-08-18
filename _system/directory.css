@@ -6,7 +6,12 @@ html,body{margin:0;min-block-size:100%}
 /* Ground is the kit's own canvas token — the same grey the instrument-lab runs on
    — not the warm paper a single collection page picked for itself. Grain comes
    from the kit via data-instrument-grain="on". */
-body[data-system="instrument"]{background:var(--instrument-color-canvas);color:var(--instrument-color-text)}
+body[data-system="instrument"]{
+	/* Focus is ATTENTION, not alarm — neutral band, red stays reserved for
+	   invalid. Mirrors the super-interface-kit tokens.css decision (2026-08-18)
+	   for the pinned releases this page loads. */
+	--instrument-color-focus: var(--instrument-color-text);
+background:var(--instrument-color-canvas);color:var(--instrument-color-text)}
 
 [data-system="instrument"] .pg-chrome{position:sticky;top:0;z-index:3;display:flex;align-items:center;gap:var(--instrument-space-2);min-block-size:48px;padding-inline:var(--instrument-space-4);overflow-x:auto;background:#161616;font-family:"Tanker",var(--instrument-font-sans);font-size:var(--instrument-font-size-small);letter-spacing:var(--instrument-letter-spacing-label);white-space:nowrap}
 [data-system="instrument"] .pg-chrome-mark{flex:0 0 auto;inline-size:var(--instrument-space-4);block-size:var(--instrument-space-4);margin-inline-end:var(--instrument-space-2);background:#f61515}

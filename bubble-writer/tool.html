@@ -10,8 +10,19 @@
 <link rel="stylesheet" href="../_system/experiment-host.css" />
 <style>
   @font-face{font-family:"Tanker";src:url("../_system/fonts/Tanker-Regular.woff2") format("woff2");font-display:block}
+  /* The surface starts BELOW the fixed chrome, so nothing draws under the
+     header and the frame centres in the space the eye actually has. The
+     selector carries body[data-system] because the host sheet pins inset:0 on
+     .instrument-renderer-surface at that specificity and would win otherwise. */
   .hero{position:fixed;inset:0;overflow:hidden;background:#0B0B0D}
+  body[data-system="instrument"] .hero.instrument-renderer-surface{inset-block-start:var(--instrument-chrome-height)}
+  body[data-system="instrument"][data-instrument-embed="true"] .hero.instrument-renderer-surface{inset-block-start:0}
   .hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  /* Below the kit's breakpoint the panel becomes a full-width sheet; letting it
+     narrow the surface would leave nothing to draw in, so there it overlays. */
+  @media (max-width: 767px){
+    body[data-system="instrument"][data-controls="visible"] .hero.instrument-renderer-surface{inset-inline-end:0}
+  }
   /* A five-option group cannot shrink below its own labels, so inside a row it
      spills out of the grid cell and over the row label. These sit full width
      under their label instead.
@@ -49,9 +60,7 @@
     <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--middle"></div>
     <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">EX-BUBBLE-02</span><button class="instrument-action" id="toggle" type="button">Controls</button></div>
   </header>
-  <div class="instrument-renderer-hud instrument-renderer-hud--top">Ink dots gather, the letter grows around them · R replays · E exports</div>
-  <div class="instrument-renderer-hud instrument-renderer-hud--bottom" id="stat">WRITING · OUTLINE</div>
-  <div class="instrument-renderer-credit">Study of Tracy Ma’s bubble-letter animation “Do You Remember The First Time?” for Blonded (2019), and the scatter code published with the NYT’s “Gen X Is A Mess” (2019, draw-on Aliza Aufrichtig). Theirs is drawn by hand; ours is generated. Not their artwork.</div>
+  <div class="instrument-renderer-credit">Study of Tracy Ma’s “Do You Remember The First Time?” (Blonded, 2019) — theirs is hand-drawn, ours is generated</div>
 
   <aside class="instrument-renderer-panel" id="panel" aria-label="Bubble Writer controls">
     <section class="instrument-panel">
@@ -84,7 +93,7 @@ GREAT</textarea>
           <div class="bw-choice" id="f-face"><button class="instrument-action" data-face="grotesk" aria-pressed="true" type="button">Grotesk</button><button class="instrument-action" data-face="tanker" aria-pressed="false" type="button">Tanker</button><button class="instrument-action" data-face="serif" aria-pressed="false" type="button">Serif</button><button class="instrument-action" data-face="mono" aria-pressed="false" type="button">Mono</button></div>
         </div>
         <div class="instrument-row"><label class="instrument-row-label" for="s-weight">Weight</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-weight" min="100" max="700" step="25" value="300"></div><output class="instrument-row-value instrument-tabular" id="v-weight" for="s-weight">300</output></div>
-        <div class="instrument-row"><label class="instrument-row-label" for="s-inflate">Inflate</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-inflate" min="0.02" max="0.16" step="0.005" value="0.085"></div><output class="instrument-row-value instrument-tabular" id="v-inflate" for="s-inflate">0.085</output></div>
+        <div class="instrument-row"><label class="instrument-row-label" for="s-inflate">Inflate</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-inflate" min="0.02" max="0.12" step="0.005" value="0.085"></div><output class="instrument-row-value instrument-tabular" id="v-inflate" for="s-inflate">0.085</output></div>
         <div class="instrument-row"><label class="instrument-row-label" for="s-plump">Plump</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-plump" min="0" max="1" step="0.01" value="0.95"></div><output class="instrument-row-value instrument-tabular" id="v-plump" for="s-plump">0.95</output></div>
         <div class="instrument-row"><label class="instrument-row-label" for="s-track">Tracking</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-track" min="-0.3" max="0.1" step="0.005" value="-0.09"></div><output class="instrument-row-value instrument-tabular" id="v-track" for="s-track">-0.090</output></div>
         <div class="instrument-row"><label class="instrument-row-label" for="s-stroke">Outline</label><div class="instrument-row-control"><input class="instrument-range" type="range" id="s-stroke" min="0.002" max="0.05" step="0.001" value="0.026"></div><output class="instrument-row-value instrument-tabular" id="v-stroke" for="s-stroke">0.026</output></div>
@@ -209,26 +218,15 @@ GREAT</textarea>
   let clock = 0;
 
   /* ---------- the artboard, centred in what you can actually see ---------- */
+  // The kit already narrows .instrument-renderer-surface by the panel's width
+  // when controls are open — so the CANVAS BOX is the visible strip, and it is
+  // the only truth worth measuring. Everything before this measured the window
+  // and reserved the panel by hand, which double-counted the panel AND left the
+  // backing store sized to the full window while CSS displayed it narrower —
+  // squeezing every frame ~21% horizontally and shoving it left.
   const stage = () => {
-    // Measure the BOUNDARY, not the element. The panel's box is sized from a CSS
-    // variable and can be wider than the strip it actually paints, which quietly
-    // over-reserves space and pushes the whole artboard left. Its left edge is
-    // the only thing that is always true — and when the panel is hidden it is
-    // translated off the right edge, so this reads as zero with no special case.
-    const embedded = document.body.dataset.instrumentEmbed === 'true';
-    const edge = embedded ? innerWidth : $('panel').getBoundingClientRect().left;
-    // No cap on what the panel reserves. Capping it at a fraction of the window
-    // lies whenever the panel is wider than that fraction — which happens as
-    // soon as the window is narrow or the page is zoomed — and the board is then
-    // centred in a strip wider than the one you can see, so it runs under the
-    // panel and reads as shifted left with a gap on the right.
-    let reserved = Math.max(0, Math.min(innerWidth, innerWidth - edge));
-    // Below the kit's breakpoint the panel stops being a side rail and becomes a
-    // full-width sheet. Reserving its width then leaves nothing to draw in, so
-    // past a certain share it is treated as an overlay and the frame takes the
-    // whole window — the panel simply sits on top of it.
-    if (reserved > innerWidth * 0.6) reserved = 0;
-    return { height: innerHeight, width: Math.max(200, innerWidth - reserved), x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    return { height: Math.max(150, rect.height), width: Math.max(200, rect.width), x: 0, y: 0 };
   };
   const board = () => {
     const area = stage();
@@ -250,9 +248,15 @@ GREAT</textarea>
     const source = S.text.split('\n').map(t => t.trim()).filter(Boolean);
     letters = 0;
 
+    // The inflate a skeleton can carry depends on the skeleton: Tanker and
+    // heavy weights close their counters far below the slider's ceiling, and
+    // past that point every glyph is the same rounded slab. The dice already
+    // respect this; the renderer must too, or a manual face/weight flip
+    // destroys the letterforms at a slider value that read fine before.
+    const skeleton = S.face === 'tanker' ? 0.055 : 0.12 - S.weight * 0.0001;
     lines = source.map((text) => {
       const built = bubble.phrase(text, {
-        fontStack: FACES[S.face], inflate: S.inflate, jitter: 0.05, lean: 0.045,
+        fontStack: FACES[S.face], inflate: Math.min(S.inflate, skeleton), jitter: 0.05, lean: 0.045,
         plump: S.plump, seed: S.seed, tracking: S.tracking, weight: S.weight, wobble: S.wobble,
       });
       const count = built.letters.length;
@@ -268,12 +272,22 @@ GREAT</textarea>
     // Lay the block out at unit scale first, then fit the whole thing at once.
     // Scaling line by line lets a long phrase walk off the bottom, and the point
     // of a declared frame is that the work stays inside its own edges.
+    // A line's scale comes from its allotted box over its letter count — which
+    // hands a two-letter line letters FIVE times the size of a ten-letter
+    // line's, big enough to bury the small line entirely. Letter size may
+    // vary; it may not dwarf. Clamp every line's scale around the median.
+    for (const line of lines) {
+      line.scale = (usableWidth * line.widthFraction) / (line.built.bounds.width || 1);
+    }
+    const scales = lines.map(l => l.scale).sort((a, b) => a - b);
+    const median = scales.length ? scales[Math.floor(scales.length / 2)] : 1;
     let cursor = 0;
     let minX = Infinity;
     let maxX = -Infinity;
-    for (const line of lines) {
-      const boxWidth = usableWidth * line.widthFraction;
-      line.scale = boxWidth / (line.built.bounds.width || 1);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      line.scale = Math.max(median * 0.5, Math.min(median * 2.1, line.scale));
+      const boxWidth = (line.built.bounds.width || 1) * line.scale;
       line.height = (line.built.bounds.height || 1) * line.scale;
       line.width = boxWidth;
       if (S.align === 'left') line.left = 0;
@@ -281,11 +295,22 @@ GREAT</textarea>
       else if (S.align === 'centre') line.left = (usableWidth - boxWidth) / 2;
       else line.left = usableWidth * 0.5 + line.wander * S.cascade * usableWidth * 0.42 - boxWidth / 2;
       line.top = cursor;
-      cursor += line.height * S.overlap;
+      // Lines interlock by a fraction of the SMALLER of the two neighbours —
+      // never of the previous line alone. Measured against the previous line,
+      // "20% overlap" of a tall line swallows a short one whole; measured
+      // against the smaller line, every line keeps the same visible share no
+      // matter who its neighbours are. (Overlap past 1 becomes a gap.)
+      const next = lines[i + 1];
+      if (next) {
+        const nextHeight = (next.built.bounds.height || 1) * Math.max(median * 0.5, Math.min(median * 2.1, next.scale));
+        cursor += line.height - Math.min(line.height, nextHeight) * (1 - S.overlap);
+      } else {
+        cursor += line.height * S.overlap;
+      }
       minX = Math.min(minX, line.left);
       maxX = Math.max(maxX, line.left + boxWidth);
     }
-    const blockHeight = cursor + (lines.length ? lines[lines.length - 1].height * (1 - S.overlap) : 0);
+    const blockHeight = lines.length ? Math.max(...lines.map(l => l.top + l.height)) : 0;
     const blockWidth = Math.max(1, maxX - minX);
     const fit = Math.min(1, usableHeight / Math.max(1, blockHeight), usableWidth / blockWidth);
     const offsetY = frame.height * inset + (usableHeight - blockHeight * fit) / 2;
@@ -296,6 +321,27 @@ GREAT</textarea>
       line.y = line.top * fit + offsetY;
       line.width *= fit;
       line.height *= fit;
+    }
+
+    // Centre the MASS, not just the box. A zigzag cascade can have a perfectly
+    // centred bounding box while all its visual weight leans one way — which
+    // reads as off-centre no matter what the geometry says. Shift the whole
+    // block so the area-weighted centre sits on the frame's centre, clamped so
+    // nothing leaves the margin.
+    if (lines.length) {
+      let weight = 0;
+      let moment = 0;
+      for (const line of lines) {
+        const w = line.width * line.height;
+        weight += w;
+        moment += w * (line.x + line.width / 2);
+      }
+      const pad = frame.width * inset;
+      const minLeft = Math.min(...lines.map(l => l.x));
+      const maxRight = Math.max(...lines.map(l => l.x + l.width));
+      let shift = frame.width / 2 - moment / weight;
+      shift = Math.max(pad - minLeft, Math.min(shift, frame.width - pad - maxRight));
+      if (Number.isFinite(shift)) for (const line of lines) line.x += shift;
     }
   };
 
@@ -429,8 +475,9 @@ GREAT</textarea>
   /* ---------- paint ---------- */
   const fit = () => {
     const ratio = Math.min(devicePixelRatio || 1, 2);
-    canvas.width = Math.round(innerWidth * ratio);
-    canvas.height = Math.round(innerHeight * ratio);
+    const area = stage();
+    canvas.width = Math.round(area.width * ratio);
+    canvas.height = Math.round(area.height * ratio);
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
   };
 
@@ -441,6 +488,19 @@ GREAT</textarea>
     // then each line divides it back out by its own scale, so a word set twice
     // as large is not drawn twice as heavily.
     const strokePx = S.stroke * frame.height * 0.5;
+    // Knockout channels (solid, halo, sticker) are also constant on screen —
+    // but a constant band wide enough to separate two big lines will SHRED a
+    // small line caught behind it. Cap each line's knockout against its OWN
+    // neighbour (the line it actually overlaps), not the board's smallest
+    // line — a global cap turns every channel hairline the moment any one
+    // line is tiny, and the whole piece fuses. A modest floor keeps the
+    // channel visible even beside a small neighbour.
+    const knock = (li, want, share) => {
+      const line = lines[li];
+      const behind = lines[li + 1];
+      const neighbour = Math.min(line.height, behind ? behind.height : line.height);
+      return Math.max(Math.min(strokePx * want, neighbour * share), strokePx * 1.2);
+    };
 
     // Dots go down first, so a growing letter's fill covers the cluster it grew
     // out of — the letter really does close over its own dots.
@@ -508,8 +568,11 @@ GREAT</textarea>
         // fuses into one silhouette. A paper knockout under the line carves it
         // out of the line behind, and a thicker per-letter paper stroke keeps
         // the channels readable between letters within the word.
-        pass({ fill: null, lineWidth: w * 3.5, stroke: S.paper });
-        pass({ fill: ink, lineWidth: w * 1.4, stroke: S.paper });
+        pass({ fill: null, lineWidth: knock(li, 3.5, 0.3) / line.scale, stroke: S.paper });
+        // The within-word channel is capped by the line's own height: constant
+        // screen pixels are right for outline weight, but on a small line a
+        // constant channel eats a quarter of every letter and shreds the word.
+        pass({ fill: ink, lineWidth: Math.min(strokePx * 1.4, line.height * 0.09) / line.scale, stroke: S.paper });
       }
       else if (S.style === 'shadow') {
         target.save(); target.translate(w * 2.4, w * 3.1);
@@ -517,10 +580,10 @@ GREAT</textarea>
         target.restore();
         pass({ fill: S.paper, lineWidth: w, stroke: ink });
       } else if (S.style === 'halo') {
-        pass({ fill: null, lineWidth: w * 6, stroke: S.paper });
+        pass({ fill: null, lineWidth: knock(li, 6, 0.4) / line.scale, stroke: S.paper });
         pass({ fill: S.paper, lineWidth: w, stroke: ink });
       } else {
-        pass({ fill: null, lineWidth: w * 9, stroke: S.paper });
+        pass({ fill: null, lineWidth: knock(li, 9, 0.45) / line.scale, stroke: S.paper });
         pass({ fill: ink, lineWidth: w * 1.2, stroke: ink });
       }
       target.restore();
@@ -528,16 +591,18 @@ GREAT</textarea>
   };
 
   const paint = (target, now) => {
+    const area = stage();
     const frame = board();
     // The composition is laid out against a particular artboard. If that board
     // has changed since — a resize that fired no event, browser zoom, the panel
     // opening — the letters would still be placed for the old one while the
     // paper is drawn for the new, which reads as the work sitting off-centre.
-    // Re-laying out on any change makes the two impossible to disagree.
-    const key = `${Math.round(frame.width)}x${Math.round(frame.height)}@${Math.round(frame.x)}`;
-    if (key !== boardKey) { boardKey = key; compose(); }
+    // Re-fitting the backing store AND re-laying out on any change makes the
+    // canvas box, its pixels, and the composition impossible to disagree.
+    const key = `${Math.round(area.width)}x${Math.round(area.height)}`;
+    if (key !== boardKey) { boardKey = key; fit(); compose(); }
     target.fillStyle = '#0B0B0D';
-    target.fillRect(0, 0, innerWidth, innerHeight);
+    target.fillRect(0, 0, area.width, area.height);
     target.save();
     target.beginPath();
     target.rect(frame.x, frame.y, frame.width, frame.height);
@@ -556,7 +621,7 @@ GREAT</textarea>
     if (!S.paused) clock += delta * S.speed;
     if (S.loop === 'cycle' && clock > cycleLength()) clock = 0;
     if (S.loop === 'once' && clock > eraseEnd()) clock = eraseEnd();
-    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     paint(ctx, clock);
     requestAnimationFrame(frame);
   };
@@ -854,16 +919,25 @@ GREAT</textarea>
     // (NOTES pins ~0.11 inflate as the edge of the form). Whatever the style,
     // keep the pair inside the readable band, and stop huge letters from
     // coinciding by flooring tracking and line spacing as inflation rises.
+    // The inflate a skeleton can carry depends on how fat it already is: a
+    // heavy weight or a display face like Tanker closes its counters long
+    // before the slider's ceiling. Cap inflate by the skeleton itself.
+    const skeletonCap = variant.face === 'tanker' ? 0.05 : 0.115 - variant.weight * 0.0001;
+    variant.inflate = Math.min(variant.inflate, skeletonCap);
     if (variant.inflate > 0.085) variant.plump = Math.min(variant.plump, 0.8);
     if (variant.inflate > 0.095) {
       variant.tracking = Math.max(variant.tracking, -0.06);
       variant.overlap = Math.max(variant.overlap, 0.82);
     }
     if (variant.style === 'solid' || variant.style === 'sticker') {
-      variant.inflate = Math.min(variant.inflate, 0.09);
+      variant.inflate = Math.min(variant.inflate, 0.085);
       variant.overlap = Math.max(variant.overlap, 0.8);
       variant.tracking = Math.max(variant.tracking, -0.08);
       variant.sizeVary = Math.min(variant.sizeVary, 0.55);
+      // Solid letters are separated only by their paper channels, and a thin
+      // rolled stroke makes those channels vanish — every muddy solid roll
+      // traced back to stroke near the floor. Solid earns a thicker minimum.
+      variant.stroke = Math.max(variant.stroke, 0.022);
     }
     return variant;
   };
