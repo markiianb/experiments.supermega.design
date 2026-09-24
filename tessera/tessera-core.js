@@ -31,6 +31,44 @@
 		return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
 	}
 
+	/**
+	 * The five looks, each fixed to its reference as measured (NOTES.md):
+	 * cell shape, which mark each tone draws, weights, gaps, colours. The
+	 * person picks one and tunes only detail, contrast and balance.
+	 */
+	const COMMON = { smooth: 1, amount: 0, brightness: 0, brush: 0.12, colorMode: "palette", fit: "cover", gamma: 1, invert: false, levels: "auto", loop: 6, merge: true, motion: "still", order: "sweep", panX: 0, panY: 0, persist: 0.8, pointer: "off", pointerStrength: 0, underlay: 0, zoom: 1, minWeight: 0.125, curve: 1 };
+	const STYLES = {
+		// Black columns, rows and joined bars on yellow; 24 px square cells at 0.66, ≈4 px run gaps.
+		yellow: { ...COMMON, background: "#f7d358", palette: ["#000000"], tiers: 4, glyphs: ["column", "row", "connect", "empty"], weighting: "flat", scale: 0.66, gap: 0.17, roundness: 0, cellAspect: 1, columns: 54 },
+		// Base's bars on black: thin dark blue, wide light blue, cells 1.75× taller than wide.
+		// Measured on the frame: exactly two widths — dark blue ≈ 0.25, light blue ≈ 0.68 of a 29 px column.
+		blue: { ...COMMON, background: "#000000", palette: ["#0000ff", "#6a9cff"], tiers: 3, glyphs: ["empty", "column", "column"], weights: [0, 0.25, 0.68], weighting: "flat", scale: 1, gap: 0.045, roundness: 0, cellAspect: 1.75, columns: 45, toneShift: 0.12 },
+		// Beige checker (the body mass), white rows, orange columns on near-black; every tone of the subject is inked — only what is not the subject is empty.
+		figure: { ...COMMON, background: "#1b1d20", palette: ["#c9b99a", "#ea5a36", "#f2f2f2"], tiers: 3, glyphs: ["checker", "column", "row"], weights: [0.85, 0.35, 0.4], weighting: "flat", scale: 1, gap: 0.12, roundness: 0, cellAspect: 1, columns: 110,
+			// A photo has a background; its lightest tone drops out to the ground so only the subject carries marks.
+			onPhoto: { tiers: 4, glyphs: ["checker", "column", "row", "empty"], weights: [0.85, 0.35, 0.4, 0] } },
+		// Blue checker, light-blue diamonds, pale grey columns on white.
+		// Measured on the frame: checker squares ≈ half a cell, diamonds touch at their corners, grey columns ≈ 0.8.
+		rooster: { ...COMMON, background: "#ffffff", palette: ["#0000ff", "#5b8ff9", "#e4e5e7"], tiers: 4, glyphs: ["checker", "diamond", "column", "empty"], weights: [0.55, 1, 0.8, 0], weighting: "flat", scale: 1, gap: 0.05, roundness: 0, cellAspect: 1, columns: 72 },
+		// base.org's live settings: five tiers, darkest blank, widths 1/8·1/2·3/4·1 × 0.66, round caps.
+		base: { ...COMMON, background: "#ffffff", palette: ["#ebba00", "#a7e66b", "#cd99fd", "#0000ff"], tiers: 5, glyphs: ["empty", "column", "column", "column", "column"], weighting: "ramp", curve: 0.77, scale: 0.66, gap: 0.045, roundness: 0.44, cellAspect: 1, columns: 90 },
+	};
+
+	/** The four controls a person has → everything the shader needs. */
+	function resolve(simple, picture) {
+		const base = STYLES[simple.style] || STYLES.yellow;
+		const style = picture && !picture.cutout && base.onPhoto ? { ...base, ...base.onPhoto } : base;
+		const out = { ...style, aspect: simple.aspect || "source" };
+		// A cut-out (transparent background) sits in the frame with room around it,
+		// as the Base frames do; a photo fills the frame.
+		if (picture && picture.cutout) { out.fit = "contain"; out.zoom = 0.82; }
+		style.glyphs.forEach((g, i) => { out[`glyph${i + 1}`] = g; });
+		out.columns = Math.max(8, Math.round(style.columns * simple.detail));
+		out.contrast = simple.contrast;
+		out.brightness = simple.balance + (style.toneShift || 0);
+		return out;
+	}
+
 	/* ---------- pure maths the tests pin (the shader mirrors these) ---------- */
 	/** Levels, contrast about the middle, gamma, invert, then a brightness trim. */
 	function toneOf(lum, config, levels) {
@@ -129,6 +167,7 @@ uniform int uTrailCount;
 uniform vec3 uTrail[${MAX_TRAIL}];  // x, y (frame fractions), weight
 uniform int uPointer;          // 0 off, 1 light, 2 dark, 3 reveal
 uniform float uBrush, uStrength;
+uniform float uSmooth;          // extra mip levels: tone read over a wider footprint, so regions hold together
 
 float hash(vec2 p){ p = fract(p * vec2(443.897, 441.423)); p += dot(p, p.yx + 19.19); return fract((p.x + p.y) * p.x); }
 
@@ -138,7 +177,8 @@ vec4 cellSample(vec2 cell){
   vec2 uv = (centre - uPlace.xy) / uPlace.zw;
   if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return vec4(0.0);
   float texelsPerCell = max(uCell.x / uPlace.z * uImageSize.x, uCell.y / uPlace.w * uImageSize.y);
-  return textureLod(uImage, uv, max(0.0, log2(texelsPerCell)));
+  vec4 c = textureLod(uImage, uv, max(0.0, log2(texelsPerCell) + uSmooth));
+  return c.a > 0.0 ? vec4(c.rgb / c.a, c.a) : vec4(0.0);
 }
 
 float pointerPush(vec2 cell){
@@ -157,7 +197,7 @@ float pointerPush(vec2 cell){
 // Tone → tier; −1 where the picture is not.
 int tierAt(vec2 cell){
   vec4 c = cellSample(cell);
-  if (c.a < 0.5) return -1;
+  if (c.a < 0.8) return -1;   // a cut-out's soft fringe is not the subject
   float v = dot(c.rgb, vec3(0.299, 0.587, 0.114));
   if (uLevels == 1) v = uLoHi.y - uLoHi.x > 1e-3 ? (v - uLoHi.x) / (uLoHi.y - uLoHi.x) : v;
   else if (uLevels == 2) v = texture(uCdf, vec2(clamp(v, 0.0, 1.0) * (255.0 / 256.0) + 0.5 / 256.0, 0.5)).r;
@@ -218,7 +258,8 @@ void main(){
   vec2 p = px - cell * uCell;
   vec2 puv = (px - uPlace.xy) / uPlace.zw;
   bool onPicture = puv.x >= 0.0 && puv.y >= 0.0 && puv.x <= 1.0 && puv.y <= 1.0;
-  vec3 photo = texture(uImage, clamp(puv, 0.0, 1.0)).rgb;
+  vec4 photoP = texture(uImage, clamp(puv, 0.0, 1.0));
+  vec3 photo = mix(uGround, photoP.a > 0.0 ? photoP.rgb / photoP.a : uGround, photoP.a);
   vec3 ground = mix(uGround, photo, onPicture ? uUnderlay : 0.0);
 
   int t = tierAt(cell);
@@ -308,7 +349,12 @@ void main(){
 			if (key === imageKey) return;
 			gl.bindTexture(gl.TEXTURE_2D, image);
 			gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+			// Premultiplied, so the mip average of a cell half on a cut-out and half off
+			// is the subject's colour at half coverage — not mixed with whatever colour
+			// the transparent pixels happen to carry (a light rim otherwise).
+			gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
 			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+			gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
 			gl.generateMipmap(gl.TEXTURE_2D);
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -345,7 +391,7 @@ void main(){
 			const glyphs = [], weights = [], colours = [];
 			for (let i = 0; i < MAX_TIERS; i += 1) {
 				glyphs.push(Math.max(0, GLYPHS.indexOf(names[i])));
-				weights.push(weightOf(i, tiers, firstInk, config));
+				weights.push(config.weights && config.weights[i] !== undefined ? config.weights[i] * config.scale : weightOf(i, tiers, firstInk, config));
 				colours.push(...(palette[(((i - firstInk) % palette.length) + palette.length) % palette.length] || [1, 1, 1]));
 			}
 			const trailFlat = new Float32Array(MAX_TRAIL * 3);
@@ -387,6 +433,7 @@ void main(){
 			gl.uniform1i(loc.uPointer, ["off", "light", "dark", "reveal"].indexOf(config.pointer));
 			gl.uniform1f(loc.uBrush, config.brush);
 			gl.uniform1f(loc.uStrength, config.pointerStrength);
+			gl.uniform1f(loc.uSmooth, config.smooth || 0);
 			gl.drawArrays(gl.TRIANGLES, 0, 3);
 			return { cols: Math.round(config.columns), rows: Math.ceil(H / (cw * config.cellAspect)) };
 		}
@@ -573,7 +620,7 @@ void main(){
 	}
 
 	global.SUPERMEGA_TESSERA = Object.freeze({
-		ASPECTS, GLYPHS, MAX_TIERS, ORDERS, SAMPLES,
-		artifactSizeFor, createEngine, drawSample, hexToRgb, keepable, measureLevels, placeSource, revealAt, tierOf, toneOf, weightOf,
+		ASPECTS, GLYPHS, MAX_TIERS, ORDERS, SAMPLES, STYLES,
+		artifactSizeFor, createEngine, drawSample, resolve, hexToRgb, keepable, measureLevels, placeSource, revealAt, tierOf, toneOf, weightOf,
 	});
 })(typeof window !== "undefined" ? window : globalThis);

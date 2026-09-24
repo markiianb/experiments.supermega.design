@@ -19,9 +19,9 @@
 - [Engine](https://experiments.supermega.design/pixel-garden/core/pixel-core.js): dependency-free source, with [sprites](https://experiments.supermega.design/pixel-garden/core/sprites.js)
 
 ## Tessera
-- [Open the instrument](https://experiments.supermega.design/tessera/): drop, paste or choose a picture; a WebGL shader redraws it on a grid — one mark and one colour per tone
+- [Open the instrument](https://experiments.supermega.design/tessera/): drop, paste or upload a picture; choose one of five styles (Yellow, Blue, Figure, Rooster, Base) and tune detail, contrast and balance
 - Linear marks (column, row, and a joined bar that runs down, across or stands as a square by its neighbours — the maze) and cubic marks (square, checker, diamond, dot, ring, solid); bars of one tone join into long strokes with a gap and round caps
-- Levels (equalise by default) so ordinary photos read; reveal, cycle and drift motion; a pointer that paints tone; PNG, JPG and video export
+- Each style is fixed to a Base frame as measured — marks per tone, cell shape, weights, colours; cut-outs (transparent PNGs) sit in the frame with only the subject marked; PNG and JPG export
 - Credited study of the Base brand image treatment — Mouthwash Studio's Base launch, image tool by John Provencher, after Karel Martens. None of their code or artwork is used
 - [Seed prompt](https://experiments.supermega.design/tessera/seed-prompt.txt): a self-contained prompt for coding agents — paste it into your agent to rebuild and adapt this system
 

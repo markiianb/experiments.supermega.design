@@ -43,7 +43,7 @@
 
   <header class="instrument-renderer-chrome">
     <div class="instrument-renderer-chrome-zone experiment-brand"><span class="experiment-brand-mark" aria-hidden="true"></span><a data-crumb="root" href="https://supermega.design">SUPERMEGA</a><span class="experiment-brand-sep" aria-hidden="true">/</span><a href="../">EXPERIMENTS</a><span class="experiment-brand-sep" aria-hidden="true">/</span><span class="experiment-brand-here">TESSERA</span></div>
-    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--middle"><span>Any picture as a field of marks — one glyph, one colour per tone. Drop, paste or pick an image.</span></div>
+    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--middle"><span>Your picture in lines and cubes — the Base image treatment. Drop, paste or upload an image.</span></div>
     <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">EX-TESS-01</span><button type="button" class="instrument-action" id="b-image" title="Use your own picture — or drop / paste one onto the stage">Upload</button><button type="button" class="instrument-action" id="b-defaults" title="Restore configuration defaults — Base's own settings">Defaults</button><button class="instrument-action" id="toggle" type="button">Controls</button></div>
   </header>
   <input class="tessera-file" id="file" type="file" accept="image/*" aria-label="Choose a picture" />
@@ -69,10 +69,9 @@
 /* =============================================================================
    Tessera — page glue.
 
-   The engine owns the canvas; the adapter owns the configuration; the shell
-   owns the panel, the state, the export, the stage and the clock. What is left
-   here: the SOURCE PICTURE (canvas-owned media, never configuration — the kit
-   keeps source pixels out of the panel), the pointer, and the frame renderer.
+   Four controls (style, detail, contrast, balance) plus a frame. The engine
+   turns them into the full look (E.resolve). The picture is canvas-owned
+   media: drop, paste, or the Upload button; one built-in picture until then.
    ========================================================================== */
 (() => {
   const A = window.SUPERMEGA_INSTRUMENT_ADAPTERS.tessera;
@@ -84,106 +83,94 @@
 
   let sayStatus = null;
   let viewport = null;
-  let timeline = null;
   let uploadName = null;
-  let lastSample = null;
+  let current = null;
+  let shown = null; // the configuration being drawn — adapter-core commits after the callback
+  let picture = { cutout: false };
+  // A picture with a transparent border is a cut-out: sample its corners and edges.
+  const isCutout = (img) => {
+    try {
+      const c = document.createElement('canvas'); c.width = 64; c.height = 64;
+      const g = c.getContext('2d'); g.drawImage(img, 0, 0, 64, 64);
+      const d = g.getImageData(0, 0, 64, 64).data;
+      let clear = 0, n = 0;
+      for (let i = 0; i < 64; i += 1) for (const [x, y] of [[i, 0], [i, 63], [0, i], [63, i]]) { n += 1; if (d[(y * 64 + x) * 4 + 3] < 128) clear += 1; }
+      return clear / n > 0.5;
+    } catch (e) { return false; }
+  };
   const engine = E.createEngine(canvas, { onFrame: () => { if (sayStatus) sayStatus(); } });
 
-  /* ---------- the source: a built-in sample, or the person's own picture ---------- */
-  const sampleCache = new Map();
-  const useSample = (name) => {
-    if (!sampleCache.has(name)) sampleCache.set(name, E.drawSample(name, 1200));
-    uploadName = null;
-    delete stage.dataset.hasImage;
-    engine.setSource(sampleCache.get(name), `sample:${name}`);
-    if (viewport) viewport.refresh('source');
+  const setPicture = (img, key) => {
+    current = { img, key };
+    picture = { cutout: isCutout(img) };
+    engine.setConfig(E.resolve(shown || adapter.getConfiguration(), picture));
+    engine.setSource(img, key);
+    if (viewport) { viewport.refresh('source'); viewport.fit(); }
   };
+  // The built-in picture: a letter on paper, portrait like most photos.
+  const sample = (() => {
+    const c = document.createElement('canvas'); c.width = 1200; c.height = 1500;
+    const g = c.getContext('2d'); g.fillStyle = '#f2f0ea'; g.fillRect(0, 0, 1200, 1500);
+    g.drawImage(E.drawSample('letter', 1200), 0, 150);
+    return c;
+  })();
 
   const schema = A.schema;
   const adapter = A.create({
     applyConfiguration: (c) => {
-      // A new sample choice is a request to leave the uploaded picture.
-      if (c.sample !== lastSample) { lastSample = c.sample; useSample(c.sample); }
-      stage.style.background = c.background;
-      engine.setConfig(c);
+      shown = c;
+      const look = E.resolve(c, picture);
+      stage.style.background = look.background;
+      engine.setConfig(look);
       if (viewport) viewport.refresh('canvas.aspect');
     },
     createArtifact: (request) => {
       const edge = request && Number.isFinite(request.longEdge) ? request.longEdge : 4096;
-      const out = engine.exportPNG(edge, timeline ? timeline.transport.time() : 0);
+      const out = engine.exportPNG(edge, 0);
       const c = adapter.getConfiguration();
-      return { ...out, filename: `tessera-${uploadName ? "image" : c.sample}-${out.width}.png`, mime: 'image/png' };
+      return { ...out, filename: `tessera-${c.style}-${out.width}.png`, mime: 'image/png' };
     },
     hideControls: () => controller.setControls(false),
-    nextVariant: () => shell.randomise(schema),
-    pause: () => { if (timeline) timeline.transport.pause(); return { paused: true }; },
-    resume: () => { if (timeline) timeline.transport.play(); return { paused: false }; },
+    nextVariant: () => {
+      const others = A.styles.filter((s) => s !== adapter.getConfiguration().style);
+      return { style: others[Math.floor(Math.random() * others.length)] };
+    },
     showControls: () => controller.setControls(true),
   });
 
-  engine.setConfig(adapter.getConfiguration());
-  // The adapter does not apply its first configuration through the callback, so the sample loads here.
-  lastSample = adapter.getConfiguration().sample;
-  useSample(lastSample);
+    setPicture(sample, 'sample:letter');
 
-  /* ---------- the stage, the panel, the modules ---------- */
-  const artboard = () => engine.artifactSize(Math.max(schema.canvas.width, schema.canvas.height));
   const page = {
-    bounds: artboard,
-    duration: () => adapter.getConfiguration().loop,
-    renderFrame: (ctx, width, height, time) => engine.renderTo(ctx.canvas, width, height, time),
+    bounds: () => engine.artifactSize(Math.max(schema.canvas.width, schema.canvas.height)),
+    renderFrame: (ctx, width, height) => engine.renderTo(ctx.canvas, width, height, 0),
     resize: (width, height) => engine.resizeTo(width, height),
-    speed: () => 1,
-    time: () => (timeline ? timeline.transport.time() : 0),
   };
-
   const tool = shell.mountTool({
-    adapter,
-    canvas,
-    defaults: () => A.defaults,
-    normalize: A.normalize,
-    onFrame: (transport) => engine.setClock(transport.time()),
-    page,
-    panel: document.getElementById('panel'),
-    schema: A.schema,
-    stage,
+    adapter, canvas, defaults: () => A.defaults, normalize: A.normalize, page,
+    panel: document.getElementById('panel'), schema: A.schema, stage,
   });
   const controller = tool.controller;
   viewport = tool.viewport;
-  timeline = tool.timeline;
 
   let said = '';
   sayStatus = () => {
-    const c = adapter.getConfiguration();
+    const c = shown || adapter.getConfiguration();
     const s = engine.getState();
-    const label = c.motion === 'still' ? 'STILL' : timeline.transport.playing() ? 'LIVE' : 'HELD';
-    const src = uploadName ? `IMAGE ${uploadName.slice(0, 24).toUpperCase()}` : `SAMPLE ${c.sample.toUpperCase()}`;
-    const line = `${label} · ${src} · ${s.cols}×${s.rows} · ${s.shapes} MARKS`;
+    const line = uploadName ? `${c.style.toUpperCase()} · ${s.cols}×${s.rows}` : `${c.style.toUpperCase()} · DROP A PICTURE`;
     if (line === said) return;
     said = line;
-    const load = controller.reportLoad(s.shapes);
-    controller.status(`${line}${load && load.over ? ` — past ${load.budget}` : ''}`, load && load.over ? 'alert' : 'active');
+    controller.status(line, 'active');
   };
 
   document.getElementById('b-defaults').addEventListener('click', () => adapter.execute('reset-configuration'));
 
-  /* ---------- your own picture: choose, drop or paste ---------- */
-  // The picture is kept (downscaled, as a JPEG) in this browser so a reload
-  // keeps it. It is media, not configuration: a shared link carries the
-  // settings, never the picture.
-  const storeUpload = (img, name) => {
-    try {
-      localStorage.setItem(UPLOAD_KEY, JSON.stringify({ name, data: E.keepable(img, 1600) }));
-    } catch (error) { /* storage full or blocked: the picture still works this session */ }
-  };
+  /* ---------- your picture: choose, drop or paste ---------- */
   const useImage = (img, name, store) => {
     uploadName = name || 'image';
     stage.dataset.hasImage = 'true';
-    engine.setSource(img, `upload:${uploadName}:${img.naturalWidth}x${img.naturalHeight}`);
-    if (store) storeUpload(img, uploadName);
-    if (viewport) { viewport.refresh('source'); viewport.fit(); }
-    said = '';
-    sayStatus();
+    setPicture(img, `upload:${uploadName}:${img.naturalWidth}x${img.naturalHeight}`);
+    if (store) { try { localStorage.setItem(UPLOAD_KEY, JSON.stringify({ name: uploadName, data: E.keepable(img, 1600) })); } catch (e) { /* the picture still works this session */ } }
+    said = ''; sayStatus();
   };
   const loadFile = (file) => {
     if (!file || !/^image\//.test(file.type)) { controller.status('THAT IS NOT A PICTURE — TRY A JPG, PNG OR WEBP', 'alert'); return; }
@@ -204,25 +191,11 @@
     const item = [...((e.clipboardData && e.clipboardData.items) || [])].find((i) => i.type.startsWith('image/'));
     if (item) loadFile(item.getAsFile());
   });
-  const restoreUpload = () => {
-    if (new URLSearchParams(location.search).get('reset-state') === '1') { try { localStorage.removeItem(UPLOAD_KEY); } catch (e) {} return; }
+  if (new URLSearchParams(location.search).get('reset-state') === '1') { try { localStorage.removeItem(UPLOAD_KEY); } catch (e) {} } else {
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(UPLOAD_KEY) || 'null'); } catch (e) { saved = null; }
-    if (!saved || !saved.data) return;
-    const img = new Image();
-    img.onload = () => useImage(img, saved.name, false);
-    img.src = saved.data;
-  };
-
-  /* ---------- the pointer is engine input, never configuration ---------- */
-  const point = (event) => {
-    const rect = canvas.getBoundingClientRect();
-    engine.setPointer((event.clientX - rect.left) / rect.width, (event.clientY - rect.top) / rect.height);
-  };
-  canvas.addEventListener('pointermove', point, { passive: true });
-  canvas.addEventListener('pointerdown', point, { passive: true });
-  canvas.addEventListener('pointerleave', () => engine.setPointer(null));
-  canvas.addEventListener('pointercancel', () => engine.setPointer(null));
+    if (saved && saved.data) { const img = new Image(); img.onload = () => useImage(img, saved.name, false); img.src = saved.data; }
+  }
 
   /* ---------- boot ---------- */
   const instrumentState = window.SUPERMEGA_INSTRUMENT.createState();
@@ -231,40 +204,40 @@
   window.TESSERA_MATERIALS = window.SUPERMEGA_INSTRUMENT.enhance(document.body, instrumentState);
   window.TESSERA_ADAPTER = adapter;
   window.TESSERA_ENGINE = engine;
-  window.TESSERA_SHELL = { controller, timeline, viewport };
+  window.TESSERA_SHELL = { controller, viewport };
   window.TESSERA_USE_IMAGE = useImage;
   if (window.parent !== window) window.TESSERA_BRIDGE = window.SUPERMEGA_INSTRUMENT_ADAPTERS.core.installBridge(adapter);
 
-  /* ---------- fidelity: the render against Base ----------
-     Base's bars, rendered at the Base preset on the portal sample and read off
-     the pixels: the widest bar is 0.66 of a cell (scale .66, tier weight 1). */
+  /* ---------- fidelity: the Base style against base.org's shader ----------
+     The widest bar at the Base style is 0.66 of a cell (scale .66, top tier). */
   window.SHELL_FIDELITY = [{
     name: 'base: widest bar as a share of the cell (scale 0.66)',
     reference: 0.66,
     tolerance: 0.03,
     measure: () => {
       const before = adapter.getConfiguration();
-      adapter.configure({ ...A.defaults, ...A.schema.presets.base, columns: 40, sample: 'portal', aspect: '1:1', motion: 'still', underlay: 0, contrast: 1 });
+      const was = current;
+      engine.setSource(E.drawSample('portal', 1200), 'sample:portal');
+      adapter.configure({ aspect: '1:1', balance: 0, contrast: 1, detail: 40 / E.STYLES.base.columns, style: 'base' });
       const off = document.createElement('canvas'); off.width = 2000; off.height = 2000;
       engine.renderTo(off, 2000, 2000, 0);
       adapter.configure(before);
+      engine.setSource(was.img, was.key);
       const g = off.getContext('2d');
       let widest = 0;
       for (let y = 50; y < 1950; y += 11) {
         const row = g.getImageData(0, y, 2000, 1).data;
         let run = 0;
         for (let x = 0; x < 2000; x += 1) {
-          // Half coverage or more against the white ground counts as ink.
-          const ink = (255 * 3 - row[x * 4] - row[x * 4 + 1] - row[x * 4 + 2]) / 3 > 0.5 * (255 * 3 - 0x00 - 0x00 - 0xff) / 3;
+          const ink = (765 - row[x * 4] - row[x * 4 + 1] - row[x * 4 + 2]) / 3 > 85;
           run = ink ? run + 1 : 0;
           if (run > widest && run < 50) widest = run;
         }
       }
-      return widest / 50; // a cell is 2000 / 40 = 50 px
+      return widest / 50;
     },
   }];
 
-  restoreUpload();
   viewport.fit();
   engine.start();
   sayStatus();

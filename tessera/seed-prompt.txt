@@ -70,33 +70,24 @@ A ground colour. Each tier's palette colour, or the picture's own colour per
 cell. An underlay (≤ 90%) mixes the photo in under the marks — capped so a
 cell with no mark still differs from the untouched photo.
 
-MOTION (close every loop)
+KEEP THE PANEL SMALL
 
-- reveal: cells switch from the photo to the field in an order — sweep (by
-  column), rows, radial from the centre, scatter (hash). Let the loop start AND
-  end on the field and ease back to the photo at the half:
-  r = smoothstep of |2·phase − 1|; a cell shows the field when order < r. An
-  export at time 0 is then the treatment.
-- cycle: tone = fract(min(tone, 0.99999) + phase), at every phase including 0.
-- drift: tone += 0.18 · amount · sin(2π·phase).
-
-THE POINTER (input, never saved, ignored by exports)
-
-A trail of up to 16 recent positions fading over about a second. Light / dark
-add or subtract tone under a soft brush; reveal shows the field only under the
-pointer.
-
-PRESETS THAT PROVE IT
-
-- Base: five tiers, darkest empty, columns, contrast 3.1, scale 0.66, gap 4.5%,
-  caps 44%, four bright line colours, white ground, fixed levels.
-- Maze: columns / rows / connect in black on yellow, light empty, flat 0.62.
-- Signal: thin dark blue and wide light blue columns on black.
-- Figure: checker, white rows, orange columns on near-black.
-- Rooster: blue checker, light-blue diamonds, pale grey columns on white.
-- Icons: rings, squares and dots in five saturated colours on black.
-- Ink (default): blue columns on white, inverted so the darkest tones are the
-  heaviest bars — reads on ordinary photos.
+Offer five STYLES, each a fixed recipe, and only four controls: style, detail
+(× the style's cell count), contrast, balance (a lightness trim). Measured
+recipes (dark → light):
+- Yellow: column, row, joined bar, empty — black on #f7d358, square cells,
+  flat weight 0.66, run gap 0.17.
+- Blue: empty, column 0.25, column 0.68 — #0000ff / #6a9cff on black, cells
+  1.75× taller than wide, square ends.
+- Figure: checker 0.85, column 0.35, row 0.4 — beige / orange / white on
+  #1b1d20; on a photo (no cut-out) add a fourth, empty tier for the lightest.
+- Rooster: checker 0.55, diamond 1.0, column 0.8, empty — #0000ff / #5b8ff9 /
+  #e4e5e7 on white.
+- Base: empty + four columns at 1/8, 1/2, 3/4, 1 × 0.66, round caps 0.44.
+Read each cell's tone one mip level wider than the cell so regions hold
+together. Detect cut-outs (transparent border): place them with room around
+(contain, ~0.82), premultiply on upload and divide by coverage, and treat cells
+under 80% coverage as empty so a subject lift's soft fringe drops out.
 
 CREDIT
 
