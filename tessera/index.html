@@ -20,6 +20,12 @@
   .stage canvas{display:block;cursor:crosshair}
   /* Dropping a picture: the stage says so. */
   .stage[data-drop="over"]{outline:2px dashed #f61515;outline-offset:-10px}
+  /* The first thing on the stage: where your picture goes. Page-owned, not a kit control. */
+  .tessera-drop{position:absolute;inset-inline:0;inset-block-start:50%;transform:translateY(-50%);margin-inline:auto;inline-size:min(440px,calc(100% - 32px));z-index:3;display:grid;gap:6px;justify-items:center;padding:22px 20px;border:2px dashed rgba(255,255,255,.55);background:rgba(10,10,10,.82);color:#fff;font:600 15px/1.3 var(--instrument-font-sans, system-ui, sans-serif);text-align:center;cursor:pointer;backdrop-filter:blur(4px)}
+  .tessera-drop:hover,.stage[data-drop="over"] .tessera-drop{border-color:#f61515}
+  .tessera-drop small{font:500 11px/1.3 var(--instrument-font-mono, ui-monospace, monospace);letter-spacing:.04em;opacity:.7;text-transform:uppercase}
+  .stage[data-has-image="true"] .tessera-drop{display:none}
+  body[data-instrument-embed="true"] .tessera-drop{display:none}
   .tessera-file{position:absolute;inline-size:1px;block-size:1px;opacity:0;pointer-events:none}
   .tessera-credit{position:absolute;inset-inline-end:16px;inset-block-end:14px;text-align:end;font:500 11px/1.3 var(--instrument-font-mono, ui-monospace, monospace);letter-spacing:.04em;color:#fff;mix-blend-mode:difference;opacity:.7;z-index:2}
   .tessera-credit a{color:inherit}
@@ -31,13 +37,14 @@
 
   <section class="stage instrument-renderer-surface" id="stage">
     <canvas id="c" aria-label="Tessera: a picture rebuilt as a grid of marks — bars, squares, rings, dots and checkers — one mark and one colour per tone. Drop or paste a picture to use your own."></canvas>
+    <button type="button" class="tessera-drop" id="drop"><span>Drop a picture here — or click to choose one</span><small>JPG · PNG · WEBP · or paste · it becomes the field of marks</small></button>
     <div class="tessera-credit">After the Base image treatment — <a href="https://mouthwash.studio/project/base/" target="_blank" rel="noreferrer">Mouthwash Studio</a>, tool by <a href="https://johnprovencher.com/" target="_blank" rel="noreferrer">John Provencher</a>, after Karel Martens · <a href="seed-prompt.txt">seed prompt</a></div>
   </section>
 
   <header class="instrument-renderer-chrome">
     <div class="instrument-renderer-chrome-zone experiment-brand"><span class="experiment-brand-mark" aria-hidden="true"></span><a data-crumb="root" href="https://supermega.design">SUPERMEGA</a><span class="experiment-brand-sep" aria-hidden="true">/</span><a href="../">EXPERIMENTS</a><span class="experiment-brand-sep" aria-hidden="true">/</span><span class="experiment-brand-here">TESSERA</span></div>
     <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--middle"><span>Any picture as a field of marks — one glyph, one colour per tone. Drop, paste or pick an image.</span></div>
-    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">EX-TESS-01</span><button type="button" class="instrument-action" id="b-image" title="Use your own picture — or drop / paste one onto the stage">Image</button><button type="button" class="instrument-action" id="b-defaults" title="Restore configuration defaults — Base's own settings">Defaults</button><button class="instrument-action" id="toggle" type="button">Controls</button></div>
+    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">EX-TESS-01</span><button type="button" class="instrument-action" id="b-image" title="Use your own picture — or drop / paste one onto the stage">Upload</button><button type="button" class="instrument-action" id="b-defaults" title="Restore configuration defaults — Base's own settings">Defaults</button><button class="instrument-action" id="toggle" type="button">Controls</button></div>
   </header>
   <input class="tessera-file" id="file" type="file" accept="image/*" aria-label="Choose a picture" />
 
@@ -87,6 +94,7 @@
   const useSample = (name) => {
     if (!sampleCache.has(name)) sampleCache.set(name, E.drawSample(name, 1200));
     uploadName = null;
+    delete stage.dataset.hasImage;
     engine.setSource(sampleCache.get(name), `sample:${name}`);
     if (viewport) viewport.refresh('source');
   };
@@ -102,15 +110,11 @@
     },
     createArtifact: (request) => {
       const edge = request && Number.isFinite(request.longEdge) ? request.longEdge : 4096;
-      const t = timeline ? timeline.transport.time() : 0;
-      const svg = request && request.format === 'svg';
-      const out = svg ? engine.exportSVG(edge, t) : engine.exportPNG(edge, t);
+      const out = engine.exportPNG(edge, timeline ? timeline.transport.time() : 0);
       const c = adapter.getConfiguration();
-      const filename = `tessera-${uploadName ? 'image' : c.sample}-${c.seed}-${out.width}.${svg ? 'svg' : 'png'}`;
-      return { ...out, filename, mime: svg ? 'image/svg+xml' : 'image/png' };
+      return { ...out, filename: `tessera-${uploadName ? "image" : c.sample}-${out.width}.png`, mime: 'image/png' };
     },
     hideControls: () => controller.setControls(false),
-    nextSeed: () => shell.nextSeed(schema),
     nextVariant: () => shell.randomise(schema),
     pause: () => { if (timeline) timeline.transport.pause(); return { paused: true }; },
     resume: () => { if (timeline) timeline.transport.play(); return { paused: false }; },
@@ -128,7 +132,6 @@
     bounds: artboard,
     duration: () => adapter.getConfiguration().loop,
     renderFrame: (ctx, width, height, time) => engine.renderTo(ctx.canvas, width, height, time),
-    renderVector: (width, height) => engine.renderSVG(width, height, timeline ? timeline.transport.time() : 0),
     resize: (width, height) => engine.resizeTo(width, height),
     speed: () => 1,
     time: () => (timeline ? timeline.transport.time() : 0),
@@ -175,6 +178,7 @@
   };
   const useImage = (img, name, store) => {
     uploadName = name || 'image';
+    stage.dataset.hasImage = 'true';
     engine.setSource(img, `upload:${uploadName}:${img.naturalWidth}x${img.naturalHeight}`);
     if (store) storeUpload(img, uploadName);
     if (viewport) { viewport.refresh('source'); viewport.fit(); }
@@ -191,6 +195,7 @@
   };
   const input = document.getElementById('file');
   document.getElementById('b-image').addEventListener('click', () => input.click());
+  document.getElementById('drop').addEventListener('click', () => input.click());
   input.addEventListener('change', () => { loadFile(input.files && input.files[0]); input.value = ''; });
   stage.addEventListener('dragover', (e) => { e.preventDefault(); stage.dataset.drop = 'over'; });
   stage.addEventListener('dragleave', () => { delete stage.dataset.drop; });

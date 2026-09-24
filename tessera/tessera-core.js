@@ -1,85 +1,54 @@
 /* =============================================================================
-   Tessera — engine.
+   Tessera — a shader over your picture.
 
-   An image becomes a grid of cells; each cell's tone snaps to one of a few
-   TIERS; every tier is drawn as one glyph in one colour at one weight. Bars
-   that sit next to each other along their own axis in the same tier join into
-   one long bar with a gap and a rounded cap where the run ends — that joining
-   is what turns a posterised image into the woven field of the Base brand
-   (Mouthwash Studio, with an image tool by John Provencher, after Karel
-   Martens). The rest of the glyph alphabet — squares, rings, dots, diamonds,
-   checkers — is the Martens icon set.
+   One WebGL2 fragment pass. The frame is a grid; every cell reads the
+   picture's average colour under it (a mip level the size of the cell), turns
+   that into a tone, snaps the tone to one of 2–6 TIERS, and draws the tier's
+   mark — a LINEAR mark (column, row, or a joined bar that picks its own axis
+   from its neighbours) or a CUBIC one (square, checker, diamond, dot, ring,
+   solid). Bars look at the cells before and after them: same tier → the bar
+   runs straight through the cell edge; different → it stops short by halfW a
+   gap with a rounded cap. That joining is what turns a posterised picture into
+   the woven field of the Base treatment (Mouthwash Studio, image tool by John
+   Provencher, after Karel Martens).
 
-   One scene, three outputs: the canvas on screen, the PNG, and the SVG are
-   all drawn from `buildScene`, so what you see is what you print.
-
-   Nothing here is Base's code. Its public shader was read for its numbers
-   (tier edges, bar weights, gap, cap roundness, contrast); see NOTES.md.
+   Nothing here is Base's code; its public shader was read for its numbers.
    ========================================================================== */
 (function tesseraEngine(global) {
 	"use strict";
 
-	const GLYPHS = ["empty", "column", "row", "flow", "solid", "square", "ring", "dot", "diamond", "checker", "cross", "slash"];
-	const BAR_GLYPHS = new Set(["column", "row", "flow"]);
+	// Order matters: it is the glyph id the shader switches on.
+	const GLYPHS = ["empty", "column", "row", "connect", "square", "checker", "diamond", "dot", "ring", "solid"];
 	const MAX_TIERS = 6;
+	const MAX_TRAIL = 16;
+	const ORDERS = ["sweep", "rows", "radial", "scatter"];
 	const ASPECTS = { "1:1": [1, 1], "4:5": [4, 5], "3:4": [3, 4], "2:3": [2, 3], "9:16": [9, 16], "5:4": [5, 4], "3:2": [3, 2], "16:9": [16, 9] };
 
 	const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
-	const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 	const fract = (x) => x - Math.floor(x);
 	function hexToRgb(hex) {
 		const h = String(hex || "#000000").replace("#", "");
 		return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
 	}
-	const lumOf = (r, g, b) => 0.299 * r + 0.587 * g + 0.114 * b;
-	// A seeded hash per cell: stable across frames, re-dealt by the seed.
-	function hash2(x, y, seed) {
-		let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263) + Math.imul(seed | 0, 1442695041)) | 0;
-		h = Math.imul(h ^ (h >>> 13), 1274126177);
-		return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
-	}
 
-	/* ---------- the grid ---------- */
-	/** Columns are authored; rows follow from the frame and the cell's aspect. */
-	function gridFor(config, width, height) {
-		const cols = Math.max(1, Math.round(config.columns));
-		const cw = width / cols;
-		const ch = cw * config.cellAspect;
-		const rows = Math.max(1, Math.ceil(height / ch - 1e-6));
-		return { ch, cols, cw, rows };
-	}
-
-	/** Where the source sits in the frame: cover or contain, then zoom and pan. In frame pixels. */
-	function placeSource(config, width, height, srcW, srcH) {
-		const s = config.fit === "contain" ? Math.min(width / srcW, height / srcH) : Math.max(width / srcW, height / srcH);
-		const k = s * config.zoom;
-		const w = srcW * k;
-		const h = srcH * k;
-		// Pan runs from −1 to 1 across whatever slack (or overhang) the placement leaves.
-		const x = (width - w) / 2 + config.panX * Math.abs(width - w) / 2;
-		const y = (height - h) / 2 + config.panY * Math.abs(height - h) / 2;
-		return { h, w, x, y };
-	}
-
-	/* ---------- tone ---------- */
-	/** Brightness, then contrast about the middle (Base's form), then gamma and invert. */
-	function toneOf(lum, config) {
-		let v = lum + config.brightness;
+	/* ---------- pure maths the tests pin (the shader mirrors these) ---------- */
+	/** Levels, contrast about the middle, gamma, invert, then a brightness trim. */
+	function toneOf(lum, config, levels) {
+		let v = lum;
+		if (levels && config.levels === "auto") v = levels.hi - levels.lo > 1e-3 ? (v - levels.lo) / (levels.hi - levels.lo) : v;
+		if (levels && config.levels === "equalize") v = levels.cdf[Math.min(255, Math.max(0, Math.round(v * 255)))];
 		v = clamp((v - 0.5) * config.contrast + 0.5, 0, 1);
 		v = Math.pow(v, config.gamma);
-		return config.invert ? 1 - v : v;
+		if (config.invert) v = 1 - v;
+		return clamp(v + config.brightness, 0, 1);
 	}
-
-	/** Tier edges are even: tier = ⌊tone · N⌋. Base's five-tier blank mode is exactly this at N = 5. */
-	function tierOf(tone, tiers) {
-		return Math.min(tiers - 1, Math.floor(clamp(tone, 0, 1) * tiers));
-	}
+	const tierOf = (tone, tiers) => Math.min(tiers - 1, Math.floor(clamp(tone, 0, 1) * tiers));
 
 	/**
-	 * Weight of a tier, as a share of the cell. The first inked tier is
-	 * `minWeight`; the last is 1; between, a power curve. Base's bars are
-	 * half-thickness 1/16, 1/4, 3/8, 1/2 of a cell — widths 0.125, 0.5, 0.75, 1 —
-	 * which this reproduces within 0.02 at minWeight 0.125, curve 0.77.
+	 * Weight of a tier as a share of the cell. Ramp: the first inked tier gets
+	 * `minWeight`, the last 1, a power curve between, all × scale — Base's bars
+	 * (1/8, 1/2, 3/4, 1 of a cell) come back at minWeight 0.125, curve 0.77.
+	 * Flat: every tier is `scale`.
 	 */
 	function weightOf(tier, tiers, firstInk, config) {
 		if (config.weighting === "flat") return config.scale;
@@ -88,302 +57,343 @@
 		return (config.minWeight + (1 - config.minWeight) * Math.pow(t, config.curve)) * config.scale;
 	}
 
-	function glyphsOf(config) {
-		const out = [];
-		for (let i = 0; i < config.tiers; i += 1) out.push(config[`glyph${i + 1}`] || "empty");
-		return out;
-	}
-
-	/**
-	 * Levels: the picture's own range, measured once per grid. Fixed leaves the
-	 * tones alone (Base, whose footage is graded for its tier edges); auto
-	 * stretches the 2nd–98th percentile to 0..1; equalise replaces each tone
-	 * with its rank, so every tier covers the same share of the picture.
-	 */
-	function levelsOf(grid) {
-		if (grid.levels) return grid.levels;
-		const { cells } = grid;
-		const n = cells.length / 4;
-		const lums = [];
-		for (let i = 0; i < n; i += 1) if (cells[i * 4 + 3] >= 0.5) lums.push(lumOf(cells[i * 4], cells[i * 4 + 1], cells[i * 4 + 2]));
-		const sorted = Float32Array.from(lums).sort();
-		const at = (q) => (sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor(q * (sorted.length - 1)))] : 0);
-		grid.levels = { hi: at(0.98), lo: at(0.02), sorted };
-		return grid.levels;
-	}
-	function levelled(lum, mode, levels) {
-		if (mode === "auto") return levels.hi - levels.lo > 1e-3 ? (lum - levels.lo) / (levels.hi - levels.lo) : lum;
-		if (mode === "equalize") {
-			const a = levels.sorted;
-			if (!a.length) return lum;
-			let lo = 0, hi = a.length;
-			while (lo < hi) { const mid = (lo + hi) >> 1; if (a[mid] < lum) lo = mid + 1; else hi = mid; }
-			// Mid-rank of the run of equal tones, so a flat area does not all land at its bottom edge.
-			let top = lo;
-			while (top < a.length && a[top] === lum) top += 1;
-			return ((lo + top) / 2) / Math.max(1, a.length);
-		}
-		return lum;
-	}
-
-	/* ---------- motion ---------- */
-	/** The reveal order of a cell, 0..1: sweep by column, rows, radial from the centre, or seeded scatter. */
-	function revealOrder(mode, cx, cy, cols, rows, seed) {
-		if (mode === "rows") return (cy + 0.5) / rows;
-		if (mode === "radial") return Math.hypot((cx + 0.5) / cols - 0.5, (cy + 0.5) / rows - 0.5) / Math.SQRT1_2;
-		if (mode === "scatter") return hash2(cx, cy, seed + 7);
-		return (cx + 0.5) / cols;
-	}
-
-	/**
-	 * Reveal 0..1 across a loop: the loop starts and ends on the field, eases
-	 * back to the picture at the half and wipes in again — so a frame taken at
-	 * time 0 is the treatment, and no stretch of the loop stands still.
-	 */
+	/** The loop starts and ends on the field and eases back to the picture at the halfW. */
 	function revealAt(phase) {
 		const x = Math.abs(2 * fract(phase) - 1);
 		return x * x * (3 - 2 * x);
 	}
 
-	/* ---------- the scene ---------- */
-	/**
-	 * grid: { cols, rows, cw, ch, cells: Float32Array(cols·rows·4) of r,g,b,a in 0..1 }.
-	 * trail: [{x, y, w}] in frame fractions, or null. phase: 0..1 of the loop.
-	 * Returns shapes in frame pixels; `paint` and `toSVG` draw the same list.
-	 */
-	function buildScene(config, grid, phase, trail, frame) {
-		const { cols, rows, cw, ch, cells } = grid;
-		const tiers = clamp(Math.round(config.tiers), 2, MAX_TIERS);
-		const glyphs = glyphsOf({ ...config, tiers });
-		const firstInk = Math.max(0, glyphs.findIndex((g) => g !== "empty"));
-		const palette = config.palette.map(hexToRgb);
-		const motion = config.motion;
-		const drift = motion === "drift" ? 0.18 * config.amount * Math.sin(2 * Math.PI * phase) : 0;
-		const cycle = motion === "cycle" ? phase : 0;
-		const reveal = motion === "reveal" ? revealAt(phase) : 1;
-		const n = cols * rows;
-		const tierOfCell = new Int8Array(n).fill(-1);
-		const orient = new Int8Array(n); // 0 vertical, 1 horizontal
-		const visible = new Uint8Array(n);
-		const tone = new Float32Array(n);
-		const levels = config.levels === "fixed" ? null : levelsOf(grid);
-
-		// 1. tone per cell, with the drift, the cycle and the pointer's paint
-		for (let cy = 0; cy < rows; cy += 1) {
-			for (let cx = 0; cx < cols; cx += 1) {
-				const i = cy * cols + cx;
-				const a = cells[i * 4 + 3];
-				if (a < 0.5) continue;
-				const raw = lumOf(cells[i * 4], cells[i * 4 + 1], cells[i * 4 + 2]);
-				let v = toneOf(levels ? levelled(raw, config.levels, levels) : raw, config) + drift;
-				if (trail && trail.length && config.pointer !== "off") {
-					const fx = (cx + 0.5) / cols;
-					const fy = ((cy + 0.5) * ch) / (rows * ch);
-					let push = 0;
-					for (const p of trail) {
-						const d = Math.hypot((fx - p.x) * frame.aspect, fy - p.y);
-						push += p.w * (1 - smoothstep(0, config.brush, d));
-					}
-					push = Math.min(1, push) * config.pointerStrength;
-					if (config.pointer === "light") v += push;
-					else if (config.pointer === "dark") v -= push;
-				}
-				// Cycle wraps every tone, at every phase, so phase 0 and phase 1 are the same frame.
-				if (motion === "cycle") v = fract(clamp(v, 0, 0.99999) + cycle);
-				tone[i] = clamp(v, 0, 1);
-				tierOfCell[i] = tierOf(tone[i], tiers);
-				let shown = reveal >= 1 ? 1 : reveal <= 0 ? 0 : (revealOrder(config.order, cx, cy, cols, rows, config.seed) < reveal ? 1 : 0);
-				if (config.pointer === "reveal" && trail && trail.length) {
-					const fx = (cx + 0.5) / cols;
-					const fy = (cy + 0.5) / rows;
-					let near = 0;
-					for (const p of trail) near = Math.max(near, p.w * (1 - smoothstep(config.brush * 0.6, config.brush, Math.hypot((fx - p.x) * frame.aspect, fy - p.y))));
-					shown = near > 0.5 ? 1 : 0;
-				}
-				visible[i] = shown;
-			}
+	/** Levels measured once per picture placement: 2nd/98th percentile and a 256-step CDF. */
+	function measureLevels(data) {
+		const hist = new Float64Array(256);
+		let n = 0;
+		for (let i = 0; i < data.length; i += 4) {
+			if (data[i + 3] < 128) continue;
+			const l = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) | 0;
+			hist[l] += 1; n += 1;
 		}
-
-		// 2. orientation: fixed per glyph, or — for flow bars — along the picture's structure.
-		// The structure tensor (gx², gy², gx·gy, smoothed over a few cells) carries an edge's
-		// direction into the flat area beside it; where there is still no direction, a seeded
-		// patchwork of blocks decides, which is what makes the maze.
-		const usesFlow = glyphs.includes("flow");
-		let flowDir = null;
-		if (usesFlow) {
-			const L = new Float32Array(n);
-			for (let i = 0; i < n; i += 1) L[i] = cells[i * 4 + 3] < 0.5 ? 0 : lumOf(cells[i * 4], cells[i * 4 + 1], cells[i * 4 + 2]);
-			const at = (x, y) => L[clamp(y, 0, rows - 1) * cols + clamp(x, 0, cols - 1)];
-			const xx = new Float32Array(n), yy = new Float32Array(n), xy = new Float32Array(n);
-			for (let cy = 0; cy < rows; cy += 1) for (let cx = 0; cx < cols; cx += 1) {
-				const gx = at(cx + 1, cy - 1) + 2 * at(cx + 1, cy) + at(cx + 1, cy + 1) - at(cx - 1, cy - 1) - 2 * at(cx - 1, cy) - at(cx - 1, cy + 1);
-				const gy = at(cx - 1, cy + 1) + 2 * at(cx, cy + 1) + at(cx + 1, cy + 1) - at(cx - 1, cy - 1) - 2 * at(cx, cy - 1) - at(cx + 1, cy - 1);
-				const i = cy * cols + cx;
-				xx[i] = gx * gx; yy[i] = gy * gy; xy[i] = gx * gy;
-			}
-			const blur = (src) => {
-				const r = 3, tmp = new Float32Array(n), out = new Float32Array(n);
-				for (let cy = 0; cy < rows; cy += 1) for (let cx = 0; cx < cols; cx += 1) {
-					let sum = 0; for (let k = -r; k <= r; k += 1) sum += src[cy * cols + clamp(cx + k, 0, cols - 1)];
-					tmp[cy * cols + cx] = sum / (2 * r + 1);
-				}
-				for (let cy = 0; cy < rows; cy += 1) for (let cx = 0; cx < cols; cx += 1) {
-					let sum = 0; for (let k = -r; k <= r; k += 1) sum += tmp[clamp(cy + k, 0, rows - 1) * cols + cx];
-					out[cy * cols + cx] = sum / (2 * r + 1);
-				}
-				return out;
-			};
-			const bxx = blur(xx), byy = blur(yy), bxy = blur(xy);
-			flowDir = new Int8Array(n);
-			const patch = 6;
-			for (let cy = 0; cy < rows; cy += 1) for (let cx = 0; cx < cols; cx += 1) {
-				const i = cy * cols + cx;
-				const strength = bxx[i] + byy[i];
-				// Energy mostly in x means edges run vertically: bars go down them (0). Mostly in y: across (1).
-				if (strength > 0.004 && Math.abs(bxx[i] - byy[i]) > 0.25 * strength) flowDir[i] = byy[i] > bxx[i] ? 1 : 0;
-				else flowDir[i] = hash2(Math.floor(cx / patch), Math.floor(cy / patch), config.seed) < 0.5 ? 0 : 1;
-			}
+		const cdf = new Float32Array(256);
+		let acc = 0, lo = 0, hi = 1, loSet = false, hiSet = false;
+		for (let i = 0; i < 256; i += 1) {
+			// Mid-rank of the bin, so a flat area lands in the middle of its span.
+			cdf[i] = n ? (acc + hist[i] / 2) / n : i / 255;
+			acc += hist[i];
+			if (!loSet && acc >= 0.02 * n) { lo = i / 255; loSet = true; }
+			if (!hiSet && acc >= 0.98 * n) { hi = i / 255; hiSet = true; }
 		}
-		for (let i = 0; i < n; i += 1) {
-			const t = tierOfCell[i];
-			if (t < 0) continue;
-			const g = glyphs[t];
-			if (g === "row") orient[i] = 1;
-			else if (g === "flow") orient[i] = flowDir[i];
-		}
+		return { cdf, hi, lo };
+	}
 
-		const shapes = [];
-		const colourOf = (t, i) => {
-			if (config.colorMode === "source") return [cells[i * 4], cells[i * 4 + 1], cells[i * 4 + 2]];
-			return palette[(t - firstInk + palette.length * 8) % palette.length] || [1, 1, 1];
+	/** Where the picture sits in the frame: cover or contain, then zoom and pan. In frame pixels. */
+	function placeSource(config, width, height, srcW, srcH) {
+		const s = config.fit === "contain" ? Math.min(width / srcW, height / srcH) : Math.max(width / srcW, height / srcH);
+		const k = s * config.zoom;
+		const w = srcW * k, h = srcH * k;
+		return { h, w, x: (width - w) / 2 + (config.panX * Math.abs(width - w)) / 2, y: (height - h) / 2 + (config.panY * Math.abs(height - h)) / 2 };
+	}
+
+	/* ---------- the shader ---------- */
+	const VERT = `#version 300 es
+in vec2 aPos;
+void main(){ gl_Position = vec4(aPos, 0.0, 1.0); }`;
+
+	const FRAG = `#version 300 es
+precision highp float;
+out vec4 outColor;
+uniform sampler2D uImage;
+uniform sampler2D uCdf;        // 256×1 equalise table
+uniform vec2 uRes;             // frame px
+uniform vec4 uPlace;           // picture rect in frame px: x, y, w, h
+uniform vec2 uImageSize;       // picture px
+uniform vec2 uCell;            // cell px (w, h)
+uniform int uLevels;           // 0 fixed, 1 auto, 2 equalize
+uniform vec2 uLoHi;
+uniform float uContrast, uGamma, uBrightness;
+uniform int uInvert;
+uniform int uTiers;
+uniform int uGlyph[${MAX_TIERS}];
+uniform float uWeight[${MAX_TIERS}];
+uniform vec3 uTierColor[${MAX_TIERS}];
+uniform int uJoin;
+uniform float uGap;            // share of a cell
+uniform float uCaps;           // share of the halfW-width
+uniform float uLine;           // ring stroke share
+uniform vec3 uGround;
+uniform float uImageColor;     // 0 palette … 1 the picture's own colour
+uniform float uUnderlay;
+uniform int uMotion;           // 0 still, 1 reveal, 2 cycle, 3 drift
+uniform float uPhase, uAmount;
+uniform int uOrder;
+uniform float uSeed;
+uniform int uTrailCount;
+uniform vec3 uTrail[${MAX_TRAIL}];  // x, y (frame fractions), weight
+uniform int uPointer;          // 0 off, 1 light, 2 dark, 3 reveal
+uniform float uBrush, uStrength;
+
+float hash(vec2 p){ p = fract(p * vec2(443.897, 441.423)); p += dot(p, p.yx + 19.19); return fract((p.x + p.y) * p.x); }
+
+// The picture under a cell, averaged: the mip level whose texel is about one cell.
+vec4 cellSample(vec2 cell){
+  vec2 centre = (cell + 0.5) * uCell;
+  vec2 uv = (centre - uPlace.xy) / uPlace.zw;
+  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return vec4(0.0);
+  float texelsPerCell = max(uCell.x / uPlace.z * uImageSize.x, uCell.y / uPlace.w * uImageSize.y);
+  return textureLod(uImage, uv, max(0.0, log2(texelsPerCell)));
+}
+
+float pointerPush(vec2 cell){
+  if (uPointer == 0 || uPointer == 3 || uTrailCount == 0) return 0.0;
+  vec2 f = (cell + 0.5) * uCell / uRes;
+  float push = 0.0;
+  for (int i = 0; i < ${MAX_TRAIL}; i++) {
+    if (i >= uTrailCount) break;
+    vec2 d = (f - uTrail[i].xy) * vec2(uRes.x / uRes.y, 1.0);
+    push += uTrail[i].z * (1.0 - smoothstep(0.0, uBrush, length(d)));
+  }
+  push = min(push, 1.0) * uStrength;
+  return uPointer == 1 ? push : -push;
+}
+
+// Tone → tier; −1 where the picture is not.
+int tierAt(vec2 cell){
+  vec4 c = cellSample(cell);
+  if (c.a < 0.5) return -1;
+  float v = dot(c.rgb, vec3(0.299, 0.587, 0.114));
+  if (uLevels == 1) v = uLoHi.y - uLoHi.x > 1e-3 ? (v - uLoHi.x) / (uLoHi.y - uLoHi.x) : v;
+  else if (uLevels == 2) v = texture(uCdf, vec2(clamp(v, 0.0, 1.0) * (255.0 / 256.0) + 0.5 / 256.0, 0.5)).r;
+  v = clamp((v - 0.5) * uContrast + 0.5, 0.0, 1.0);
+  v = pow(v, uGamma);
+  if (uInvert == 1) v = 1.0 - v;
+  v = clamp(v + uBrightness, 0.0, 1.0);
+  v += pointerPush(cell);
+  if (uMotion == 3) v += 0.18 * uAmount * sin(6.2831853 * uPhase);
+  if (uMotion == 2) v = fract(clamp(v, 0.0, 0.99999) + uPhase);
+  v = clamp(v, 0.0, 1.0);
+  return min(uTiers - 1, int(floor(v * float(uTiers))));
+}
+
+int glyphOf(int t){ return t < 0 ? 0 : uGlyph[t]; }
+
+float aa(float d){ return clamp(0.5 - d, 0.0, 1.0); } // d in px, negative inside
+
+// A bar along one axis. p: px from the cell's corner; size: cell px; halfW: halfW-width px;
+// joinA/joinB: the run continues through the start/end edge.
+float bar(vec2 p, vec2 size, float halfW, bool vertical, bool joinA, bool joinB){
+  float across = vertical ? p.x - size.x * 0.5 : p.y - size.y * 0.5;
+  float along = vertical ? p.y : p.x;
+  float len = vertical ? size.y : size.x;
+  float g = uGap * len * 0.5;
+  float a0 = joinA ? -2.0 * len : g;
+  float a1 = joinB ? 3.0 * len : len - g;
+  float r = clamp(uCaps, 0.0, 1.0) * halfW;
+  float mid = 0.5 * (a0 + a1), hl = 0.5 * (a1 - a0);
+  vec2 q = abs(vec2(across, along - mid)) - vec2(halfW, hl) + r;
+  float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r;
+  return aa(d);
+}
+
+float cubic(int g, vec2 p, vec2 size, float w, vec2 cell){
+  vec2 c = p - size * 0.5;
+  float m = min(size.x, size.y);
+  if (g == 9) return 1.0;                                                        // solid
+  if (g == 4) { vec2 q = abs(c) - vec2(w * m * 0.5); return aa(max(q.x, q.y)); } // square
+  if (g == 5) {                                                                  // checker
+    if (mod(cell.x + cell.y, 2.0) > 0.5) return 0.0;
+    vec2 q = abs(c) - w * size * 0.5; return aa(max(q.x, q.y));
+  }
+  if (g == 6) return aa((abs(c.x) + abs(c.y) - w * m * 0.5) * 0.7071);           // diamond
+  if (g == 7) return aa(length(c) - w * m * 0.5);                                // dot
+  if (g == 8) {                                                                  // ring
+    float s = w * m * 0.5, t = max(1.0, s * 2.0 * uLine);
+    vec2 q = abs(c) - vec2(s); float outer = max(q.x, q.y);
+    vec2 qi = abs(c) - vec2(s - t); float inner = max(qi.x, qi.y);
+    return aa(outer) * (1.0 - aa(inner));
+  }
+  return 0.0;
+}
+
+void main(){
+  vec2 px = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);   // y down, like the frame
+  vec2 cell = floor(px / uCell);
+  vec2 p = px - cell * uCell;
+  vec2 puv = (px - uPlace.xy) / uPlace.zw;
+  bool onPicture = puv.x >= 0.0 && puv.y >= 0.0 && puv.x <= 1.0 && puv.y <= 1.0;
+  vec3 photo = texture(uImage, clamp(puv, 0.0, 1.0)).rgb;
+  vec3 ground = mix(uGround, photo, onPicture ? uUnderlay : 0.0);
+
+  int t = tierAt(cell);
+  int g = glyphOf(t);
+
+  // Reveal: cells the wipe has not reached show the picture itself.
+  float shown = 1.0;
+  if (uMotion == 1) {
+    vec2 n = (cell + 0.5) * uCell / uRes;
+    float order = uOrder == 0 ? n.x : uOrder == 1 ? n.y : uOrder == 2 ? length(n - 0.5) / 0.7071 : hash(cell + uSeed * 0.013);
+    float x = abs(2.0 * fract(uPhase) - 1.0);
+    float r = x * x * (3.0 - 2.0 * x);
+    shown = (r >= 1.0 || order < r) ? 1.0 : 0.0;
+  }
+  if (uPointer == 3) {
+    vec2 f = (cell + 0.5) * uCell / uRes; float near = 0.0;
+    for (int i = 0; i < ${MAX_TRAIL}; i++) {
+      if (i >= uTrailCount) break;
+      vec2 d = (f - uTrail[i].xy) * vec2(uRes.x / uRes.y, 1.0);
+      near = max(near, uTrail[i].z * (1.0 - smoothstep(uBrush * 0.6, uBrush, length(d))));
+    }
+    shown = near > 0.5 ? 1.0 : 0.0;
+  }
+  if (shown < 0.5 && onPicture) { outColor = vec4(photo, 1.0); return; }
+
+  float ink = 0.0;
+  if (g == 1 || g == 2 || g == 3) {
+    int up = tierAt(cell + vec2(0.0, -1.0)), down = tierAt(cell + vec2(0.0, 1.0));
+    int left = tierAt(cell + vec2(-1.0, 0.0)), right = tierAt(cell + vec2(1.0, 0.0));
+    bool vertical = g == 1;
+    bool alone = false;
+    if (g == 3) {
+      // Joined bar: runs down if a neighbour above or below shares its tier,
+      // across if one beside it does, and is a square when it stands alone.
+      bool v = up == t || down == t;
+      bool h = left == t || right == t;
+      vertical = v;
+      alone = !v && !h;
+    }
+    if (alone) {
+      ink = cubic(4, p, uCell, uWeight[t], cell);
+    } else {
+      bool a = uJoin == 1 && (vertical ? up == t : left == t);
+      bool b = uJoin == 1 && (vertical ? down == t : right == t);
+      float halfW = uWeight[t] * (vertical ? uCell.x : uCell.y) * 0.5;
+      ink = bar(p, uCell, halfW, vertical, a, b);
+    }
+  } else if (g > 3) {
+    ink = cubic(g, p, uCell, uWeight[t], cell);
+  }
+  vec3 color = t >= 0 ? mix(uTierColor[t], cellSample(cell).rgb, uImageColor) : uGround;
+  outColor = vec4(mix(ground, color, ink), 1.0);
+}`;
+
+	function createRenderer(canvas) {
+		const gl = canvas.getContext("webgl2", { alpha: false, antialias: false, preserveDrawingBuffer: true, premultipliedAlpha: false });
+		if (!gl) return null;
+		const compile = (type, src) => {
+			const s = gl.createShader(type);
+			gl.shaderSource(s, src);
+			gl.compileShader(s);
+			if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+			return s;
 		};
-		const cellX = (cx) => cx * cw;
-		const cellY = (cy) => cy * ch;
-		const done = new Uint8Array(n);
-		const gap = config.gap;
+		const prog = gl.createProgram();
+		gl.attachShader(prog, compile(gl.VERTEX_SHADER, VERT));
+		gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FRAG));
+		gl.bindAttribLocation(prog, 0, "aPos");
+		gl.linkProgram(prog);
+		if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+		const loc = {};
+		const count = gl.getProgramParameter(prog, gl.ACTIVE_UNIFORMS);
+		for (let i = 0; i < count; i += 1) {
+			const info = gl.getActiveUniform(prog, i);
+			loc[info.name.replace(/\[0\]$/, "")] = gl.getUniformLocation(prog, info.name);
+		}
+		const vbo = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+		gl.enableVertexAttribArray(0);
+		gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+		const image = gl.createTexture();
+		const cdf = gl.createTexture();
+		let imageKey = null, cdfKey = null;
 
-		// 3. bars: runs along their own axis, joined while the tier, the axis and the reveal agree
-		for (let cy = 0; cy < rows; cy += 1) {
-			for (let cx = 0; cx < cols; cx += 1) {
-				const i = cy * cols + cx;
-				const t = tierOfCell[i];
-				if (t < 0 || done[i] || !visible[i]) continue;
-				const g = glyphs[t];
-				if (!BAR_GLYPHS.has(g)) continue;
-				const o = orient[i];
-				let len = 1;
-				if (config.merge) {
-					while (true) {
-						const nx = o ? cx + len : cx;
-						const ny = o ? cy : cy + len;
-						if (nx >= cols || ny >= rows) break;
-						const j = ny * cols + nx;
-						if (done[j] || tierOfCell[j] !== t || orient[j] !== o || !visible[j] || glyphs[tierOfCell[j]] !== g) break;
-						len += 1;
-					}
-				}
-				for (let k = 0; k < len; k += 1) done[o ? i + k : i + k * cols] = 1;
-				const w = weightOf(t, tiers, firstInk, config);
-				if (w <= 0) continue;
-				const colour = colourOf(t, i);
-				if (o === 0) {
-					const bw = w * cw;
-					const y0 = cellY(cy) + (gap * ch) / 2;
-					const y1 = cellY(cy + len) - (gap * ch) / 2;
-					shapes.push({ colour, kind: "bar", r: config.roundness * bw / 2, x: cellX(cx) + (cw - bw) / 2, y: y0, w: bw, h: Math.max(0, y1 - y0) });
-				} else {
-					const bh = w * ch;
-					const x0 = cellX(cx) + (gap * cw) / 2;
-					const x1 = cellX(cx + len) - (gap * cw) / 2;
-					shapes.push({ colour, kind: "bar", r: config.roundness * bh / 2, x: x0, y: cellY(cy) + (ch - bh) / 2, w: Math.max(0, x1 - x0), h: bh });
-				}
-			}
+		function upload(source, key) {
+			if (key === imageKey) return;
+			gl.bindTexture(gl.TEXTURE_2D, image);
+			gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+			gl.generateMipmap(gl.TEXTURE_2D);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+			imageKey = key;
+		}
+		function uploadCdf(levels, key) {
+			if (key === cdfKey) return;
+			const bytes = new Uint8Array(256 * 4);
+			for (let i = 0; i < 256; i += 1) bytes[i * 4] = Math.round(levels.cdf[i] * 255);
+			gl.bindTexture(gl.TEXTURE_2D, cdf);
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 256, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, bytes);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+			cdfKey = key;
 		}
 
-		// 4. every other glyph, one per cell
-		const m = Math.min(cw, ch);
-		for (let cy = 0; cy < rows; cy += 1) {
-			for (let cx = 0; cx < cols; cx += 1) {
-				const i = cy * cols + cx;
-				const t = tierOfCell[i];
-				if (t < 0 || done[i] || !visible[i]) continue;
-				const g = glyphs[t];
-				if (g === "empty" || BAR_GLYPHS.has(g)) continue;
-				const w = weightOf(t, tiers, firstInk, config);
-				const colour = colourOf(t, i);
-				const x = cellX(cx) + cw / 2;
-				const y = cellY(cy) + ch / 2;
-				const s = w * m;
-				if (g === "solid") shapes.push({ colour, kind: "rect", x: cellX(cx), y: cellY(cy), w: cw + 0.02, h: ch + 0.02 });
-				else if (g === "square") shapes.push({ colour, kind: "rect", x: x - s / 2, y: y - s / 2, w: s, h: s });
-				else if (g === "checker") { if ((cx + cy) % 2 === 0) shapes.push({ colour, kind: "rect", x: x - (w * cw) / 2, y: y - (w * ch) / 2, w: w * cw, h: w * ch }); }
-				else if (g === "ring") shapes.push({ colour, kind: "ring", x: x - s / 2, y: y - s / 2, w: s, h: s, line: Math.max(0.6, s * config.line) });
-				else if (g === "dot") shapes.push({ colour, kind: "dot", x, y, r: s / 2 });
-				else if (g === "diamond") shapes.push({ colour, kind: "diamond", x, y, r: s / 2 });
-				else if (g === "cross") shapes.push({ colour, kind: "cross", x, y, r: s / 2, line: Math.max(0.6, s * config.line) });
-				else if (g === "slash") shapes.push({ colour, kind: "slash", x, y, r: s / 2, line: Math.max(0.6, s * config.line), flip: (cx + cy) % 2 === 1 && config.alternate });
+		function draw(config, frame) {
+			const W = canvas.width, H = canvas.height;
+			const { source, sourceKey, levels, levelsKey, phase, trail } = frame;
+			upload(source, sourceKey);
+			uploadCdf(levels, levelsKey);
+			const sw = source.naturalWidth || source.width, sh = source.naturalHeight || source.height;
+			const place = placeSource(config, W, H, sw, sh);
+			const cw = W / Math.max(1, Math.round(config.columns));
+			const tiers = clamp(Math.round(config.tiers), 2, MAX_TIERS);
+			const names = [];
+			for (let i = 0; i < MAX_TIERS; i += 1) names.push(i < tiers ? config[`glyph${i + 1}`] || "empty" : "empty");
+			const firstInk = Math.max(0, names.findIndex((n) => n !== "empty"));
+			const palette = config.palette.map(hexToRgb);
+			const glyphs = [], weights = [], colours = [];
+			for (let i = 0; i < MAX_TIERS; i += 1) {
+				glyphs.push(Math.max(0, GLYPHS.indexOf(names[i])));
+				weights.push(weightOf(i, tiers, firstInk, config));
+				colours.push(...(palette[(((i - firstInk) % palette.length) + palette.length) % palette.length] || [1, 1, 1]));
 			}
+			const trailFlat = new Float32Array(MAX_TRAIL * 3);
+			const n = Math.min(MAX_TRAIL, trail ? trail.length : 0);
+			for (let i = 0; i < n; i += 1) trailFlat.set([trail[i].x, trail[i].y, trail[i].w], i * 3);
+
+			gl.viewport(0, 0, W, H);
+			gl.useProgram(prog);
+			gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, image); gl.uniform1i(loc.uImage, 0);
+			gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, cdf); gl.uniform1i(loc.uCdf, 1);
+			gl.uniform2f(loc.uRes, W, H);
+			gl.uniform4f(loc.uPlace, place.x, place.y, place.w, place.h);
+			gl.uniform2f(loc.uImageSize, sw, sh);
+			gl.uniform2f(loc.uCell, cw, cw * config.cellAspect);
+			gl.uniform1i(loc.uLevels, ["fixed", "auto", "equalize"].indexOf(config.levels));
+			gl.uniform2f(loc.uLoHi, levels.lo, levels.hi);
+			gl.uniform1f(loc.uContrast, config.contrast);
+			gl.uniform1f(loc.uGamma, config.gamma);
+			gl.uniform1f(loc.uBrightness, config.brightness);
+			gl.uniform1i(loc.uInvert, config.invert ? 1 : 0);
+			gl.uniform1i(loc.uTiers, tiers);
+			gl.uniform1iv(loc.uGlyph, glyphs);
+			gl.uniform1fv(loc.uWeight, weights);
+			gl.uniform3fv(loc.uTierColor, colours);
+			gl.uniform1i(loc.uJoin, config.merge ? 1 : 0);
+			gl.uniform1f(loc.uGap, config.gap);
+			gl.uniform1f(loc.uCaps, config.roundness);
+			gl.uniform1f(loc.uLine, 0.18);
+			gl.uniform3fv(loc.uGround, hexToRgb(config.background));
+			gl.uniform1f(loc.uImageColor, config.colorMode === "source" ? 1 : 0);
+			gl.uniform1f(loc.uUnderlay, config.underlay);
+			gl.uniform1i(loc.uMotion, ["still", "reveal", "cycle", "drift"].indexOf(config.motion));
+			gl.uniform1f(loc.uPhase, phase);
+			gl.uniform1f(loc.uAmount, config.amount);
+			gl.uniform1i(loc.uOrder, ORDERS.indexOf(config.order));
+			gl.uniform1f(loc.uSeed, 7);
+			gl.uniform1i(loc.uTrailCount, n);
+			gl.uniform3fv(loc.uTrail, trailFlat);
+			gl.uniform1i(loc.uPointer, ["off", "light", "dark", "reveal"].indexOf(config.pointer));
+			gl.uniform1f(loc.uBrush, config.brush);
+			gl.uniform1f(loc.uStrength, config.pointerStrength);
+			gl.drawArrays(gl.TRIANGLES, 0, 3);
+			return { cols: Math.round(config.columns), rows: Math.ceil(H / (cw * config.cellAspect)) };
 		}
-
-		// Hidden cells show the photo: the page paints it under the scene through these holes.
-		let hidden = 0;
-		for (let i = 0; i < n; i += 1) if (!visible[i] && tierOfCell[i] >= 0) hidden += 1;
-		return { cols, rows, cw, ch, shapes, hidden, visible, tier: tierOfCell, tone };
+		return { canvas, draw, maxSize: gl.getParameter(gl.MAX_RENDERBUFFER_SIZE) || 8192 };
 	}
 
-	/* ---------- drawing ---------- */
-	const css = (c) => `rgb(${Math.round(c[0] * 255)},${Math.round(c[1] * 255)},${Math.round(c[2] * 255)})`;
-
-	function paintShapes(ctx, shapes) {
-		let last = "";
-		for (const s of shapes) {
-			const fill = css(s.colour);
-			if (fill !== last) { ctx.fillStyle = fill; ctx.strokeStyle = fill; last = fill; }
-			if (s.kind === "rect") ctx.fillRect(s.x, s.y, s.w, s.h);
-			else if (s.kind === "bar") {
-				const r = Math.min(s.r, s.w / 2, s.h / 2);
-				if (r > 0.25) { ctx.beginPath(); ctx.roundRect(s.x, s.y, s.w, s.h, r); ctx.fill(); }
-				else ctx.fillRect(s.x, s.y, s.w, s.h);
-			} else if (s.kind === "ring") {
-				ctx.lineWidth = s.line;
-				ctx.strokeRect(s.x + s.line / 2, s.y + s.line / 2, Math.max(0, s.w - s.line), Math.max(0, s.h - s.line));
-			} else if (s.kind === "dot") {
-				ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
-			} else if (s.kind === "diamond") {
-				ctx.beginPath(); ctx.moveTo(s.x, s.y - s.r); ctx.lineTo(s.x + s.r, s.y); ctx.lineTo(s.x, s.y + s.r); ctx.lineTo(s.x - s.r, s.y); ctx.closePath(); ctx.fill();
-			} else if (s.kind === "cross") {
-				ctx.fillRect(s.x - s.r, s.y - s.line / 2, s.r * 2, s.line);
-				ctx.fillRect(s.x - s.line / 2, s.y - s.r, s.line, s.r * 2);
-			} else if (s.kind === "slash") {
-				ctx.lineWidth = s.line; ctx.lineCap = "butt";
-				ctx.beginPath();
-				if (s.flip) { ctx.moveTo(s.x - s.r, s.y - s.r); ctx.lineTo(s.x + s.r, s.y + s.r); } else { ctx.moveTo(s.x - s.r, s.y + s.r); ctx.lineTo(s.x + s.r, s.y - s.r); }
-				ctx.stroke();
-			}
-		}
-	}
-
-	const f2 = (v) => Number(v.toFixed(2));
-	function shapeToSVG(s) {
-		const fill = css(s.colour);
-		if (s.kind === "rect") return `<rect x="${f2(s.x)}" y="${f2(s.y)}" width="${f2(s.w)}" height="${f2(s.h)}" fill="${fill}"/>`;
-		if (s.kind === "bar") { const r = Math.min(s.r, s.w / 2, s.h / 2); return `<rect x="${f2(s.x)}" y="${f2(s.y)}" width="${f2(s.w)}" height="${f2(s.h)}"${r > 0.25 ? ` rx="${f2(r)}"` : ""} fill="${fill}"/>`; }
-		if (s.kind === "ring") return `<rect x="${f2(s.x + s.line / 2)}" y="${f2(s.y + s.line / 2)}" width="${f2(Math.max(0, s.w - s.line))}" height="${f2(Math.max(0, s.h - s.line))}" fill="none" stroke="${fill}" stroke-width="${f2(s.line)}"/>`;
-		if (s.kind === "dot") return `<circle cx="${f2(s.x)}" cy="${f2(s.y)}" r="${f2(s.r)}" fill="${fill}"/>`;
-		if (s.kind === "diamond") return `<path d="M${f2(s.x)} ${f2(s.y - s.r)}L${f2(s.x + s.r)} ${f2(s.y)}L${f2(s.x)} ${f2(s.y + s.r)}L${f2(s.x - s.r)} ${f2(s.y)}Z" fill="${fill}"/>`;
-		if (s.kind === "cross") return `<path d="M${f2(s.x - s.r)} ${f2(s.y)}H${f2(s.x + s.r)}M${f2(s.x)} ${f2(s.y - s.r)}V${f2(s.y + s.r)}" stroke="${fill}" stroke-width="${f2(s.line)}"/>`;
-		if (s.kind === "slash") return s.flip
-			? `<path d="M${f2(s.x - s.r)} ${f2(s.y - s.r)}L${f2(s.x + s.r)} ${f2(s.y + s.r)}" stroke="${fill}" stroke-width="${f2(s.line)}"/>`
-			: `<path d="M${f2(s.x - s.r)} ${f2(s.y + s.r)}L${f2(s.x + s.r)} ${f2(s.y - s.r)}" stroke="${fill}" stroke-width="${f2(s.line)}"/>`;
-		return "";
-	}
-
-	function toSVG(scene, config, width, height) {
-		const body = scene.shapes.map(shapeToSVG).join("\n");
-		return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f2(width)} ${f2(height)}" width="${f2(width)}" height="${f2(height)}">\n<rect width="100%" height="100%" fill="${config.background}"/>\n${body}\n</svg>\n`;
-	}
-
-	/* ---------- sources: our own procedural samples ---------- */
+	/* ---------- sources: procedural samples, all ours ---------- */
 	const SAMPLES = ["orb", "letter", "waves", "dunes", "portal"];
 	function drawSample(name, size) {
 		const c = global.document.createElement("canvas");
@@ -391,20 +401,17 @@
 		const g = c.getContext("2d");
 		const S = size;
 		if (name === "orb") {
-			g.fillStyle = "#0b0b0b"; g.fillRect(0, 0, S, S);
-			const floor = g.createRadialGradient(S * 0.55, S * 0.86, 0, S * 0.55, S * 0.86, S * 0.4);
-			floor.addColorStop(0, "#000"); floor.addColorStop(1, "rgba(0,0,0,0)");
-			const body = g.createRadialGradient(S * 0.38, S * 0.36, S * 0.02, S * 0.5, S * 0.5, S * 0.34);
-			body.addColorStop(0, "#ffffff"); body.addColorStop(0.35, "#b9b9b9"); body.addColorStop(0.8, "#3c3c3c"); body.addColorStop(1, "#141414");
-			g.fillStyle = "#6d6d6d"; g.fillRect(0, S * 0.78, S, S * 0.22);
-			g.fillStyle = floor; g.fillRect(0, S * 0.6, S, S * 0.4);
-			g.beginPath(); g.arc(S * 0.5, S * 0.5, S * 0.32, 0, Math.PI * 2); g.fillStyle = body; g.fill();
+			g.fillStyle = "#e9e6df"; g.fillRect(0, 0, S, S);
+			const shadow = g.createRadialGradient(S * 0.56, S * 0.86, 0, S * 0.56, S * 0.86, S * 0.36);
+			shadow.addColorStop(0, "rgba(0,0,0,.55)"); shadow.addColorStop(1, "rgba(0,0,0,0)");
+			g.fillStyle = shadow; g.fillRect(0, S * 0.6, S, S * 0.4);
+			const body = g.createRadialGradient(S * 0.38, S * 0.34, S * 0.02, S * 0.5, S * 0.5, S * 0.36);
+			body.addColorStop(0, "#ffffff"); body.addColorStop(0.3, "#9a9a9a"); body.addColorStop(0.8, "#262626"); body.addColorStop(1, "#050505");
+			g.beginPath(); g.arc(S * 0.5, S * 0.48, S * 0.33, 0, Math.PI * 2); g.fillStyle = body; g.fill();
 		} else if (name === "letter") {
-			const bg = g.createLinearGradient(0, 0, S, S);
-			bg.addColorStop(0, "#f2f2f2"); bg.addColorStop(1, "#5a5a5a");
-			g.fillStyle = bg; g.fillRect(0, 0, S, S);
+			g.fillStyle = "#f2f0ea"; g.fillRect(0, 0, S, S);
 			const ink = g.createLinearGradient(0, S * 0.1, 0, S * 0.9);
-			ink.addColorStop(0, "#050505"); ink.addColorStop(1, "#8c8c8c");
+			ink.addColorStop(0, "#050505"); ink.addColorStop(1, "#7a7a7a");
 			g.fillStyle = ink;
 			g.font = `900 ${Math.round(S * 0.95)}px "Helvetica Neue", Arial, sans-serif`;
 			g.textAlign = "center"; g.textBaseline = "middle";
@@ -414,8 +421,7 @@
 			for (let y = 0; y < S; y += 1) for (let x = 0; x < S; x += 1) {
 				const u = x / S - 0.5, v = y / S - 0.5;
 				const a = Math.sin(Math.hypot(u + 0.2, v + 0.1) * 38) + Math.sin(Math.hypot(u - 0.25, v - 0.15) * 31);
-				const k = Math.round((a * 0.25 + 0.5) * 255);
-				const o = (y * S + x) * 4;
+				const k = Math.round((a * 0.25 + 0.5) * 255), o = (y * S + x) * 4;
 				img.data[o] = img.data[o + 1] = img.data[o + 2] = k; img.data[o + 3] = 255;
 			}
 			g.putImageData(img, 0, 0);
@@ -427,15 +433,14 @@
 			for (let k = 0; k < 6; k += 1) {
 				const base = S * (0.45 + k * 0.1);
 				g.beginPath(); g.moveTo(0, S);
-				for (let x = 0; x <= S; x += 4) g.lineTo(x, base + Math.sin(x / S * (3 + k) + k * 1.7) * S * 0.05);
+				for (let x = 0; x <= S; x += 4) g.lineTo(x, base + Math.sin((x / S) * (3 + k) + k * 1.7) * S * 0.05);
 				g.lineTo(S, S); g.closePath();
 				const shade = Math.round(150 - k * 26);
 				g.fillStyle = `rgb(${shade},${shade},${shade})`; g.fill();
 			}
 		} else {
 			for (let k = 14; k >= 0; k -= 1) {
-				const t = k / 14;
-				const shade = Math.round(255 * Math.pow(1 - t, 1.4));
+				const t = k / 14, shade = Math.round(255 * Math.pow(1 - t, 1.4));
 				g.fillStyle = `rgb(${shade},${shade},${shade})`;
 				const w = S * (0.16 + 0.84 * t), h = S * (0.24 + 0.76 * t);
 				g.fillRect((S - w) / 2, (S - h) / 2 + S * 0.08 * (1 - t), w, h);
@@ -451,115 +456,76 @@
 		const c = global.document.createElement("canvas");
 		c.width = Math.round(w * k); c.height = Math.round(h * k);
 		c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-		return c.toDataURL("image/jpeg", 0.88);
+		return c.toDataURL("image/jpeg", 0.9);
 	}
 
-	/* ---------- analysis: the source, sampled once per cell ---------- */
-	function analyse(source, config, width, height) {
-		const grid = gridFor(config, width, height);
+	/**
+	 * Every picture goes through a 2D canvas before it reaches the GPU. Drawing
+	 * applies the camera's EXIF rotation (a texture upload does not — a phone
+	 * portrait arrives sideways and stretched) and caps the size the shader has
+	 * to mipmap. Long edge ≤ 4096.
+	 */
+	function upright(image) {
+		const w = image.naturalWidth || image.videoWidth || image.width;
+		const h = image.naturalHeight || image.videoHeight || image.height;
+		const k = Math.min(1, 4096 / Math.max(w, h));
 		const c = global.document.createElement("canvas");
-		c.width = grid.cols; c.height = grid.rows;
-		const g = c.getContext("2d", { willReadFrequently: true });
-		g.imageSmoothingEnabled = true;
+		c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+		const g = c.getContext("2d");
 		g.imageSmoothingQuality = "high";
-		g.clearRect(0, 0, grid.cols, grid.rows);
-		const sw = source.naturalWidth || source.videoWidth || source.width;
-		const sh = source.naturalHeight || source.videoHeight || source.height;
-		const p = placeSource(config, width, height, sw, sh);
-		// Frame pixels → grid cells: x / cw, y / ch.
-		const sx = 1 / grid.cw, sy = 1 / grid.ch;
-		// Downscale in halving steps first so a large photo averages instead of aliasing.
-		let src = source, w = sw, h = sh;
-		const targetW = p.w * sx, targetH = p.h * sy;
-		while (w / 2 > targetW * 1.5 && h / 2 > targetH * 1.5) {
-			const half = global.document.createElement("canvas");
-			half.width = Math.max(1, Math.round(w / 2)); half.height = Math.max(1, Math.round(h / 2));
-			const hg = half.getContext("2d"); hg.imageSmoothingQuality = "high";
-			hg.drawImage(src, 0, 0, half.width, half.height);
-			src = half; w = half.width; h = half.height;
-		}
-		g.drawImage(src, p.x * sx, p.y * sy, targetW, targetH);
-		const data = g.getImageData(0, 0, grid.cols, grid.rows).data;
-		const cells = new Float32Array(grid.cols * grid.rows * 4);
-		for (let i = 0; i < cells.length; i += 1) cells[i] = data[i] / 255;
-		return { ...grid, cells, placement: p };
+		g.drawImage(image, 0, 0, c.width, c.height);
+		return c;
 	}
 
 	/* ---------- the engine ---------- */
 	function artifactSizeFor(config, longEdge, sourceAspect) {
-		const ratio = config.aspect === "source" ? (sourceAspect || 1) : (() => { const [a, b] = ASPECTS[config.aspect] || [4, 5]; return a / b; })();
+		const ratio = config.aspect === "source" ? sourceAspect || 1 : (() => { const [a, b] = ASPECTS[config.aspect] || [4, 5]; return a / b; })();
 		const edge = Math.max(64, Math.round(longEdge || 2048));
 		return ratio >= 1 ? { width: edge, height: Math.round(edge / ratio) } : { width: Math.round(edge * ratio), height: edge };
 	}
 
 	function createEngine(canvas, options) {
 		options = options || {};
-		const ctx = canvas.getContext("2d");
+		const live = createRenderer(canvas);
+		let offscreen = null;
 		let config = null;
-		let source = null;
-		let sourceKey = "";
-		let clock = 0;
-		let raf = 0;
-		let lastNow = 0;
-		let lastScene = null;
-		let grid = null;
-		let gridKey = "";
+		let source = null, sourceKey = "", levels = null, levelsKey = "";
+		let clock = 0, raf = 0, lastNow = 0, lastInfo = { cols: 0, rows: 0 };
 		const trail = [];
 		let pointer = null;
 
 		const sourceAspect = () => (source ? (source.naturalWidth || source.width) / (source.naturalHeight || source.height) : 1);
 		const phaseAt = (t) => (config ? fract(t / config.loop) : 0);
-		function ensureGrid(width, height) {
-			const key = `${sourceKey}|${width}x${height}|${config.columns}|${config.cellAspect}|${config.fit}|${config.zoom}|${config.panX}|${config.panY}`;
-			if (key !== gridKey || !grid) { grid = source ? analyse(source, config, width, height) : null; gridKey = key; }
-			return grid;
+		// Levels are measured on the picture as placed, once per placement.
+		function ensureLevels(width, height) {
+			const key = `${sourceKey}|${config.fit}|${config.zoom}|${config.panX}|${config.panY}|${(width / height).toFixed(3)}`;
+			if (key === levelsKey && levels) return;
+			const S = 256, c = global.document.createElement("canvas");
+			c.width = S; c.height = Math.max(1, Math.round((S * height) / width));
+			const g = c.getContext("2d", { willReadFrequently: true });
+			const sw = source.naturalWidth || source.width, sh = source.naturalHeight || source.height;
+			const p = placeSource(config, c.width, c.height, sw, sh);
+			g.drawImage(source, p.x, p.y, p.w, p.h);
+			levels = measureLevels(g.getImageData(0, 0, c.width, c.height).data);
+			levelsKey = key;
 		}
-		function drawTo(target, width, height, time, withPointer) {
-			const g = target.getContext ? target.getContext("2d") : target;
-			g.save();
-			g.setTransform(1, 0, 0, 1, 0, 0);
-			g.fillStyle = config.background;
-			g.fillRect(0, 0, width, height);
-			if (!source) { g.restore(); return null; }
-			const gr = withPointer ? ensureGrid(width, height) : analyse(source, config, width, height);
-			const scene = buildScene(config, gr, phaseAt(time), withPointer ? trail : null, { aspect: width / height });
-			const p = gr.placement;
-			// The photo under the field: faint as an underlay, full where the reveal has not reached yet.
-			if (config.underlay > 0 || scene.hidden) {
-				if (scene.hidden) {
-					g.save();
-					g.beginPath();
-					for (let cy = 0; cy < gr.rows; cy += 1) for (let cx = 0; cx < gr.cols; cx += 1) {
-						const i = cy * gr.cols + cx;
-						if (!scene.visible[i] && scene.tier[i] >= 0) g.rect(cx * gr.cw, cy * gr.ch, gr.cw + 0.5, gr.ch + 0.5);
-					}
-					g.clip();
-					g.drawImage(source, p.x, p.y, p.w, p.h);
-					g.restore();
-				}
-				if (config.underlay > 0) { g.globalAlpha = config.underlay; g.drawImage(source, p.x, p.y, p.w, p.h); g.globalAlpha = 1; }
-			}
-			paintShapes(g, scene.shapes);
-			g.restore();
-			return scene;
+		function frameFor(time, withPointer, width, height) {
+			ensureLevels(width, height);
+			return { levels, levelsKey, phase: phaseAt(time), source, sourceKey, trail: withPointer && config.pointer !== "off" ? trail : null };
 		}
 		function render() {
-			if (!config) return;
-			lastScene = drawTo(canvas, canvas.width, canvas.height, clock, true);
+			if (!live || !config || !source) return;
+			lastInfo = live.draw(config, frameFor(clock, true, canvas.width, canvas.height));
 			if (options.onFrame) options.onFrame();
 		}
 		function step(now) {
 			const dt = lastNow ? Math.min(0.1, (now - lastNow) / 1000) : 0;
 			lastNow = now;
 			let moved = false;
-			if (pointer && config && config.pointer !== "off") {
-				trail.unshift({ x: pointer.x, y: pointer.y, w: 1 });
-				moved = true;
-			}
-			// The trail fades over `persist` seconds; old points drop off.
+			if (pointer && config && config.pointer !== "off") { trail.unshift({ w: 1, x: pointer.x, y: pointer.y }); moved = true; }
 			const decay = config ? Math.exp(-dt / Math.max(0.05, config.persist)) : 0;
 			for (const p of trail) p.w *= decay;
-			while (trail.length && (trail.length > 48 || trail[trail.length - 1].w < 0.02)) { trail.pop(); moved = true; }
+			while (trail.length && (trail.length > MAX_TRAIL || trail[trail.length - 1].w < 0.02)) { trail.pop(); moved = true; }
 			return moved || trail.length > 0;
 		}
 		function loop(now) {
@@ -567,14 +533,21 @@
 			if (step(now) || (config && config.motion !== "still")) render();
 		}
 		return {
+			available: !!live,
 			artifactSize(longEdge) { return artifactSizeFor(config, longEdge, sourceAspect()); },
-			getState: () => ({ hasSource: !!source, shapes: lastScene ? lastScene.shapes.length : 0, cols: lastScene ? lastScene.cols : 0, rows: lastScene ? lastScene.rows : 0, trail: trail.length }),
-			renderTo(target, width, height, time) { return drawTo(target, width, height, Number.isFinite(time) ? time : clock, false); },
-			renderSVG(width, height, time) {
-				if (!source) return "";
-				const gr = analyse(source, config, width, height);
-				const scene = buildScene(config, gr, phaseAt(Number.isFinite(time) ? time : clock), null, { aspect: width / height });
-				return toSVG(scene, config, width, height);
+			getState: () => ({ cols: lastInfo.cols, hasSource: !!source, rows: lastInfo.rows, trail: trail.length }),
+			renderTo(target, width, height, time) {
+				if (!config || !source) return;
+				if (!offscreen) {
+					offscreen = createRenderer(global.document.createElement("canvas"));
+					if (!offscreen) throw new Error("WebGL2 is not available for export");
+				}
+				const s = Math.min(1, (offscreen.maxSize || 8192) / Math.max(width, height));
+				offscreen.canvas.width = Math.round(width * s);
+				offscreen.canvas.height = Math.round(height * s);
+				offscreen.draw(config, frameFor(Number.isFinite(time) ? time : clock, false, offscreen.canvas.width, offscreen.canvas.height));
+				const ctx = target.getContext ? target.getContext("2d") : target;
+				ctx.drawImage(offscreen.canvas, 0, 0, width, height);
 			},
 			// The bridge's create-artifact: drawn fresh at the requested size, never read off the screen.
 			exportPNG(longEdge, time) {
@@ -584,11 +557,6 @@
 				this.renderTo(out, size.width, size.height, time);
 				return { dataUrl: out.toDataURL("image/png"), height: size.height, width: size.width };
 			},
-			exportSVG(longEdge, time) {
-				const size = artifactSizeFor(config, longEdge, sourceAspect());
-				const svg = this.renderSVG(size.width, size.height, time);
-				return { dataUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`, height: size.height, svg, width: size.width };
-			},
 			resizeTo(width, height) {
 				if (canvas.width !== width) canvas.width = width;
 				if (canvas.height !== height) canvas.height = height;
@@ -596,7 +564,7 @@
 			},
 			setClock(time) { clock = Number(time) || 0; if (config && config.motion !== "still") render(); },
 			setConfig(next) { config = next; render(); },
-			setSource(image, key) { source = image; sourceKey = key || String(Math.random()); gridKey = ""; render(); },
+			setSource(image, key) { source = upright(image); sourceKey = key || String(Math.random()); levelsKey = ""; render(); },
 			/** Canvas fractions 0..1, y down, or null when the pointer leaves. */
 			setPointer(fx, fy) { pointer = fx === null || fx === undefined ? null : { x: fx, y: fy }; },
 			sourceAspect,
@@ -605,7 +573,7 @@
 	}
 
 	global.SUPERMEGA_TESSERA = Object.freeze({
-		ASPECTS, GLYPHS, MAX_TIERS, SAMPLES,
-		artifactSizeFor, buildScene, keepable, levelled, levelsOf, createEngine, drawSample, gridFor, hash2, hexToRgb, lumOf, paintShapes, placeSource, revealAt, revealOrder, tierOf, toneOf, toSVG, weightOf,
+		ASPECTS, GLYPHS, MAX_TIERS, ORDERS, SAMPLES,
+		artifactSizeFor, createEngine, drawSample, hexToRgb, keepable, measureLevels, placeSource, revealAt, tierOf, toneOf, weightOf,
 	});
 })(typeof window !== "undefined" ? window : globalThis);
