@@ -70,16 +70,14 @@
   <header class="instrument-renderer-chrome">
     <div class="instrument-renderer-chrome-zone experiment-brand"><span class="experiment-brand-mark" aria-hidden="true"></span><a data-crumb="root" href="https://supermega.design">SUPERMEGA</a><span class="experiment-brand-sep" aria-hidden="true">/</span><a href="../">EXPERIMENTS</a><span class="experiment-brand-sep" aria-hidden="true">/</span><span class="experiment-brand-here">BUBBLE WRITER</span></div>
     <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--middle"></div>
-    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">EX-BUBBLE-02</span><button class="instrument-action" id="toggle" type="button">Controls</button></div>
+    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">EX-BUBBLE-02</span><button type="button" class="instrument-action" id="b-defaults" title="Restore configuration defaults">Defaults</button><button class="instrument-action" id="toggle" type="button">Controls</button></div>
   </header>
   <div class="instrument-renderer-credit">Study of Tracy Ma’s “Do You Remember The First Time?” (Blonded, 2019) — theirs is hand-drawn, ours is generated</div>
 
   <aside class="instrument-renderer-panel" id="panel" aria-label="Bubble Writer controls">
     <section class="instrument-panel">
       <header class="instrument-panel-header">
-        <h2 class="instrument-panel-title" id="scatter-controls-title">Bubble Writer</h2>
-        <div class="instrument-panel-actions"><button class="instrument-action" id="b-defaults" type="button" title="Restore configuration defaults">Defaults</button><button class="instrument-action" id="b-hide" type="button">Hide</button></div>
-      </header>
+        <h2 class="instrument-panel-title" id="scatter-controls-title">Bubble Writer</h2></header>
 
       <details class="instrument-disclosure" open>
         <summary><span class="instrument-disclosure-label">Phrase</span></summary>
@@ -1082,7 +1080,6 @@ GREAT</textarea>
   $('b-random-big').addEventListener('click', () => adapter.execute('randomize'));
   $('b-defaults').addEventListener('click', () => adapter.execute('reset-configuration'));
   $('scatter-controls-title').addEventListener('dblclick', () => adapter.execute('reset-configuration'));
-  $('b-hide').addEventListener('click', () => adapter.execute('hide-controls'));
   $('toggle').addEventListener('click', () => adapter.execute($('panel').classList.contains('hidden') ? 'show-controls' : 'hide-controls'));
   $('b-png').addEventListener('click', () => {
     const result = adapter.execute('create-artifact');

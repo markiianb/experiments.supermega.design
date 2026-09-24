@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>12 — blog index</title>
+<style>
+  main { max-width: 1248px; margin: 0 auto; padding: 56px 24px 120px; }
+  .blog-head { display: flex; flex-wrap: wrap; align-items: baseline;
+    justify-content: space-between; gap: 12px 32px; margin-bottom: 40px;
+    padding-bottom: 20px; border-bottom: 3px solid #1c1a17; }
+  .blog-head h1 { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    font-size: 40px; line-height: 1.1; font-weight: 700; letter-spacing: -.01em; }
+  .blog-head p { font-size: 12px; opacity: .6; }
+  .posts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 56px 32px; }
+  .post-card { display: block; color: #1c1a17; text-decoration: none; }
+  .post-card canvas { width: 100%; aspect-ratio: 1200 / 630; display: block;
+    border: 3px solid #1c1a17; image-rendering: pixelated; }
+  .post-card h2 { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    font-size: 24px; line-height: 1.25; font-weight: 650; margin-top: 18px; }
+  .post-card:hover h2 { text-decoration: underline; text-decoration-thickness: 2px;
+    text-underline-offset: 4px; }
+  .post-card:focus-visible { outline: 3px solid #e23b47; outline-offset: 6px; }
+  .post-card time { display: block; font-size: 12px; opacity: .6; margin-top: 8px; }
+  .small { font-size: 10px; opacity: .45; margin-top: 64px; }
+  @media (max-width: 760px) {
+    .posts { grid-template-columns: 1fr; gap: 44px; }
+    .blog-head h1 { font-size: 30px; }
+    .post-card h2 { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<main>
+  <header class="blog-head">
+    <h1>Kestrel Labs Blog</h1>
+    <p>engineering notes from the people building the models</p>
+  </header>
+
+  <div class="posts">
+    <a class="post-card" href="11-blog-headers.html#retrieval">
+      <canvas id="sc-roots" width="1200" height="630" aria-hidden="true"></canvas>
+      <h2>The Roots Behind Every Answer</h2>
+      <time datetime="2026-09-09">September 9, 2026</time>
+    </a>
+    <a class="post-card" href="11-blog-headers.html#evals">
+      <canvas id="sc-evals" width="1200" height="630" aria-hidden="true"></canvas>
+      <h2>12,000 Questions Before a Model Ships</h2>
+      <time datetime="2026-08-26">August 26, 2026</time>
+    </a>
+    <a class="post-card" href="11-blog-headers.html#training">
+      <canvas id="sc-loss" width="1200" height="630" aria-hidden="true"></canvas>
+      <h2>Reading a Loss Curve From the Summit Down</h2>
+      <time datetime="2026-08-12">August 12, 2026</time>
+    </a>
+    <a class="post-card" href="11-blog-headers.html#agents">
+      <canvas id="sc-agent" width="1200" height="630" aria-hidden="true"></canvas>
+      <h2>41 Steps to Fix One Bug</h2>
+      <time datetime="2026-07-29">July 29, 2026</time>
+    </a>
+  </div>
+
+  <p class="small">sample client — Kestrel Labs is a placeholder name; posts and dates are illustrative</p>
+</main>
+
+<canvas id="trail" aria-hidden="true"
+  style="position:fixed;inset:0;pointer-events:none;z-index:9999;"></canvas>
+
+<script src="core/pixel-core.js"></script>
+<script src="core/sprites.js"></script>
+<script src="blog-scenes.js"></script>
+<script>
+"use strict";
+PG.labChrome({ title: "blog index", n: "12" });
+PG.attachTrail(document.getElementById("trail"));
+
+function boot() {
+  mountScenes(["roots", "evals", "loss", "agent"].map((id) => [id, document.getElementById("sc-" + id)]));
+}
+if (document.readyState === "complete") requestAnimationFrame(boot);
+else window.addEventListener("load", () => requestAnimationFrame(boot));
+</script>
+</body>
+</html>

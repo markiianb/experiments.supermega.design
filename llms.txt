@@ -18,4 +18,11 @@
 - [Seed prompt](https://experiments.supermega.design/pixel-garden/seed-prompt.txt): a self-contained prompt for coding agents — paste it into your agent to rebuild and adapt this system
 - [Engine](https://experiments.supermega.design/pixel-garden/core/pixel-core.js): dependency-free source, with [sprites](https://experiments.supermega.design/pixel-garden/core/sprites.js)
 
+## Tessera
+- [Open the instrument](https://experiments.supermega.design/tessera/): drop, paste or choose a picture; it comes back as a grid of marks — one glyph and one colour per tone
+- Tone snaps to 2–6 tiers; each tier draws one of twelve glyphs (column, row, flow, solid, square, ring, dot, diamond, checker, cross, slash, empty); bars of one tier join into long strokes with a gap and round caps; flow bars turn along the picture's structure
+- Levels (fixed / auto / equalise) so ungraded photos still read; reveal, cycle and drift motion; a pointer that paints tone; PNG, JPG, SVG and video export from one shape list
+- Credited study of the Base brand image treatment — Mouthwash Studio's Base launch, image tool by John Provencher, after Karel Martens. None of their code or artwork is used
+- [Seed prompt](https://experiments.supermega.design/tessera/seed-prompt.txt): a self-contained prompt for coding agents — paste it into your agent to rebuild and adapt this system
+
 Free to use in your projects; a link back is appreciated.

@@ -21,7 +21,7 @@
   <header class="instrument-renderer-chrome">
     <div class="instrument-renderer-chrome-zone experiment-brand"><span class="experiment-brand-mark" aria-hidden="true"></span><a data-crumb="root" href="https://supermega.design">SUPERMEGA</a><span class="experiment-brand-sep" aria-hidden="true">/</span><a href="../">EXPERIMENTS</a><span class="experiment-brand-sep" aria-hidden="true">/</span><span class="experiment-brand-here">QUADTREE RESOLUTION</span></div>
     <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--middle"><span>STUDY</span><span>KITASENJU DESIGN</span></div>
-    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">EX-QUAD-01</span><button class="instrument-action" id="toggle" type="button">Controls</button></div>
+    <div class="instrument-renderer-chrome-zone instrument-renderer-chrome-zone--end"><span class="instrument-renderer-meta">EX-QUAD-01</span><button type="button" class="instrument-action" id="b-defaults" title="Restore configuration defaults">Defaults</button><button class="instrument-action" id="toggle" type="button">Controls</button></div>
   </header>
   <div class="instrument-renderer-hud instrument-renderer-hud--top">The letter resolves — cells split where the glyph disagrees with itself · drag to orbit, shift-drag to pan, scroll to zoom</div>
   <div class="instrument-renderer-hud instrument-renderer-hud--bottom" id="stat">A · TIMELINE · SEED 17 · LIVE</div>
@@ -30,9 +30,7 @@
   <aside class="instrument-renderer-panel" id="panel" aria-label="Quadtree Resolution controls">
     <section class="instrument-panel">
       <header class="instrument-panel-header">
-        <h2 class="instrument-panel-title" id="quad-controls-title">Quadtree Resolution</h2>
-        <div class="instrument-panel-actions"><button class="instrument-action" id="b-defaults" type="button" title="Restore configuration defaults">Defaults</button><button class="instrument-action" id="b-hide" type="button">Hide</button></div>
-      </header>
+        <h2 class="instrument-panel-title" id="quad-controls-title">Quadtree Resolution</h2></header>
       <p class="instrument-renderer-panel-lede">Type a glyph, breathe the resolution, reroll the mosaic.</p>
 
       <div class="instrument-renderer-section">Mask</div>
@@ -325,7 +323,6 @@
     anchor.download = result.value.filename;
     anchor.click();
   });
-  $('b-hide').addEventListener('click', () => adapter.execute('hide-controls'));
   $('toggle').addEventListener('click', () => adapter.execute(panel.classList.contains('hidden') ? 'show-controls' : 'hide-controls'));
   addEventListener('resize', () => handle && handle.resize());
   addEventListener('keydown', (event) => {

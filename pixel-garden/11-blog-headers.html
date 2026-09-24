@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>11 — blog headers</title>
+<style>
+  main { max-width: 1248px; margin: 0 auto; padding: 40px 24px 120px; }
+  .lede { font-size: 13px; line-height: 1.7; max-width: 640px; margin-bottom: 48px; }
+  section.scene { margin-bottom: 88px; }
+  section.scene h2 { font-size: 12px; text-transform: uppercase;
+    letter-spacing: .08em; margin-bottom: 10px; }
+  section.scene h2 span { opacity: .45; font-weight: normal; margin-left: 10px;
+    text-transform: none; letter-spacing: 0; }
+  section.scene canvas { width: 100%; aspect-ratio: 1200 / 630; display: block;
+    border: 3px solid #1c1a17; image-rendering: pixelated; }
+  .caption { font-size: 11px; opacity: .65; margin-top: 10px; line-height: 1.6; }
+  .caption a { color: #1c1a17; margin-left: 8px; }
+  .post { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 40px; margin-top: 28px; padding-top: 24px; border-top: 3px solid #1c1a17; }
+  .post .kicker { font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+    opacity: .55; margin-bottom: 10px; }
+  .post h3 { font-size: 24px; line-height: 1.25; font-weight: 700; margin-bottom: 14px; }
+  .post .dek { font-size: 13px; line-height: 1.7; }
+  .post ol { list-style: none; counter-reset: s; }
+  .post li { counter-increment: s; font-size: 13px; line-height: 1.7;
+    padding-left: 36px; position: relative; margin-bottom: 16px; }
+  .post li::before { content: counter(s, decimal-leading-zero); position: absolute;
+    left: 0; top: 0; opacity: .4; }
+  .post li b { display: block; }
+  .post .coda { font-size: 12px; line-height: 1.7; opacity: .7; padding-left: 36px; }
+  .small { font-size: 10px; opacity: .45; }
+  @media (max-width: 760px) {
+    .post { grid-template-columns: 1fr; gap: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<main>
+  <p class="lede">four blog headers for a technical ai client, from the same pixel
+    system. each post gets its own picture of the idea: roots for retrieval, a
+    nursery for evals, a hillside for a loss curve, a trail for an agent run. every
+    header exports a 1200×630 png, with or without the title.</p>
+
+  <!-- 01 retrieval -->
+  <section class="scene" id="retrieval">
+    <h2>01 retrieval <span>roots under a single answer</span></h2>
+    <canvas id="sc-roots" width="1200" height="630" aria-label="header: a sunflower whose roots reach three glowing documents in the soil"></canvas>
+    <p class="caption">one answer above ground, an index below it. three roots light up
+      the passages it drew from.
+      <a href="#" data-dl="roots" data-title="1">png with title</a>
+      <a href="#" data-dl="roots" data-title="0">art only</a></p>
+    <article class="post">
+      <div>
+        <p class="kicker">retrieval · 9 min read</p>
+        <h3>The Roots Behind Every Answer</h3>
+        <p class="dek">Every answer our assistant gives starts underground, in an index
+          of 2.1 million chunks. Here is how we pick the three that matter, and how we
+          check that we picked right.</p>
+      </div>
+      <div>
+        <ol>
+          <li><b>Chunk by structure, not by token count</b> We split documents on
+            headings, tables, and code blocks. A table cut in half answers nothing, so
+            tables stay whole. Median chunk: 280 tokens.</li>
+          <li><b>Two searches, one list</b> Dense embedding search and keyword search
+            run in parallel, merged with reciprocal rank fusion. Embeddings catch
+            meaning; keywords catch part numbers and error codes the embeddings blur.</li>
+          <li><b>A re-ranker that pays for its 90 ms</b> A cross-encoder re-scores the
+            top 50 candidates. On our internal benchmark it lifts the right passage into
+            the top three from 81% of questions to 93%.</li>
+          <li><b>Cite it or skip it</b> The model can only quote retrieved passages, and
+            every claim links to its chunk. When nothing clears the relevance bar, the
+            assistant says it doesn’t know.</li>
+        </ol>
+        <p class="coda">What we still get wrong: questions that need eight documents
+          instead of three.</p>
+      </div>
+    </article>
+  </section>
+
+  <!-- 02 evals -->
+  <section class="scene" id="evals">
+    <h2>02 evals <span>a nursery of test questions</span></h2>
+    <canvas id="sc-evals" width="1200" height="630" aria-label="header: three shelves of potted flowers, a few wilted, under a pass and fail scoreboard"></canvas>
+    <p class="caption">three shelves, one pot per question. most bloom, a few wilt, and
+      the scoreboard keeps count.
+      <a href="#" data-dl="evals" data-title="1">png with title</a>
+      <a href="#" data-dl="evals" data-title="0">art only</a></p>
+    <article class="post">
+      <div>
+        <p class="kicker">evals · 7 min read</p>
+        <h3>12,000 Questions Before a Model Ships</h3>
+        <p class="dek">No model reaches customers until it has answered our full eval
+          suite. What is in it, how we grade it, and why the 588 failures teach us more
+          than the 11,412 passes.</p>
+      </div>
+      <div>
+        <ol>
+          <li><b>Three shelves of 4,000</b> Reasoning, code, and safety. Every question
+            carries a reference answer and a rubric, written by the engineer who owns
+            that area.</li>
+          <li><b>Graders we check every week</b> Exact match where we can, unit tests for
+            code, a model grader for open answers. We compare the model grader against
+            300 human-graded samples each week. If they disagree more than 5% of the
+            time, we rewrite the grader and leave the threshold alone.</li>
+          <li><b>Regressions block, averages don’t</b> A new model can score higher
+            overall and still not ship. Any question that passed last release and fails
+            now goes to a person before launch.</li>
+          <li><b>The suite grows from bug reports</b> Every customer bug becomes a new
+            question within a week. That added 1,900 questions this year.</li>
+        </ol>
+        <p class="coda">Next up: publishing the safety shelf so customers can run it
+          themselves.</p>
+      </div>
+    </article>
+  </section>
+
+  <!-- 03 training -->
+  <section class="scene" id="training">
+    <h2>03 training <span>the loss curve is the hillside</span></h2>
+    <canvas id="sc-loss" width="1200" height="630" aria-label="header: a dusk hillside shaped like a falling loss curve, with a dotted validation line and two flags"></canvas>
+    <p class="caption">the horizon is the training loss, the dotted line is validation.
+      a hiker walks the run from step 0 to 40k.
+      <a href="#" data-dl="loss" data-title="1">png with title</a>
+      <a href="#" data-dl="loss" data-title="0">art only</a></p>
+    <article class="post">
+      <div>
+        <p class="kicker">training · 11 min read</p>
+        <h3>Reading a Loss Curve From the Summit Down</h3>
+        <p class="dek">A training run is 40,000 steps of one number going down. We walk
+          the curve from the first steep drop to the long flat stretch and say what each
+          shape told us.</p>
+      </div>
+      <div>
+        <ol>
+          <li><b>The cliff, steps 0 to 4K</b> Loss falls fast while the model learns the
+            easy structure. It looks dramatic and tells you little. Almost any sane
+            config gets this far.</li>
+          <li><b>The spike at 16K</b> One data shard full of duplicated boilerplate. Loss
+            jumped for 300 steps. We now deduplicate shards by hash before they enter
+            the mix, and skip any batch whose gradient norm is 4× the running median.</li>
+          <li><b>The long flat, 20K to 40K</b> Progress drops to fractions of a percent.
+            This is where the learning-rate schedule earns its keep: cosine decay bought
+            another 3% on held-out loss.</li>
+          <li><b>Where the lines part</b> At 29K the validation loss starts climbing
+            while training loss keeps falling. We ship the checkpoint from where they
+            separate, not the last one.</li>
+        </ol>
+        <p class="coda">All four runs from this quarter, with raw logs, are linked at
+          the end.</p>
+      </div>
+    </article>
+  </section>
+
+  <!-- 04 agents -->
+  <section class="scene" id="agents">
+    <h2>04 agents <span>a trail of tool calls</span></h2>
+    <canvas id="sc-agent" width="1200" height="630" aria-label="header: a small robot walks a trail of signposts labeled grep, read, edit, test, fail, edit, test, pass"></canvas>
+    <p class="caption">each signpost is a tool call, numbered by step. one red loop marks
+      the wrong turn.
+      <a href="#" data-dl="agent" data-title="1">png with title</a>
+      <a href="#" data-dl="agent" data-title="0">art only</a></p>
+    <article class="post">
+      <div>
+        <p class="kicker">agents · 8 min read</p>
+        <h3>41 Steps to Fix One Bug</h3>
+        <p class="dek">We gave our coding agent a real ticket from the backlog and logged
+          every move. Here is the full trace: 41 tool calls, one wrong turn, one green
+          test suite.</p>
+      </div>
+      <div>
+        <ol>
+          <li><b>Steps 1 to 9: read before touching</b> Grep for the error string, read
+            four files, read the failing test. A fifth of the run went to reading, and
+            it is the part we would least want to cut.</li>
+          <li><b>Steps 10 to 23: the wrong fix</b> It patched the symptom in the request
+            handler. The tests ran and failed on an edge case in a file it hadn’t
+            opened.</li>
+          <li><b>Steps 24 to 38: the retry</b> Instead of stacking a second patch, it
+            reverted and traced the bad value back to the parser. The failing test
+            output was the most useful thing in its context.</li>
+          <li><b>Steps 39 to 41: done means green</b> Full suite passes. It writes a pull
+            request that explains the fix and the dead end. Six minutes, 212K tokens.</li>
+        </ol>
+        <p class="coda">The full trace is published alongside this post, one line per
+          step.</p>
+      </div>
+    </article>
+  </section>
+
+  <p class="small">sample client — Kestrel Labs is a placeholder name; every number in
+    these posts is illustrative</p>
+</main>
+
+<canvas id="trail" aria-hidden="true"
+  style="position:fixed;inset:0;pointer-events:none;z-index:9999;"></canvas>
+
+<script src="core/pixel-core.js"></script>
+<script src="core/sprites.js"></script>
+<script src="blog-scenes.js"></script>
+<script>
+"use strict";
+PG.labChrome({ title: "blog headers", n: "11" });
+PG.attachTrail(document.getElementById("trail"));
+
+function boot() {
+  mountScenes(["roots", "evals", "loss", "agent"].map((id) => [id, document.getElementById("sc-" + id)]));
+  document.querySelectorAll("[data-dl]").forEach((a) => {
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      const s = scenes[a.dataset.dl];
+      const withTitle = a.dataset.title === "1";
+      const link = document.createElement("a");
+      link.href = renderFull(s, withTitle).toDataURL("image/png");
+      link.download = `kestrel-blog-${s.id}-${withTitle ? "title" : "art"}-1200x630.png`;
+      link.click();
+    });
+  });
+}
+if (document.readyState === "complete") requestAnimationFrame(boot);
+else window.addEventListener("load", () => requestAnimationFrame(boot));
+</script>
+</body>
+</html>

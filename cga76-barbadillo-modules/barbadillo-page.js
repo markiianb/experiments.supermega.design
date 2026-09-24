@@ -219,8 +219,7 @@
 	panel.querySelectorAll("[data-preset]").forEach((button) => button.addEventListener("click", () => adapter.configure(PRESETS[button.dataset.preset])));
 	$("randomize").addEventListener("click", () => adapter.execute("randomize"));
 	$("reset-configuration").addEventListener("click", () => adapter.execute("reset-configuration"));
-	$("hide-controls").addEventListener("click", () => adapter.execute("hide-controls"));
-	$("toggle-controls").addEventListener("click", () => adapter.execute(panel.classList.contains("hidden") ? "show-controls" : "hide-controls"));
+		$("toggle-controls").addEventListener("click", () => adapter.execute(panel.classList.contains("hidden") ? "show-controls" : "hide-controls"));
 	$("load-configuration").addEventListener("click", () => loadSerialized($("configuration-input").value, "CONFIG"));
 	$("select-configuration").addEventListener("click", () => { $("configuration-input").focus(); $("configuration-input").select(); });
 	$("copy-configuration").addEventListener("click", async () => {

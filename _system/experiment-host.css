@@ -220,6 +220,22 @@ body[data-system="instrument"][data-controls="visible"] .instrument-renderer-sur
 	min-block-size: 100%;
 }
 
+/* The renderer panel's header is the title alone — full weight, in the section
+   wash, laid out like the application-window header. Configuration reset and
+   controls visibility are chrome verbs: Defaults sits beside Controls in
+   .instrument-renderer-chrome-zone--end; there is no Hide button. Decided
+   2026-09-21 (Markiian, from the header specimen sheet); the kit carries the
+   same title rule from its next release, this mirrors it for every pinned page. */
+[data-system="instrument"] .instrument-renderer-panel .instrument-panel-header {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	gap: var(--instrument-space-3);
+}
+
+[data-system="instrument"] .instrument-renderer-panel .instrument-panel-title {
+	opacity: 1;
+}
+
 [data-system="instrument"] .instrument-renderer-panel-lede {
 	margin: 0;
 	padding: var(--instrument-space-5) var(--instrument-space-3);
@@ -337,6 +353,34 @@ body[data-system="instrument"][data-controls="visible"] .instrument-renderer-sur
 	content: "";
 }
 
+/* ---------------------------------------------------------------------------
+   The generated panel — what is left here
+
+   The seven arrangements the shell emits (the choice grid, the stacked row, the
+   section reset, the colour list, the stage, the viewport bar and the
+   inapplicable row) moved UP into the kit once three pages rendered them, so
+   they arrive with the pinned release. What stays below is this host's own
+   business: how a generated panel sits inside the renderer's fixed columns.
+   --------------------------------------------------------------------------- */
+
+/* The chrome's end column is exactly the panel's width, so two more actions in
+   it need the zone's own spacing back. Measured: five children come to 275px in
+   a 320px column, which fits on the tighter padding and not on the wide one.
+   Only a page carrying a generated panel is affected. */
+body[data-shell-ready] .instrument-renderer-meta {
+	white-space: nowrap;
+}
+
+body[data-shell-ready] .instrument-renderer-chrome-zone--end {
+	justify-content: flex-end;
+	gap: var(--instrument-space-1);
+	padding-inline: var(--instrument-space-3);
+}
+
+/* Column widths for a generated row, scoped to the generated panel so the 99
+   hand-written ones keep whatever they set for themselves. Measured from
+   dash-loom, which sized these by hand: a value cell wide enough for 0.0090,
+   and a slider that does not swallow the row. */
 [data-system="instrument"] .instrument-renderer-checkbox {
 	inline-size: var(--instrument-control-min-height);
 	block-size: var(--instrument-control-min-height);
@@ -349,6 +393,38 @@ body[data-system="instrument"][data-controls="visible"] .instrument-renderer-sur
 
 [data-system="instrument"] .instrument-renderer-panel .instrument-row-value {
 	min-inline-size: 48px;
+}
+
+/* The generated panel's column widths. They sit AFTER the renderer-panel rules
+   above on purpose: `[data-shell-panel] .instrument-row-value.instrument-mini-
+   field` and `[data-system="instrument"] .instrument-renderer-panel
+   .instrument-row-value` are both (0,3,0), so before the move the 48px minimum
+   won and the 96px one was a declaration that did nothing. */
+[data-shell-panel] .instrument-row-value.instrument-mini-field {
+	flex: none;
+	/* 96, not dash-loom's 84: a generated cell also carries its unit suffix, and
+	   "1280 px" truncated to "12…" at 84. */
+	inline-size: 96px;
+	min-inline-size: 96px;
+}
+
+[data-shell-panel] .instrument-row-value.instrument-mini-field .instrument-mini-input {
+	flex: 1 1 auto;
+	inline-size: 100%;
+	min-inline-size: 0;
+}
+
+[data-shell-panel] .instrument-row .instrument-range {
+	flex: 1 1 auto;
+	inline-size: auto;
+	min-inline-size: 0;
+}
+
+[data-shell-panel] .instrument-row .instrument-mini-select,
+[data-shell-panel] .instrument-row .instrument-mini-select-input {
+	flex: 1 1 auto;
+	inline-size: 100%;
+	min-inline-size: 0;
 }
 
 [data-system="instrument"] .instrument-renderer-meta {

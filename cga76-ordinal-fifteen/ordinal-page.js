@@ -298,8 +298,7 @@
 		scheduleFrame();
 		setStatus("REPLAY", "active");
 	});
-	$("hide-controls").addEventListener("click", () => adapter.execute("hide-controls"));
-	$("toggle-controls").addEventListener("click", () => adapter.execute(panel.classList.contains("hidden") ? "show-controls" : "hide-controls"));
+		$("toggle-controls").addEventListener("click", () => adapter.execute(panel.classList.contains("hidden") ? "show-controls" : "hide-controls"));
 	$("load-configuration").addEventListener("click", () => loadSerialized($("configuration-input").value, "CONFIG"));
 	$("select-configuration").addEventListener("click", () => {
 		$("configuration-input").focus();

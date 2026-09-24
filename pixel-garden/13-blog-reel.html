@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>13 — blog reel</title>
+<style>
+  body { overflow-x: hidden; }
+  .wrap { padding: 32px 24px 80px; }
+  .note { max-width: 1248px; margin: 0 auto 20px; font-size: 11px; opacity: .6; line-height: 1.6; }
+  /* the stage is always 1920×1080; on screen it scales to fit */
+  .fit { max-width: 1248px; margin: 0 auto; aspect-ratio: 16 / 9; position: relative; }
+  #stage { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px;
+    transform-origin: 0 0; background: #faf4e8; color: #1c1a17; overflow: hidden; }
+  #stage .inner { position: absolute; left: 207px; top: 66px; width: 1506px; }
+  #view { display: block; width: 1500px; height: 788px; border: 3px solid #1c1a17;
+    box-sizing: content-box; image-rendering: pixelated; }
+  #title { font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    font-size: 54px; line-height: 1.15; font-weight: 700; letter-spacing: -.01em;
+    margin-top: 40px; white-space: nowrap; }
+  .meta { display: flex; justify-content: space-between; margin-top: 16px;
+    font-size: 24px; opacity: .6; }
+  body.record .lab-bar, body.record .note { display: none; }
+  body.record .wrap { padding: 0; }
+  body.record .fit { max-width: none; width: 1920px; height: 1080px; margin: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="note">a 16:9 reel for social: one post at a time, header image then title
+    and date, six seconds each. sample client — Kestrel Labs is a placeholder.</p>
+  <div class="fit" id="fit">
+    <div id="stage">
+      <div class="inner" id="inner">
+        <canvas id="view" width="1500" height="788"></canvas>
+        <div id="title"></div>
+        <div class="meta"><span id="date"></span><span id="count"></span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="core/pixel-core.js"></script>
+<script src="core/sprites.js"></script>
+<script src="blog-scenes.js"></script>
+<script>
+"use strict";
+const RECORD = new URLSearchParams(location.search).get("record") === "1";
+if (RECORD) document.body.classList.add("record");
+PG.labChrome({ title: "blog reel", n: "13" });
+
+const POSTS = [
+  { id: "roots", title: "The Roots Behind Every Answer", date: "September 9, 2026" },
+  { id: "evals", title: "12,000 Questions Before a Model Ships", date: "August 26, 2026" },
+  { id: "loss",  title: "Reading a Loss Curve From the Summit Down", date: "August 12, 2026" },
+  { id: "agent", title: "41 Steps to Fix One Bug", date: "July 29, 2026" },
+];
+const SEG = 6000, FADE = 250;
+const REEL_MS = SEG * POSTS.length;
+
+const view = document.getElementById("view");
+const vctx = view.getContext("2d");
+vctx.imageSmoothingEnabled = false;
+const src = document.createElement("canvas");   // scene renders here at 1200×630
+src.width = W; src.height = H;
+const inner = document.getElementById("inner");
+const titleEl = document.getElementById("title");
+const dateEl = document.getElementById("date");
+const countEl = document.getElementById("count");
+
+let current = -1, scene = null, lastLocal = 0;
+
+/* deterministic: render(t) for any t in [0, REEL_MS); frames must advance in order
+   within a post (baked layers accumulate), a new post rebuilds its scene */
+function render(t) {
+  t = ((t % REEL_MS) + REEL_MS) % REEL_MS;
+  const i = Math.floor(t / SEG), local = t - i * SEG;
+  if (i !== current || local < lastLocal) {
+    current = i;
+    const p = POSTS[i];
+    scene = makeScene(p.id, SCENE_DEFS[p.id], src);
+    startScene(scene, -200);                 // t0 = 0 at the start of the segment
+    titleEl.textContent = p.title;
+    dateEl.textContent = p.date;
+    countEl.textContent = String(i + 1).padStart(2, "0") + " / " + String(POSTS.length).padStart(2, "0");
+  }
+  lastLocal = local;
+  frameScene(scene, local);
+  vctx.drawImage(src, 0, 0, 1500, 787.5);    // 1.25×: every 4px grid cell → 5px, dots stay even
+  const a = Math.min(1, local / FADE, (SEG - local) / FADE);
+  inner.style.opacity = a.toFixed(3);
+}
+window.__render = render;
+window.__reelMs = REEL_MS;
+
+function fit() {
+  if (RECORD) return;
+  const box = document.getElementById("fit").getBoundingClientRect();
+  document.getElementById("stage").style.transform = `scale(${box.width / 1920})`;
+}
+window.addEventListener("resize", fit);
+
+function boot() {
+  fit();
+  if (RECORD) { render(0); window.__ready = true; return; }
+  const t0 = performance.now();
+  (function loop(now) { render(now - t0); requestAnimationFrame(loop); })(t0);
+}
+if (document.readyState === "complete") requestAnimationFrame(boot);
+else window.addEventListener("load", () => requestAnimationFrame(boot));
+</script>
+</body>
+</html>

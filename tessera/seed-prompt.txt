@@ -1,0 +1,144 @@
+Build a tool that takes any picture and redraws it as a field of marks: a grid
+where every cell's tone picks ONE glyph in ONE colour. Bars that line up join
+into long strokes. The result should read as the picture from across the room
+and as pure pattern up close.
+
+THE PIPELINE
+
+1. Sample the picture onto a grid. The person sets the number of columns;
+   "cell height" is the cell's height ÷ width (1 = square), and
+   rows = ceil(frameHeight / (frameWidth / columns × cellHeight)). Downscale in halving steps
+   before the final draw into a cols × rows canvas, so each cell averages its
+   area instead of aliasing a single pixel. Place the picture with cover or
+   contain, then zoom and pan. Cells the picture does not reach are empty.
+
+2. Tone per cell: lum = 0.299 r + 0.587 g + 0.114 b. Then LEVELS, then
+   contrast about the middle — clamp((v − 0.5) · contrast + 0.5) — then gamma,
+   invert, and a brightness trim.
+
+   Levels is the step everyone skips and then wonders why their photo came
+   back blank. Fixed tier edges only work on pictures graded for them; a normal
+   phone photo sits in the bottom third of the range and lands entirely in the
+   darkest tier. Offer three:
+   - fixed: tones as they are;
+   - auto: stretch the picture's own 2nd–98th percentile to 0..1;
+   - equalise: replace each tone with its rank among all cells (mid-rank for
+     runs of equal tones), so every tier covers the same share of the frame.
+   Measure the percentiles once per grid, not per frame, and only over cells
+   the picture actually covers.
+
+3. Tiers: tier = floor(tone · N), N between 2 and 6, even edges. Default:
+   N = 5 with tier 0 empty. Every tier has
+   its own glyph, and tiers run dark to light. Making the darkest tier "empty"
+   gives the classic look: shadows drop out, the light becomes structure.
+
+4. Weight per tier, as a share of the cell. Either flat (every tier the same)
+   or a ramp that thickens toward the light: the first inked tier gets a
+   minimum weight, the last gets 1, a power curve between, all times a global
+   scale: w = (min + (1 − min) · t^curve) · scale, where t runs 0..1 across the
+   INKED tiers only. With N = 5 and tier 0 empty, the default ramp is widths
+   1/8, 1/2, 3/4, 1 of a cell times 0.66 (min 0.125, curve ≈ 0.77). Weight is a
+   share of the cell's width for columns and marks, of its height for rows.
+   Palette colours are assigned from the first inked (darkest) tier upward, so
+   the first colour always lands on the thinnest bars — pick palettes knowing
+   that.
+
+THE GLYPHS
+
+column, row, flow, solid, square, ring, dot, diamond, checker, cross, slash,
+empty. List "empty" LAST in any menu — it is the choice people make least.
+
+- column / row: a bar of the tier's weight, centred across the cell and running
+  its full length along the axis.
+- RUNS: walk each column (for columns) or row (for rows); consecutive cells of
+  the same tier and the same axis become ONE bar. Where a run ends, inset it by
+  half the gap — the full gap is 4.5% of a cell, so each end moves in 2.25% —
+  and round the end with a cap radius of roundness × half its width (≈ 44%).
+  In picture-colour mode a run takes the colour of its first cell (top or
+  left). This joining is the whole look. Without
+  it you get a grid of stubs; with it you get woven strokes. Make joining a
+  switch so people can see the difference.
+- flow: a bar that turns to follow the picture. Compute Sobel gradients at
+  cell scale on the RAW cell luminance (before levels and contrast), build the
+  structure tensor (gx², gy², gx·gy) and box-blur it with radius 3 cells (a
+  7-cell window, separable) so an edge's direction reaches into the flat area
+  beside it. With E = Bxx + Byy: if E > 0.004 and |Bxx − Byy| > 0.25 · E, the
+  tensor decides — energy mostly in x means the edge runs vertically, so the
+  bar goes down it; mostly in y, across it. Otherwise decide with a seeded
+  patchwork of 6 × 6-cell blocks (hash of block x, block y and the seed; below
+  0.5 → down, else across). Without the patchwork flat regions all default to
+  one axis and the maze never appears. Flow cells join into runs exactly like
+  columns and rows, along whichever axis they chose.
+- square, ring, dot, diamond, cross, slash: one mark per cell, size = weight ×
+  the cell's short side. Ring, cross and slash are strokes about 18% of the
+  mark (stroke = max(0.6 px, 0.18 × mark size), drawn inside the mark's box).
+  Slash alternates direction on a checker parity.
+- checker: inks only cells where (x + y) is even, as a rectangle of weight ×
+  the cell.
+- solid: fills the cell exactly and ignores weight, so neighbours fuse into
+  flat areas.
+
+COLOUR
+
+A palette of up to six colours assigned from the first inked tier upward and
+repeating if it runs short, OR each cell's own colour from the picture. One
+ground colour. An optional underlay draws the picture itself, faintly, beneath
+the marks.
+
+MOTION (every mode must close on its loop)
+
+- reveal: the picture is replaced by the field cell by cell. Orders: sweep
+  (column by column, left to right), rows (top to bottom), radial (from the
+  centre), scatter (seeded). Start and end the loop
+  on the field, ease back to the picture at the half (smoothstep of
+  |2·phase − 1|). A frame exported at time 0 is then the treatment, not the
+  photo. Unrevealed cells show the picture through a clip.
+- cycle: tone = fract(min(tone, 0.99999) + phase). Apply it at every phase —
+  including 0 — or a tone of exactly 1 jumps a tier where the loop wraps.
+- drift: tone += 0.18 · amount · sin(2π · phase).
+
+THE POINTER
+
+Keep a trail of recent pointer positions that fades over a second or so. Modes:
+light and dark add or subtract tone under the brush (each trail point pushes
+by weight × (1 − smoothstep(0, brush, distance))), and reveal shows the field
+only under the pointer. The pointer is input, never saved state, and exports
+ignore it.
+
+ONE SCENE, THREE OUTPUTS
+
+Build a plain list of shapes (rect, rounded bar, ring, dot, diamond, cross,
+slash — each with position, size and colour) and draw it three ways: the
+canvas on screen, a PNG at any size, and an SVG. Because all three come from
+the same list, the vector export is exactly the picture on screen. Rounded bars
+become rect with rx. That SVG is what makes this a print tool, not a filter.
+
+THE PICTURE
+
+Let people drop, paste or choose a picture. Keep a downscaled copy (long edge
+~1600 px, JPEG) in local storage so a reload keeps it; a shared link carries
+the settings, never the picture. Ship a few procedural samples so the tool is
+never empty.
+
+CONTROLS WORTH HAVING
+
+columns, cell height; tiers and a glyph per tier; weight (ramp/flat), scale,
+lightest, curve, join bars, gap, caps; colour mode, palette, ground, underlay;
+levels, contrast, gamma, invert, brightness; fit, zoom, pan; motion, order,
+amount, loop; pointer, brush, strength, trail; frame aspect (including "match
+the picture"); a seed; and presets.
+
+Useful presets: a warm maze (one tier of flow bars in black on a yellow ground,
+the light empty); blue columns on black (thin dark blue in the shadows, wide
+light blue in the light); a figure (checker, white rows, orange columns on
+near-black); icons (rings, squares and dots in five saturated colours on
+black).
+
+CREDIT
+
+This is a study of the image treatment in the Base brand system: Mouthwash
+Studio's Base launch, with an image tool by John Provencher, after the work of
+Karel Martens. Base's own site renders the bar version live; the per-tier icon
+grammar follows Provencher's published frames and Martens. None of their code
+or artwork is part of this — build the mechanism, bring your own palette, and
+credit the reference in whatever you make.
