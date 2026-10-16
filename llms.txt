@@ -1,12 +1,6 @@
 # SUPERMEGA Experiments
 > Weekly visual experiments by SUPERMEGA Design (https://supermega.design). Plain HTML/CSS/JS, no build step.
 
-## Bubble Writer
-- [Open the instrument](https://experiments.supermega.design/bubble-writer/): bubble lettering generated as geometry, written into a frame one letter at a time
-- The letterform is an operation, not a typeface — an exact signed distance transform of a thin glyph, contoured by marching squares at a true offset distance, then relaxed like a balloon under surface tension and internal pressure
-- Credited study of Tracy Ma's bubble-letter animation for Blonded (2019); the placement behaviour was recovered from the published source of the NYT's Gen X Is A Mess (2019). Their letters are hand-drawn, these are generated, and none of their artwork or code is used
-- [Seed prompt](https://experiments.supermega.design/bubble-writer/seed-prompt.txt): a self-contained prompt for coding agents — paste it into your agent to rebuild and adapt this system
-
 ## Computer Graphics and Art
 - [Open the collection](https://experiments.supermega.design/cga76/): sixteen instruments derived from Computer Graphics and Art, vol. 1 no. 2, May 1976
 - Each one is a clean-room study written from the issue's published descriptions — no scans ship, no source lines are traced
@@ -17,12 +11,5 @@
 - [Open](https://experiments.supermega.design/pixel-garden/): the live tool
 - [Seed prompt](https://experiments.supermega.design/pixel-garden/seed-prompt.txt): a self-contained prompt for coding agents — paste it into your agent to rebuild and adapt this system
 - [Engine](https://experiments.supermega.design/pixel-garden/core/pixel-core.js): dependency-free source, with [sprites](https://experiments.supermega.design/pixel-garden/core/sprites.js)
-
-## Tessera
-- [Open the instrument](https://experiments.supermega.design/tessera/): drop, paste or upload a picture; choose one of five styles (Yellow, Blue, Figure, Rooster, Base) and tune detail, contrast and balance
-- Linear marks (column, row, and a joined bar that runs down, across or stands as a square by its neighbours — the maze) and cubic marks (square, checker, diamond, dot, ring, solid); bars of one tone join into long strokes with a gap and round caps
-- Each style is fixed to a Base frame as measured — marks per tone, cell shape, weights, colours; cut-outs (transparent PNGs) sit in the frame with only the subject marked; PNG and JPG export
-- Credited study of the Base brand image treatment — Mouthwash Studio's Base launch, image tool by John Provencher, after Karel Martens. None of their code or artwork is used
-- [Seed prompt](https://experiments.supermega.design/tessera/seed-prompt.txt): a self-contained prompt for coding agents — paste it into your agent to rebuild and adapt this system
 
 Free to use in your projects; a link back is appreciated.
