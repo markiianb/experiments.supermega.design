@@ -34,7 +34,7 @@ background:var(--instrument-color-canvas);color:var(--instrument-color-text)}
 [data-system="instrument"] .pg-card-open{color:var(--instrument-color-text-faint);font-weight:var(--instrument-font-weight-regular);text-transform:none;white-space:nowrap;transition:color var(--instrument-duration-fast) var(--instrument-ease-standard)}
 [data-system="instrument"] a.pg-card:hover .pg-card-open{color:var(--instrument-color-text)}
 [data-system="instrument"] .pg-card-body{display:block;padding:var(--instrument-space-4)}
-[data-system="instrument"] .pg-card-preview{display:block;inline-size:100%;block-size:auto;aspect-ratio:16/10;object-fit:cover;background:var(--instrument-color-surface-overlay);filter:grayscale(1)}
+[data-system="instrument"] .pg-card-preview{display:block;inline-size:100%;block-size:auto;aspect-ratio:16/10;object-fit:cover;background:var(--instrument-color-surface-overlay)}   /* in colour (2026-10-16, Markiian: "the images should be colorful") */
 [data-system="instrument"] .pg-card-name{display:block;margin-block-end:var(--instrument-space-2);color:var(--instrument-color-text);font-family:var(--instrument-font-mono);font-size:var(--instrument-font-size-label);font-weight:var(--instrument-font-weight-semibold);line-height:1.25;text-transform:uppercase;letter-spacing:var(--instrument-letter-spacing-label)}
 [data-system="instrument"] .pg-card-blurb{display:block;color:var(--instrument-color-text-muted);font-size:var(--instrument-font-size-small);line-height:var(--instrument-line-height-normal)}
 
