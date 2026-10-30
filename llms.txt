@@ -1,6 +1,11 @@
 # SUPERMEGA Experiments
 > Weekly visual experiments by SUPERMEGA Design (https://supermega.design). Plain HTML/CSS/JS, no build step.
 
+## Endurance, 1915
+- [Open the scene](https://experiments.supermega.design/endurance-1915/): a real-time, physically lit recreation of Shackleton's Endurance beset in the Weddell Sea, built with Three.js
+- Three moments: 27 Aug 1915 (The Long Night), 14 Feb 1915 (Under Full Sail), 18 Oct 1915 (Thirty Degrees to Port); sky, exposure, ice, and rig follow from the ship's real position and date
+- URL parameters: ?moment=longnight|fullsail|pressure&t=HH:MM&cam=<shot>&look=0|1|2&flash=1&clean
+
 ## Computer Graphics and Art
 - [Open the collection](https://experiments.supermega.design/cga76/): sixteen instruments derived from Computer Graphics and Art, vol. 1 no. 2, May 1976
 - Each one is a clean-room study written from the issue's published descriptions — no scans ship, no source lines are traced
