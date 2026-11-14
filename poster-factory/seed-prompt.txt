@@ -1,0 +1,55 @@
+Build a poster factory for my brand: a small web tool that generates posters from the brand's own parts and rules, lets me pick one, tune it, and download it. No AI model is involved. Every poster comes from a seeded recipe and is checked against written rules before I can download it.
+
+Reference: https://experiments.supermega.design/poster-factory/ does this for a rebuild of the 1970 New York subway sign system. Copy the method, not the look. Use my brand's parts, colours, type, and words. If I have not given you brand files, ask me for: the palette (hex values with names), the typeface, the logo or key shapes as SVG, and three to five real things the brand says or shows (product names, places, numbers).
+
+Order of work
+1. Shared helpers and ONE style, with its test sheet. Show me the sheet.
+2. After I say yes: a second and third style.
+3. Then the app around them.
+
+Stack
+- Plain HTML, CSS, and JavaScript as ES modules. No build step, no framework, no dependencies. It runs from any static server, in a browser. Rendering needs the browser (it measures text with a canvas), so do not try to run it in Node.
+- Posters are SVG, 960 × 1200 (4:5). Export as SVG, and as PNG by drawing the SVG to a canvas at 2× and 4×. Name the font stack once and use it everywhere. An exported SVG keeps the font name, and a PNG is drawn with whatever font is installed, so say in the README which font the posters expect.
+
+Shared helpers (one file)
+- rng(seed): seed is a 32-bit integer. Returns a function r where r() gives a number in [0, 1), r.int(lo, hi) an integer in that range, and r.pick(array) one item. Use mulberry32 or similar. The same seed gives the same sequence.
+- measure(text, { size, weight }): ink width and height from a canvas measureText. Results are the same on one machine and can differ between machines with different fonts; that is accepted.
+- text(x, y, string, { size, weight, fill, anchor }): returns an SVG text element with the string escaped.
+- The palette as named constants.
+
+A style is one module
+A style is one construction idea, for example "one big word", "a grid of marks", "a diagram of the product". It exports:
+- id, name, blurb (one plain sentence).
+- random(r): takes the seeded generator and returns a full, plain-JSON params object for a fresh poster. It must vary the subject and the layout, not only the colours. It only returns posters with no "fail" flag: loop until render(params) has none, at most 30 tries, then return one known-good default recipe.
+- render(params, uid): pure and synchronous: the same params give the same string on the same machine. Returns { svg, flags }. svg is the markup that goes inside <svg viewBox="0 0 960 1200">, and its first element is a full-bleed ground rectangle. uid is a string the app passes in, unique per poster on the page (for example "p17"); if you define any id (pattern, clip, filter), prefix it with uid. flags is a list of { level: "fail" | "warn", text } from the rule checks.
+- controls(params): what a person can tune, in this order: subject, construction, colour. Four to nine entries. Shapes:
+  { key, label, type: "select", options: [{ value, label }] }
+  { key, label, type: "range", min, max, step }
+  { key, label, type: "toggle" }
+  { key, label, type: "text" }
+  { key, label, type: "color", options: ["#hex", ...] }  (palette colours only)
+
+Rules are code
+Write each style's rules first, in plain sentences with numbers: margins, the largest and smallest type size, how many colours, what may be cropped, what must be centred. Check them inside render and report each break as a flag.
+- "fail" means the poster breaks a rule and must not be downloaded. random never returns one.
+- "warn" means it is allowed but worth a look (for example low contrast on one ground). Warned posters may appear and may be downloaded.
+- Measure text before placing it. Never guess a width.
+
+One grid per style
+Pick one lattice (for example 80 px). Put the edges and anchor points of shapes on it, and the baselines of text. A type size that comes from fitting a word to a width is exempt. Shapes that sit side by side touch exactly or leave one fixed gap. A shape is fully inside the frame, fully outside it, or cropped on purpose with at least a third of its width or height hidden; never a sliver.
+
+The test sheet (build this with the first style)
+A page that renders 18 random posters of one style in a grid, seeds 1 to 18, with each poster's flags under it. Take a screenshot and look at it; if you cannot take screenshots, ask me to look. It passes when:
+- none of the 18 has a "fail", and you can explain every "warn";
+- render called twice with the same params gives the same string;
+- the 18 show at least three clearly different layouts, not one layout recoloured.
+
+The app (step 3)
+- Grid view: a title, a count line, a row of chips to filter by style, a "per set" choice of 4, 8, or 16, and a Generate button. Each poster is a tile. Hover shows Download and Remove.
+- Detail view: the poster large, previous and next, and a side panel with the style's controls, a Regenerate button (new seed, same style), Duplicate, a format picker, Download, and the list of flags ("All rules pass" when there are none). Download is disabled while a "fail" flag is present.
+- Changing a control re-renders at once. Keep the session in localStorage as a list of { id, style, seed, params }. params is what gets drawn; seed is kept only to show where the poster came from.
+- Check the detail view with a keyboard only, in light and dark, and at phone width.
+
+Safety
+- Treat saved params as untrusted. Escape every string you put into SVG text or attributes. Before inserting a poster's SVG into the page, parse it as XML and drop it if it does not parse; remove script, foreignObject, and style elements, every on* attribute, and any href that is not a fragment (#id), a data: image, or a path inside the tool's own ./assets/ folder.
+- No network requests except the tool's own static files. No analytics, no keys.
