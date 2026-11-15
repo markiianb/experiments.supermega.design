@@ -6,7 +6,7 @@ Do not edit here — edit the vault, rerun the build, commit, push.
 Live: https://experiments.supermega.design/
 
 Published experiments:
+- [Poster Factory](/poster-factory/) — since 2026-11-14
 - [Endurance, 1915](/endurance-1915/) — since 2026-10-30
 - [Computer Graphics and Art](/cga76/) — since 2026-08-05
 - [Pixel Garden Lab](/pixel-garden/) — since 2026-07-29
-- [Poster Factory](/poster-factory/) — since 2026-11-14

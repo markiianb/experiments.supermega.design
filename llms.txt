@@ -1,6 +1,13 @@
 # SUPERMEGA Experiments
 > Weekly visual experiments by SUPERMEGA Design (https://supermega.design). Plain HTML/CSS/JS, no build step.
 
+## Poster Factory
+- [Open the tool](https://experiments.supermega.design/poster-factory/): generate a set of posters, filter by style, open one to tune it, download PNG (1920 × 2400 or 3840 × 4800) or SVG
+- Five styles built from a rebuild of the 1970 NYCTA Graphics Standards Manual (Unimark: Massimo Vignelli, Bob Noorda) and the 1972 subway map: Junctions, Point of Decision, Nomenclature, Tokens, Centre
+- No AI model: each style is a module with random(rng), render(params) and controls(params); rules are checked in code and a failing rule blocks download
+- Controls after DialKit by Josh Puckett (MIT)
+- [Seed prompt](https://experiments.supermega.design/poster-factory/seed-prompt.txt): a self-contained prompt for coding agents — paste it into your agent to build a poster factory for your own brand
+
 ## Endurance, 1915
 - [Open the scene](https://experiments.supermega.design/endurance-1915/): a real-time, physically lit recreation of Shackleton's Endurance beset in the Weddell Sea, built with Three.js
 - Three moments: 27 Aug 1915 (The Long Night), 14 Feb 1915 (Under Full Sail), 18 Oct 1915 (Thirty Degrees to Port); sky, exposure, ice, and rig follow from the ship's real position and date
@@ -16,12 +23,5 @@
 - [Open](https://experiments.supermega.design/pixel-garden/): the live tool
 - [Seed prompt](https://experiments.supermega.design/pixel-garden/seed-prompt.txt): a self-contained prompt for coding agents — paste it into your agent to rebuild and adapt this system
 - [Engine](https://experiments.supermega.design/pixel-garden/core/pixel-core.js): dependency-free source, with [sprites](https://experiments.supermega.design/pixel-garden/core/sprites.js)
-
-## Poster Factory
-- [Open the tool](https://experiments.supermega.design/poster-factory/): generate a set of posters, filter by style, open one to tune it, download PNG (1920 × 2400 or 3840 × 4800) or SVG
-- Five styles built from a rebuild of the 1970 NYCTA Graphics Standards Manual (Unimark: Massimo Vignelli, Bob Noorda) and the 1972 subway map: Junctions, Point of Decision, Nomenclature, Tokens, Centre
-- No AI model: each style is a module with random(rng), render(params) and controls(params); rules are checked in code and a failing rule blocks download
-- Controls after DialKit by Josh Puckett (MIT)
-- [Seed prompt](https://experiments.supermega.design/poster-factory/seed-prompt.txt): a self-contained prompt for coding agents — paste it into your agent to build a poster factory for your own brand
 
 Free to use in your projects; a link back is appreciated.
