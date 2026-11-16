@@ -205,8 +205,7 @@ function renderWall() {
     '<div class="pf-wall-bar"><div class="pf-wall-walls" role="group" aria-label="Wall">' + S.scenes.map(s => '<button class="pf-wall-thumb" data-wall-scene="' + s.id + '" aria-pressed="' + (s.id === scene.id) + '" title="' + esc(s.name) + '" aria-label="' + esc(s.name) + '"><img src="' + esc(s.file) + '" alt=""></button>').join('') + '</div>' +
     '<div class="pf-wall-tools"><button class="btn btn-sm btn-secondary btn-rounded" data-wall="shuffle"' + (n < 2 ? ' disabled' : '') + '>' + I.shuffle + 'Shuffle</button><button class="btn btn-sm btn-primary btn-rounded" data-wall="dl">' + I.down + 'Download</button></div></div>' +
     '<div class="lens-row pf-wall-patterns"><span class="lens-word">Pattern</span>' + ST.PATTERNS.map(p => '<button class="lens-chip" data-pattern="' + p.id + '" aria-pressed="' + (p.id === wl.pattern) + '">' + esc(p.label) + '</button>').join('') + '</div>' +
-    '<p class="pf-wall-note">' + note + '</p>' +
-    '<p class="pf-wall-note pf-wall-credit">Wall photo from <a href="' + esc(scene.source) + '" target="_blank" rel="noopener">' + esc(scene.credit) + '</a>, via Visual Journal. Their posters are pasted over with ours; the photograph is theirs.</p>';
+    '<p class="pf-wall-note">' + note + '</p>';
   box.onclick = async e => {
     const sc = e.target.closest('[data-wall-scene]'); if (sc) { wl.scene = sc.dataset.wallScene; return renderWall(); }
     const pt = e.target.closest('[data-pattern]'); if (pt) { wl.pattern = pt.dataset.pattern; return renderWall(); }
