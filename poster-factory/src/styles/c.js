@@ -2,7 +2,9 @@
 // Every word comes from the 1970 manual, the 1972 map legend (data/F_data.json → LEG) or pp. 173–174 (data/nomenclature.json).
 import { W, H, PAL, ROUTE, ROUTES, FONT, rng, esc, measure, fit, text, load } from '../core/ctx.js';
 
-const M = 56, L = M, R = W - M, T = M, B = H - M, FW = R - L, FH = B - T, CAP = 0.714;
+const M = 56, L = M, T = M, CAP = 0.714;
+let R = 904, B = 1144, FW = 848, FH = 1088, CY = 600; // set from the live W, H at render time
+function dims() { R = W - M; B = H - M; FW = R - L; FH = B - T; CY = H / 2; }
 const HEX = Object.values(PAL);
 const NAME = Object.fromEntries(Object.entries(PAL).map(([k, v]) => [v, k]));
 const lum = h => { const n = parseInt(h.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255)) / 255; };
@@ -138,7 +140,7 @@ function subset(arr, n, pick) { if (arr.length <= n) return arr; const r = rng(p
 const DRAW = {
   route(S, p) {
     const d = p.subject, leg = LEG[d]; const o = { weight: 700, tracking: d.length > 1 ? -0.05 : 0 };
-    let s = fit(d, FW, o); if (d.length === 1) s = Math.min(s, 860 / CAP);
+    let s = fit(d, FW, o); if (d.length === 1) s = Math.min(s, 860 * H / 1200 / CAP);
     S.put(S.inkL(L, d, { size: s, ...o }), B, d, { size: s, ...o, fill: p.ink }, { hang: true, round: true });
     if (p.title && leg) title(S, splitTitle(leg[0]), p.ground === PAL.white ? PAL.black : (lum(p.ground) < 0.2 ? PAL.white : p.ink));
   },
@@ -182,8 +184,8 @@ const DRAW = {
     const v = VERTICALS[p.subject];
     if (v.diagonal) { const st = STATEMENTS[v.diagonal], o100 = { weight: 500, tracking: -0.03 }, n = st.lines.length; const wmax = Math.max(...st.lines.map(t => { const m = measure(t, { size: 100, ...o100 }); return m.left + m.right; }));
       const s = 100 * FW * Math.SQRT2 / (wmax + 100 * (CAP + 0.95 * (n - 1))), o = { size: s, ...o100 }, wb = wmax * s / 100, hb = s * (CAP + 0.95 * (n - 1)); const g = [];
-      st.lines.forEach((t, i) => { const f = st.accent.includes(i) ? p.accent : p.ink; S.fills.add(f); g.push(text(480 - wb / 2 + measure(t, o).left, 600 - hb / 2 + CAP * s + i * 0.95 * s, t, { ...o, fill: f })); });
-      S.sizes.add(Math.round(s)); const side = (wb + hb) / Math.SQRT2; S.raw(`<g transform="rotate(-45 480 600)">${g.join('')}</g>`); S.box({ str: 'diagonal block', l: 480 - side / 2, r: 480 + side / 2, t: 600 - side / 2, b: 600 + side / 2, size: s, capTop: 600 - side / 2, base: 600 + side / 2 }); return; }
+      st.lines.forEach((t, i) => { const f = st.accent.includes(i) ? p.accent : p.ink; S.fills.add(f); g.push(text(480 - wb / 2 + measure(t, o).left, CY - hb / 2 + CAP * s + i * 0.95 * s, t, { ...o, fill: f })); });
+      S.sizes.add(Math.round(s)); const side = (wb + hb) / Math.SQRT2; S.raw(`<g transform="rotate(-45 480 ${CY})">${g.join('')}</g>`); S.box({ str: 'diagonal block', l: 480 - side / 2, r: 480 + side / 2, t: CY - side / 2, b: CY + side / 2, size: s, capTop: CY - side / 2, base: CY + side / 2 }); return; }
     const n = v.words.length, o100 = { weight: v.weight, tracking: -0.04 }; const longest = Math.max(...v.words.map(t => { const m = measure(t, { size: 100, ...o100 }); return m.left + m.right; }));
     const s = Math.min(100 * FH / longest, (FW / (n + (n - 1) * 0.12)) / CAP), o = { size: s, ...o100 }, cap = CAP * s;
     v.words.forEach((t, i) => { const f = i === v.accent ? p.accent : p.ink; const m = measure(t, o); const x = L + i * (FW - cap) / (n - 1) + cap, y = B - m.left; S.fills.add(f); S.sizes.add(Math.round(s));
@@ -199,7 +201,7 @@ const DRAW = {
   numcol(S, p) {
     let rows; if (p.subject === 'beach') rows = NOM.alphabetical.filter(t => /^Beach \d/.test(t)).map(t => { const m = t.match(/^Beach (\d+) (.*)$/); return [m[1], m[2]]; });
     else rows = subset(NOM.numerical.filter(t => oneDash(t) && / St—/.test(t) && t.length <= 24), 8, p.pick).map(t => { const i = t.indexOf(' '); return [t.slice(0, i), t.slice(i + 1)]; });
-    const on = { size: 140, weight: 700, tracking: -0.04 }, om = { size: 64, weight: 500, tracking: -0.015 }, pitch = 120, n = rows.length;
+    const on = { size: 140, weight: 700, tracking: -0.04 }, om = { size: 64, weight: 500, tracking: -0.015 }, pitch = 120 * H / 1200, n = rows.length;
     const nw = Math.max(...rows.map(r => { const m = measure(r[0], on); return m.left + m.right; })), rw = Math.max(...rows.map(r => { const m = measure(r[1], om); return m.left + m.right; })), gap = 22;
     const total = nw + gap + rw, x0 = L + (FW - total) / 2, xa = x0 + nw, hgt = CAP * 140 + (n - 1) * pitch, top = p.title && p.subject === 'beach' ? Math.max(T + 110, (H - hgt) / 2) : (H - hgt) / 2;
     rows.forEach((r, i) => { const y = top + CAP * 140 + i * pitch; const m = measure(r[0], on), a = m.w + on.tracking * 140; S.put(xa - m.right + a, y, r[0], { ...on, fill: p.ink, anchor: 'end' }, { round: true }); S.put(S.inkL(xa + gap, r[1], om), y, r[1], { ...om, fill: p.accent }, { hang: true }); });
@@ -291,7 +293,7 @@ export default {
     return p;
   },
   render(params) {
-    const p = normal(params), S = sheet(p.ground);
+    dims(); const p = normal(params), S = sheet(p.ground);
     DRAW[p.kind](S, p);
     return { svg: S.out.join(''), flags: check(S, p) };
   },

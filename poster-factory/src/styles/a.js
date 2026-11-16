@@ -1,10 +1,11 @@
 // A · Junctions 1972 — one junction of the 1972 map, redrawn on an 80 px lattice.
 // Rules: 40-Marketing/Visual-Experiments/NYCTA-Posters/A-RULES.md
-import { W, H, MAP72, rng, measure, text, grain, load } from '../core/ctx.js';
+import { W, H, FORMAT, MAP72, rng, measure, text, grain, load } from '../core/ctx.js';
 import { makeGeo } from './a-geo.js';
 
 const LW = 80, DOT = 48, MAR = 80, CLEAR = 40, LEAD = 0.96, TRACK = -0.02, SIZES = [128, 88, 72];
-let G = null, J = [];
+let G = null, GEOS = {}, J = [];
+const useGeo = () => { G = GEOS[FORMAT] || GEOS.poster; }; // one lattice geometry per frame height
 const ink = n => MAP72[n.split('/')[1]] || MAP72.frame;
 
 // ---- name block metrics (ink box of the stacked lines)
@@ -40,6 +41,7 @@ const visible = l => { for (let z = 0; z < l.poly.length - 1; z++) { const A = l
 
 // ---- window planner: slide the window to keep the junction rich and leave room for the name
 function plan(j, r, spread = 0.35) {
+  useGeo();
   const cands = [];
   for (let a = -2; a <= 2; a++) for (let b = -2; b <= 2; b++) {
     const dx = a * spread / 2 * W / G.k, dy = b * spread / 2 * H / G.k;
@@ -57,6 +59,7 @@ function plan(j, r, spread = 0.35) {
 }
 
 function draw(p, uid) {
+  useGeo();
   const flags = [];
   const step = 17; // one lattice step in map units (80 px)
   const g = G.compute(p.cx + (p.dx || 0) * step, p.cy + (p.dy || 0) * step);
@@ -122,7 +125,7 @@ export default {
   id: 'a',
   name: 'Junctions',
   blurb: 'One junction of the 1972 subway map, blown up and redrawn on a single lattice.',
-  async init() { const [geo, jn] = await Promise.all([load('A2_mapgeo'), load('junctions')]); G = makeGeo(geo); J = jn; },
+  async init() { const [geo, jn] = await Promise.all([load('A2_mapgeo'), load('junctions')]); GEOS = { poster: makeGeo(geo), street: makeGeo(geo, { PH: 1440 }) }; G = GEOS.poster; J = jn; },
   controls() {
     return [
       { key: 'junction', label: 'Junction', type: 'select', options: J.map((j, i) => ({ value: i, label: j.title.join(' ') })), replan: true },
@@ -137,7 +140,7 @@ export default {
     ];
   },
   // called by the app when a control marked `replan` changes
-  replan(p) { const j = J[+p.junction]; const pl = plan(j, null) || { cx: j.cx, cy: j.cy }; return { ...p, title: j.title, titleText: j.title.join(' / '), cx: pl.cx, cy: pl.cy, dx: 0, dy: 0 }; },
+  replan(p) { useGeo(); const j = J[+p.junction]; const pl = plan(j, null) || { cx: j.cx, cy: j.cy }; return { ...p, title: j.title, titleText: j.title.join(' / '), cx: pl.cx, cy: pl.cy, dx: 0, dy: 0 }; },
   random(r) {
     for (let t = 0; t < 12; t++) {
       const ji = r.int(0, J.length - 1), j = J[ji]; const pl = plan(j, r); if (!pl) continue;

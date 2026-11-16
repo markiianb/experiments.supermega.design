@@ -75,6 +75,10 @@ function theme(mode, cat) {
   if (cat === 'mandatory') return { ...t, ink: PAL.red };
   return t;
 }
+// Stack plates designed for the 1200 px poster onto the current height: same order, 6 px gaps, heights scaled to fill H.
+const stack = hs => { const k = (H - GAP * (hs.length - 1)) / hs.reduce((a, b) => a + b, 0); let y = 0; return hs.map(h => { const r = { y, h: h * k }; y += h * k + GAP; return r; }); };
+const KH = () => H / 1200;
+const inner = (p, want) => Math.min(want, p.w - 20, p.h - p.band - 10);
 const parseRoutes = s => String(s || '').trim().split(/[\s,·]+/).filter(Boolean).map(x => x.toUpperCase());
 const sizeOf = (ls, w, hAvail, max) => { let s = Math.min(...ls.map(l => fit(l, w))); const k = (ls.length - 1) * LEAD + 0.92; if (s * k > hAvail) s = hAvail / k; return max ? Math.min(s, max) : s; };
 
@@ -174,31 +178,31 @@ const BUILD = {
   word(d, P, sg, th) {
     const p = d.full(0, H, th), hasArrow = P.arrow !== 'none' && sg.arrow;
     if (hasArrow) { const w = d.words(p, sg.t, P.flip ? { align: 'bottom', margin: 60, max: 460 } : { align: p.band + 70, max: 460 });
-      const top = P.flip ? p.band : w.bottom, bot = P.flip ? w.top : H, m = Math.min(620 * P.scale, bot - top - 60, W - 80);
+      const top = P.flip ? p.band : w.bottom, bot = P.flip ? w.top : H, m = Math.min(620 * P.scale * KH(), bot - top - 60, W - 80);
       d.arrow(p, P.arrow, (W - m) / 2, top + (bot - top - m) / 2, m); }
     else { const w = d.words(p, sg.t, { pad: 30 }); if ((w.bottom - w.top) / (H - p.band) < 0.4) d.fail('The message leaves a large empty field'); }
     p.end();
   },
   arrows(d, P, sg, th) {
     const ex = theme(P.mode, 'exit');
-    if (P.sign === 'six') { const o = ['L', 'R', 'U', 'D', 'BL', 'BR']; for (let j = 0; j < 3; j++) d.row(j * 402, 396, 2, th).forEach((p, i) => { d.centred(p, 'arrow', o[j * 2 + i], 340 * Math.min(P.scale, 1.1)); p.end(); }); }
-    else if (P.sign === 'pair') ['L', 'R'].forEach((a, j) => { const p = d.full(j * 603, 597, th); d.centred(p, 'arrow', P.flip ? (a === 'L' ? 'R' : 'L') : a, Math.min(540 * P.scale, 520)); p.end(); });
-    else if (P.sign === 'stairs') { const p = d.full(0, 597, ex); d.words(p, 'Exit', { align: 'bottom', margin: 60, max: 420 }); p.end(); d.row(603, 597, 2, ex).forEach((q, i) => { d.centred(q, 'arrow', ['BL', 'BR'][i], 400 * Math.min(P.scale, 1.1)); q.end(); }); }
-    else { const p = d.full(0, 360, ex); const w = d.words(p, 'Exit', { max: 305, w: 600 }); d.arrow(p, 'L', 960 - 20 - 270, p.band + (360 - p.band - 270) / 2, 270, {}); p.end();
-      const q = d.full(366, 480, th); d.words(q, 'Rector St\nTrinity Place'); q.end(); d.row(852, 348, 2, th).forEach((r, i) => { d.centred(r, 'arrow', ['BL', 'BR'][i], 250); r.end(); }); }
+    if (P.sign === 'six') { const o = ['L', 'R', 'U', 'D', 'BL', 'BR']; stack([396, 396, 396]).forEach(({ y, h }, j) => d.row(y, h, 2, th).forEach((p, i) => { d.centred(p, 'arrow', o[j * 2 + i], inner(p, 340 * KH() * Math.min(P.scale, 1.1))); p.end(); })); }
+    else if (P.sign === 'pair') { const st = stack([597, 597]); ['L', 'R'].forEach((a, j) => { const p = d.full(st[j].y, st[j].h, th); d.centred(p, 'arrow', P.flip ? (a === 'L' ? 'R' : 'L') : a, inner(p, Math.min(540 * P.scale, 520) * KH())); p.end(); }); }
+    else if (P.sign === 'stairs') { const st = stack([597, 597]); const p = d.full(st[0].y, st[0].h, ex); d.words(p, 'Exit', { align: 'bottom', margin: 60, max: 420 * KH() }); p.end(); d.row(st[1].y, st[1].h, 2, ex).forEach((q, i) => { d.centred(q, 'arrow', ['BL', 'BR'][i], inner(q, 400 * KH() * Math.min(P.scale, 1.1))); q.end(); }); }
+    else { const st = stack([360, 480, 348]), k = KH(); const p = d.full(st[0].y, st[0].h, ex); d.words(p, 'Exit', { max: 305 * k, w: 600 }); const am = 270 * k; d.arrow(p, 'L', W - 20 - am, p.band + (p.h - p.band - am) / 2, am, {}); p.end();
+      const q = d.full(st[1].y, st[1].h, th); d.words(q, 'Rector St\nTrinity Place'); q.end(); d.row(st[2].y, st[2].h, 2, th).forEach((r, i) => { d.centred(r, 'arrow', ['BL', 'BR'][i], inner(r, 250 * k)); r.end(); }); }
   },
   halves(d, P, sg, th) {
-    const half = (j, str, t, o = {}) => { const p = d.full(j * 603, 597, t, o.plate); if (o.arrow) { const w = d.words(p, str, { align: 'bottom', margin: 55, max: o.max }); const m = Math.min(250, w.top - p.band - 30); d.arrow(p, o.arrow, 22, p.band + (w.top - p.band - m) / 2, m); } else d.words(p, str, o.words); p.end(); };
+    const st = stack([597, 597]); const half = (j, str, t, o = {}) => { const p = d.full(st[j].y, st[j].h, t, o.plate); if (o.arrow) { const w = d.words(p, str, { align: 'bottom', margin: 55, max: o.max }); const m = Math.min(250 * KH(), w.top - p.band - 30); d.arrow(p, o.arrow, 22, p.band + (w.top - p.band - m) / 2, m); } else d.words(p, str, o.words); p.end(); };
     if (P.sign === 'exit-transfer') { const s = fit('Transfer', 920); half(0, 'Exit', theme(P.mode, 'exit'), { arrow: 'L', max: s }); half(1, 'Transfer', theme(P.mode, 'transfer'), { arrow: 'U', max: s }); }
     else if (P.sign === 'up-down') { half(0, S.uptown.t, th, { arrow: 'U', max: 140 }); half(1, S.downtown.t, th, { arrow: 'D', max: 140 }); }
     else if (P.sign === 'never') { const flood = P.mode === 'yellow' || P.mode === 'red'; const s = sizeOf(['before.'], 920, 9999);
       half(0, 'Never\nbefore.', flood ? theme('yellow') : th, { words: { size: Math.min(s, 300) } }); half(1, 'Never\nafter.', flood ? { ground: PAL.red, ink: PAL.white, letters: PAL.white } : th, { words: { size: Math.min(s, 300) } }); }
-    else { half(0, 'in', { ground: PAL.grey, ink: PAL.black }, { plate: { noBand: true }, words: { size: 560, align: 'bottom', margin: 60 } }); half(1, 'out', { ground: PAL.black, ink: PAL.white }, { plate: { noBand: true }, words: { size: 560, align: 'bottom', margin: 60 } }); }
+    else { const z = Math.min(560 * KH(), fit('out', 880)); half(0, 'in', { ground: PAL.grey, ink: PAL.black }, { plate: { noBand: true }, words: { size: z, align: 'bottom', margin: 60 } }); half(1, 'out', { ground: PAL.black, ink: PAL.white }, { plate: { noBand: true }, words: { size: z, align: 'bottom', margin: 60 } }); }
   },
   scales(d, P, sg, th) {
-    let y = 0;
-    for (const s of [4, 3, 2, 1]) { const m = 120 * s;
-      if (P.sign === 'leanshort') { d.rowsW.push(W); const p = d.plate(0, y, 240 * s, m, theme(P.mode, 'mandatory'), { s }); d.words(p, 'Do not lean\nover the edge', { size: 35.75 * s }); p.end(); }
+    let y = 0; const k = KH();
+    for (const s0 of [4, 3, 2, 1]) { const s = s0 * k, m = 120 * s;
+      if (P.sign === 'leanshort') { d.rowsW.push(W); const p = d.plate(0, y, Math.min(240 * s, W), m, theme(P.mode, 'mandatory'), { s }); d.words(p, 'Do not lean\nover the edge', { size: Math.min(35.75 * s, fit('over the edge', p.w - 2 * PAD * Math.min(1, s / 4)) * 0.999) }); p.end(); }
       else if (P.sign === 'transfer') { d.rowsW.push(W); const routes = parseRoutes(P.routes).slice(0, 3); checkRoutes(d, routes);
         const a = d.plate(0, y, m, m, th, { s }); d.centred(a, 'arrow', P.arrow === 'none' ? 'U' : P.arrow, 0.8 * m); a.end();
         const t = d.plate(m, y, 4 * m, m, theme(P.mode, 'transfer'), { s }); d.words(t, 'Transfer', { size: 101.54 * s, crop: true }); t.end();
@@ -207,34 +211,35 @@ const BUILD = {
       y += m; }
   },
   repeat(d, P, sg, th) {
-    if (P.sign === 'no') ['No littering', 'No smoking', 'No spitting'].forEach((l, j) => { const p = d.full(j * 402, 396, theme(P.mode, 'mandatory')); d.words(p, l, { size: fit('No smoking', 900) }); p.end(); });
+    if (P.sign === 'no') { const st = stack([396, 396, 396]); ['No littering', 'No smoking', 'No spitting'].forEach((l, j) => { const p = d.full(st[j].y, st[j].h, theme(P.mode, 'mandatory')); d.words(p, l, { size: fit('No smoking', 900) }); p.end(); }); }
     else { const n = P.count, h = (H - GAP * (n - 1)) / n; for (let j = 0; j < n; j++) { const p = d.full(j * (h + GAP), h, th.ground === PAL.grey ? th : theme(P.mode), { s: h / 120 * 0.9 }); d.words(p, 'Exit only', { max: h * 0.72 }); p.end(); } }
   },
   column(d, P, sg, th) {
     const [num, name] = COLUMN[P.sign], p = d.full(0, H, th, { noBand: true }), ls = name.split('\n');
-    const ns = Math.min(fit(num, 860), 840); const m = measure(num, { size: ns }); p.g += text(50 - m.left, 70 + CAP * ns, num, { size: ns, fill: th.ink });
-    const size = ls.length > 1 ? 132 : 190; d.words(p, name, { size, align: 'bottom', margin: 70, pad: 50 });
-    if (70 + CAP * ns > H - 70 - ((ls.length - 1) * LEAD + CAP) * size - 40) d.fail('The number runs into the name');
+    const ns = Math.min(fit(num, 860), 840); const m = measure(num, { size: ns }); const ny = 70 + (H - 1200) / 2; p.g += text(50 - m.left, ny + CAP * ns, num, { size: ns, fill: th.ink });
+    const size = (ls.length > 1 ? 132 : 190) * KH(); d.words(p, name, { size, align: 'bottom', margin: 70, pad: 50 });
+    if (ny + CAP * ns > H - 70 - ((ls.length - 1) * LEAD + CAP) * size - 40) d.fail('The number runs into the name');
     p.end();
   },
   info(d, P, sg, th) {
-    if (P.sign === 'rush') { const p = d.full(0, 597, th); d.centred(p, 'disc', 'QB', 460 * Math.min(P.scale, 1.1)); p.end(); const q = d.full(603, 597, th); d.words(q, 'Rush-hour service\nMon–Fri:\nQB to Coney Island\nvia Brighton\n4:55 pm to 5:30 pm', { pad: 30 }); q.end(); }
-    else if (P.sign === 'parttime') { const p = d.full(0, 597, th); d.words(p, 'For 23 St & 14 St\nMon-Fri\n6:50 am to 10:05 am\n3:30 pm to 6:55 pm\nTake any train to 34 St\nChange for', { pad: 30 }); p.end(); const q = d.full(603, 597, th); d.words(q, 'Mon-Fri\n7am to 8:10 pm'); q.end(); }
-    else if (P.sign === 'manhattan') { const ps = d.row(0, 597, 2, th); d.centred(ps[0], 'arrow', 'L', 420); d.centred(ps[1], 'disc', 'D', 400); ps.forEach(p => p.end()); const q = d.full(603, 597, th); d.words(q, 'Manhattan'); q.end(); }
-    else { const p = d.full(0, 300, th); d.words(p, 'Uptown', { max: 215 }); p.end(); d.row(306, 477, 2, th).forEach((q, i) => { d.centred(q, 'disc', ['N', 'QB'][i], 370); q.end(); }); const r = d.full(789, 411, th); d.words(r, 'To 57 St–7 Av'); r.end(); }
+    const st = stack([597, 597]), k = KH();
+    if (P.sign === 'rush') { const p = d.full(st[0].y, st[0].h, th); d.centred(p, 'disc', 'QB', inner(p, 460 * k * Math.min(P.scale, 1.1))); p.end(); const q = d.full(st[1].y, st[1].h, th); d.words(q, 'Rush-hour service\nMon–Fri:\nQB to Coney Island\nvia Brighton\n4:55 pm to 5:30 pm', { pad: 30 }); q.end(); }
+    else if (P.sign === 'parttime') { const p = d.full(st[0].y, st[0].h, th); d.words(p, 'For 23 St & 14 St\nMon-Fri\n6:50 am to 10:05 am\n3:30 pm to 6:55 pm\nTake any train to 34 St\nChange for', { pad: 30 }); p.end(); const q = d.full(st[1].y, st[1].h, th); d.words(q, 'Mon-Fri\n7am to 8:10 pm'); q.end(); }
+    else if (P.sign === 'manhattan') { const ps = d.row(st[0].y, st[0].h, 2, th); d.centred(ps[0], 'arrow', 'L', inner(ps[0], 420 * k)); d.centred(ps[1], 'disc', 'D', inner(ps[1], 400 * k)); ps.forEach(p => p.end()); const q = d.full(st[1].y, st[1].h, th); d.words(q, 'Manhattan'); q.end(); }
+    else { const s3 = stack([300, 477, 411]); const p = d.full(s3[0].y, s3[0].h, th); d.words(p, 'Uptown', { max: 215 * k }); p.end(); d.row(s3[1].y, s3[1].h, 2, th).forEach((q, i) => { d.centred(q, 'disc', ['N', 'QB'][i], inner(q, 370 * k)); q.end(); }); const r = d.full(s3[2].y, s3[2].h, th); d.words(r, 'To 57 St–7 Av'); r.end(); }
   },
   construct(d, P, sg, th) {
-    if (P.sign === 'circle') { d.rowsW.push(W); const p = d.plate(0, 120, W, W, th, { noBand: true }); p.g += `<circle cx="480" cy="480" r="440" fill="none" stroke="${th.ink}" stroke-width="3"/>`; d.arrow(p, P.arrow === 'none' ? 'U' : P.arrow, 0, 0, W); p.end(); }
+    if (P.sign === 'circle') { d.rowsW.push(W); const ph = H - 240, oy = (ph - W) / 2; const p = d.plate(0, 120, W, ph, th, { noBand: true }); p.g += `<circle cx="480" cy="${oy + 480}" r="440" fill="none" stroke="${th.ink}" stroke-width="3"/>`; d.arrow(p, P.arrow === 'none' ? 'U' : P.arrow, 0, oy, W); p.end(); }
     else { const p = d.full(0, H, th, { noBand: true }); for (let x = 60; x < W; x += 60) p.g += `<rect x="${x - 0.5}" width="1" height="${H}" fill="${th.ink}" opacity="0.25"/>`; for (let y = 60; y < H; y += 60) p.g += `<rect y="${y - 0.5}" width="${W}" height="1" fill="${th.ink}" opacity="0.25"/>`;
       const m = 1800 * P.scale; d.arrow(p, 'BR', W - m * 0.865, -m * 0.135 + 30, m, { crop: true, offAxis: true }); p.end(); }
   },
   tree(d, P, sg, th) {
-    const flood = P.mode === 'yellow'; const top = d.full(0, 300, flood ? { ground: PAL.red, ink: PAL.black } : theme(P.mode, 'street'));
-    top.g += `<rect y="41" width="259" height="259" fill="${th.ground}"/>`; top.g += `<path transform="translate(0 41) scale(${259 / 120}) rotate(180 60 60)" d="${ARROW}" fill="${th.ink}"/>`;
-    d.words(top, 'Subway', { x: 260, w: 700, top: 41, max: 176 }); top.end();
-    d.row(306, 240, 2, th).forEach((p, i) => { d.words(p, [S.uptown.t, S.downtown.t][i], { pad: 10, max: 78 }); p.end(); });
-    d.row(552, 155, 6, th).forEach((p, i) => { d.centred(p, 'disc', ['1', '2', '3'][i % 3], 129); p.end(); });
-    d.row(713, 487, 2, th).forEach((p, i) => { const m = 400; d.arrow(p, ['U', 'D'][i], (p.w - m) / 2, p.band + (p.h - p.band - m) / 2, m); p.end(); });
+    const flood = P.mode === 'yellow', st = stack([300, 240, 155, 487]), k = KH(); const top = d.full(st[0].y, st[0].h, flood ? { ground: PAL.red, ink: PAL.black } : theme(P.mode, 'street'));
+    const sq = top.h - 41; top.g += `<rect y="41" width="${sq}" height="${sq}" fill="${th.ground}"/>`; top.g += `<path transform="translate(0 41) scale(${sq / 120}) rotate(180 60 60)" d="${ARROW}" fill="${th.ink}"/>`;
+    d.words(top, 'Subway', { x: sq + 1, w: W - sq - 1, top: 41, max: 176 * k }); top.end();
+    d.row(st[1].y, st[1].h, 2, th).forEach((p, i) => { d.words(p, [S.uptown.t, S.downtown.t][i], { pad: 10, max: 78 * k }); p.end(); });
+    d.row(st[2].y, st[2].h, 6, th).forEach((p, i) => { d.centred(p, 'disc', ['1', '2', '3'][i % 3], Math.min(129 * k, p.w - 20, p.h - p.band - 4)); p.end(); });
+    d.row(st[3].y, st[3].h, 2, th).forEach((p, i) => { const m = inner(p, 400 * k); d.arrow(p, ['U', 'D'][i], (p.w - m) / 2, p.band + (p.h - p.band - m) / 2, m); p.end(); });
   },
 };
 

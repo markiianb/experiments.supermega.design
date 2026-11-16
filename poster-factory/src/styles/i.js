@@ -26,6 +26,7 @@ const VARIANTS = {
 };
 
 let RT = null, FD = null; const DISC = {};
+let D = 0; // extra height of the current format over 1200, set at render time
 const inkOfRoute = k => PAL[INKOF[RT[k].ink]];
 const discKey = k => (k === 'SSfr' ? 'SS' : k);
 
@@ -94,12 +95,12 @@ function disc(cx, cy, d, route, letters = '#ffffff') {
 }
 const head = ink => text(48, 53, 'New York City Transit Authority', { size: 14, weight: 400, fill: ink }) + text(330, 53, 'Subway map 1972', { size: 14, weight: 400, fill: ink });
 function caption(route, rows, ink, flags) { // disc 176 on the margin, three lines centred on it (rules 5–6)
-  const y0 = 1048 + 15 - (rows.length - 1) * 47 / 2; let s = disc(136, 1048, 176, route);
+  const y0 = 1048 + D + 15 - (rows.length - 1) * 47 / 2; let s = disc(136, 1048 + D, 176, route);
   rows.forEach((t, i) => { s += text(256, y0 + i * 47, t, { size: 42, weight: 300, fill: ink }); if (256 + measure(t, { size: 42, weight: 300 }).w > W - 40) flags.push({ level: 'warn', text: `Caption line “${t}” runs past the right margin.` }); });
   if (rows.length > 3) flags.push({ level: 'fail', text: 'Caption has more than three lines.' });
   return s;
 }
-const title = (t, ink) => text(48, 1129, t, { size: 40, weight: 300, fill: ink });
+const title = (t, ink) => text(48, 1129 + D, t, { size: 40, weight: 300, fill: ink });
 
 function checkTokens(items, flags, { centre = true, gap = null } = {}) { // rules 14, 15, 17, 21
   let over = 0; for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) if (Math.hypot(items[i].x - items[j].x, items[i].y - items[j].y) < items[i].r + items[j].r - 0.05) over++;
@@ -114,7 +115,7 @@ function checkTokens(items, flags, { centre = true, gap = null } = {}) { // rule
 const K = {};
 K.trail = (p, bg, ink, flags) => {
   const key = TRAILS.includes(p.route) ? p.route : '1', main = inkOfRoute(key), cap = p.caption;
-  const fw = 768, fh = cap ? 748 : 920, cx = 480, cy = cap ? 508 : 604;
+  const fw = 768, fh = (cap ? 748 : 920) + D, cx = 480, cy = (cap ? 508 : 604) + D / 2;
   const s = bestShape(key, p.pitch, fw, fh);
   if (!s) { flags.push({ level: 'fail', text: 'This route does not fit the field at this pitch. Lower the pitch.' }); return head(ink); }
   const N = s.N, cr = {}; let last = -9;
@@ -133,17 +134,17 @@ K.trail = (p, bg, ink, flags) => {
 };
 K.stations = (p, bg, ink, flags) => {
   const key = GRIDS[p.route] ? p.route : 'LL', main = ROUTE[key], st = FD.R[key], n = st.length, cols = GRIDS[key], rows = Math.ceil(n / cols);
-  const pitch = p.pitch * 1.25, d = pitch * 0.8, cy = p.caption ? 508 : 604, x0 = 480 - (cols - 1) * pitch / 2, y0 = cy - (rows - 1) * pitch / 2;
+  const pitch = p.pitch * 1.25, d = pitch * 0.8, cy = (p.caption ? 508 : 604) + D / 2, x0 = 480 - (cols - 1) * pitch / 2, y0 = cy - (rows - 1) * pitch / 2;
   const items = []; let g = '';
   for (let i = 0; i < n; i++) { const x = x0 + (i % cols) * pitch, y = y0 + Math.floor(i / cols) * pitch; items.push({ x, y, r: d / 2 }); g += (i === 0 || i === n - 1) ? tok(x, y, d, [main]) : tok(x, y, d, [main, bg, main]); }
   const bb = checkTokens(items, flags);
-  if (bb.y1 > (p.caption ? 944 : 1136)) flags.push({ level: 'fail', text: 'The grid runs into the caption. Lower the pitch.' });
+  if (bb.y1 > (p.caption ? 944 : 1136) + D) flags.push({ level: 'fail', text: 'The grid runs into the caption. Lower the pitch.' });
   if (n % cols) flags.push({ level: 'fail', text: 'The last row is not full.' });
   if (p.caption) g += caption(key, [FD.LEG[key][0], n + ' stations'], ink, flags);
   return g + head(ink);
 };
 K.express = (p, bg, ink, flags) => {
-  const X = FD.X['7Av'], n = X.st.length, cols = 6, rows = Math.ceil(n / cols), pitch = p.pitch * 1.25, d = pitch * 0.8, cy = p.caption ? 508 : 604;
+  const X = FD.X['7Av'], n = X.st.length, cols = 6, rows = Math.ceil(n / cols), pitch = p.pitch * 1.25, d = pitch * 0.8, cy = (p.caption ? 508 : 604) + D / 2;
   const x0 = 480 - (cols - 1) * pitch / 2, y0 = cy - (rows - 1) * pitch / 2; const items = []; let g = '';
   for (let i = 0; i < n; i++) { const x = x0 + (i % cols) * pitch, y = y0 + Math.floor(i / cols) * pitch; items.push({ x, y, r: d / 2 }); g += X.exp.includes(i) ? tok(x, y, d, [PAL.red, PAL.orange, bg]) : tok(x, y, d, [PAL.orange, bg, PAL.orange]); }
   checkTokens(items, flags);
@@ -152,7 +153,7 @@ K.express = (p, bg, ink, flags) => {
 };
 K.rings = (p, bg, ink, flags) => {
   const v = p.variant, set = v === 'inks' ? INKS.map(i => PAL[i[0]]) : (v === 'numbers' ? ROUTES.slice(18) : v === 'letters' ? ROUTES.slice(0, 18) : ROUTES).map(r => ROUTE[r]);
-  const n = set.length, R0 = 432, step = R0 / (n === 26 ? 27 : n + 0.5), cy = p.caption ? 574 : 600; let g = '';
+  const n = set.length, R0 = 432, step = R0 / (n === 26 ? 27 : n + 0.5), cy = (p.caption ? 574 : 600) + D / 2; let g = '';
   set.forEach((col, i) => { const rad = R0 - i * step; g += c(480, cy, rad, col) + c(480, cy, rad - step * 0.62, bg); });
   const label = (VARIANTS.rings.find(o => o[0] === v) || VARIANTS.rings[0])[1];
   return g + head(ink) + (p.caption ? title(label, ink) : '');
@@ -160,13 +161,13 @@ K.rings = (p, bg, ink, flags) => {
 K.discs = (p, bg, ink, flags) => {
   let g = ''; const items = [];
   if (p.variant === 'rows') {
-    const cs = 120, d = 100, y0 = 600 - 4 * cs;
+    const cs = 120, d = 100, y0 = 600 + D / 2 - 4 * cs;
     INKS.forEach((row, j) => { const rs = row[2], x0 = 480 - rs.length * cs / 2; rs.forEach((r, i) => { const x = x0 + i * cs + cs / 2, y = y0 + j * cs + cs / 2; items.push({ x, y, r: d / 2 }); g += disc(x, y, d, r); }); });
   } else if (p.variant === 'inks') {
-    INKS.forEach((row, i) => { const cx = 136 + (i % 2) * 456, cy = 253 + Math.floor(i / 2) * 240, col = PAL[row[0]]; items.push({ x: cx, y: cy, r: 88 }); g += tok(cx, cy, 176, [col, bg, col, bg]);
+    INKS.forEach((row, i) => { const cx = 136 + (i % 2) * 456, cy = 253 + D / 2 + Math.floor(i / 2) * 240, col = PAL[row[0]]; items.push({ x: cx, y: cy, r: 88 }); g += tok(cx, cy, 176, [col, bg, col, bg]);
       g += text(cx + 112, cy - 12, row[1] + (INKNAME[row[0]] ? ' ' + INKNAME[row[0]] : ''), { size: 20, weight: 500, fill: ink }) + text(cx + 112, cy + 23, row[2].join(', '), { size: 30, weight: 300, fill: ink }); });
   } else {
-    const cs = 144, y0 = 204, cell = (r, x, y) => { const k = Object.keys(PAL).find(n => PAL[n] === ROUTE[r]); g += `<rect x="${x}" y="${y}" width="${cs}" height="${cs}" fill="${PAL[PARTNER[k]]}"/>`; items.push({ x: x + cs / 2, y: y + cs / 2, r: cs * 0.43 }); return disc(x + cs / 2, y + cs / 2, cs * 0.86, r); };
+    const cs = 144, y0 = 204 + D / 2, cell = (r, x, y) => { const k = Object.keys(PAL).find(n => PAL[n] === ROUTE[r]); g += `<rect x="${x}" y="${y}" width="${cs}" height="${cs}" fill="${PAL[PARTNER[k]]}"/>`; items.push({ x: x + cs / 2, y: y + cs / 2, r: cs * 0.43 }); return disc(x + cs / 2, y + cs / 2, cs * 0.86, r); };
     let top = ''; for (let i = 0; i < 18; i++) top += cell(ROUTES[i], 48 + (i % 6) * cs, y0 + Math.floor(i / 6) * cs);
     for (let i = 0; i < 8; i++) top += cell(ROUTES[18 + i], 192 + (i % 4) * cs, y0 + 3 * cs + 72 + Math.floor(i / 4) * cs);
     g += top;
@@ -175,7 +176,7 @@ K.discs = (p, bg, ink, flags) => {
   return g + head(ink);
 };
 K.pairs = (p, bg, ink, flags) => {
-  const three = p.variant === 'three', d = three ? 220 : 352, gap = d / 8, cy = p.caption ? 508 : 604, items = []; let g = '';
+  const three = p.variant === 'three', d = three ? 220 : 352, gap = d / 8, cy = (p.caption ? 508 : 604) + D / 2, items = []; let g = '';
   for (const r of (three ? [-1, 0, 1] : [0])) for (const s of [-1, 1]) { const x = 480 + s * (d + gap) / 2, y = cy + r * (d + gap); items.push({ x, y, r: d / 2 }); g += tok(x, y, d, [PAL.green, bg, PAL.green]); }
   checkTokens(items, flags);
   if (p.caption) g += caption('SS', three ? ['Shuttles', 'Times Square–Grand Central', 'Franklin Av · Culver'] : ['Shuttle', 'Times Square', 'Grand Central'], ink, flags);
@@ -184,7 +185,7 @@ K.pairs = (p, bg, ink, flags) => {
 K.network = (p, bg, ink, flags) => {
   const one = INKS.find(i => i[0] === p.variant), keys = Object.keys(RT).filter(k => !one || INKOF[RT[k].ink] === one[0]);
   const all = [].concat(...keys.map(k => RT[k].v)), xs = all.map(q => q[0]), ys = all.map(q => q[1]);
-  const bx = one ? [104, 148, 752, 852] : [60, 137, 840, 880], sp = one ? 26 : 17, ro = one ? 8 : 5.2, ri = one ? 2.8 : 1.8, sw = one ? 3.6 : 2.4;
+  const bx = one ? [104, 148, 752, 852 + D] : [60, 137, 840, 880 + D], sp = one ? 26 : 17, ro = one ? 8 : 5.2, ri = one ? 2.8 : 1.8, sw = one ? 3.6 : 2.4;
   const X0 = Math.min(...xs), X1 = Math.max(...xs), Y0 = Math.min(...ys), Y1 = Math.max(...ys), k = Math.min(bx[2] / (X1 - X0), bx[3] / (Y1 - Y0));
   const ox = bx[0] + (bx[2] - (X1 - X0) * k) / 2, oy = bx[1] + (bx[3] - (Y1 - Y0) * k) / 2 + (p.caption ? 0 : 24); let g = '';
   for (const key of keys) {
@@ -200,14 +201,14 @@ K.network = (p, bg, ink, flags) => {
   return g + head(ink) + (p.caption ? title(label, ink) : '');
 };
 K.stripes = (p, bg, ink, flags, uid) => {
-  const per = 36, cx = 480, cy = p.caption ? 508 : 604, rad = 333, top = cy - 387; let a = '', b = '';
-  for (let k = 0; k < 22; k++) a += `<rect x="0" y="${top + k * per}" width="${W}" height="18" fill="${PAL.green}"/>`;
-  for (let k = 0; k < 21; k++) b += `<rect x="${cx - rad}" y="${top + 18 + k * per}" width="${rad * 2}" height="18" fill="${PAL.green}"/>`;
+  const per = 36, cx = 480, cy = (p.caption ? 508 : 604) + D / 2, rad = 333, nS = 22 + Math.floor(D / per / 2) * 2, top = cy - (nS * per - 18) / 2; let a = '', b = '';
+  for (let k = 0; k < nS; k++) a += `<rect x="0" y="${top + k * per}" width="${W}" height="18" fill="${PAL.green}"/>`;
+  for (let k = 0; k < nS - 1; k++) b += `<rect x="${cx - rad}" y="${top + 18 + k * per}" width="${rad * 2}" height="18" fill="${PAL.green}"/>`;
   const g = a + c(cx, cy, rad, bg) + `<clipPath id="${uid}c"><circle cx="${cx}" cy="${cy}" r="${rad}"/></clipPath><g clip-path="url(#${uid}c)">${b}</g>`;
   return g + head(ink) + (p.caption ? caption('SS', ['Shuttles', 'Times Square–Grand Central', 'Franklin Av · Culver'], ink, flags) : '');
 };
 K.screens = (p, bg, ink, flags) => {
-  const cx = 480, cy = p.caption ? 574 : 600, RR = 400, sp = 46; let g = '';
+  const cx = 480, cy = (p.caption ? 574 : 600) + D / 2, RR = 400, sp = 46; let g = '';
   for (const [col, ang] of [[PAL.magenta, 15], [PAL.blue312, 75], [PAL.yellow, 0]]) {
     const a = ang * Math.PI / 180, co = Math.cos(a), si = Math.sin(a); let s = `<g fill="${col}" style="mix-blend-mode:multiply">`;
     for (let u = -22; u <= 22; u++) for (let v = -22; v <= 22; v++) { const x = cx + (u * co - v * si) * sp, y = cy + (u * si + v * co) * sp, t = 1 - (y - (cy - RR)) / (2 * RR), r = sp * 0.5 * Math.sqrt(Math.max(0, Math.min(1, 0.08 + t * 0.9))); if (r < 3 || Math.hypot(x - cx, y - cy) + r > RR) continue; s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}"/>`; }
@@ -263,6 +264,7 @@ export default {
     return { kind: 'trail', route: '1', variant: 'all', ground: 'light', pitch: 88, caption: true };
   },
   render(p, uid) {
+    D = H - 1200;
     const flags = [], bg = p.ground === 'dark' ? DARK : (p.ground === 'pink' && p.kind === 'network') ? PINK : LIGHT, ink = bg === DARK ? '#ffffff' : PAL.black;
     if (blackOnDark(p)) flags.push({ level: 'fail', text: 'Black routes need the light ground.' });
     const body = (K[p.kind] || K.trail)(p, bg, ink, flags, uid);

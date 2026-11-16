@@ -1,6 +1,9 @@
 // K · Centre — one idea of the 1970 manual as one symmetric figure.
 // Rules: 40-Marketing/Visual-Experiments/NYCTA-Posters/K-RULES.md. Figma kit: kits/kitK2.js.
-import { W, H, PAL, text, measure } from '../core/ctx.js';
+import * as ctx from '../core/ctx.js';
+import { PAL, text, measure } from '../core/ctx.js';
+// Street (960 × 1440): the title stays put, the 720 px zone moves down one module (y 480–1200), so the figure keeps
+// two modules of air below it and the extra height is shared above and below the figure on the 120 px grid.
 
 const CX = 480, CY = 720, Z0 = 120, Z1 = 840, T0 = 360, T1 = 1080; // the 720 px figure zone
 const INKS8 = ['yellow', 'orange', 'red', 'magenta', 'green', 'blue312', 'blue300', 'black'];
@@ -161,6 +164,7 @@ function build(params) {
   let l = 1e9, t = 1e9, r = -1e9, b = -1e9;
   prims.forEach(p => { const q = bbOf(p); l = Math.min(l, q[0]); t = Math.min(t, q[1]); r = Math.max(r, q[2]); b = Math.max(b, q[3]); });
   if (Math.abs((l + r) / 2 - CX) > 1) flags.push({ level: 'fail', text: `Figure is off the centre axis by ${f2((l + r) / 2 - CX)} px.` });
+  const W = ctx.W, H = ctx.H, dy = H > 1200 ? 120 : 0;
   const bleed = l <= 0.5 && r >= W - 0.5, inside = l >= Z0 - 1 && r <= Z1 + 1;
   if (!bleed && !inside) flags.push({ level: 'fail', text: 'Figure leaves the 720 px zone on one side without bleeding off both.' });
   if (t < T0 - 1 || b > T1 + 1) flags.push({ level: 'fail', text: 'Figure leaves the zone at the top or bottom.' });
@@ -181,7 +185,8 @@ function build(params) {
     const o = { size: 112, weight: 500, tracking: -0.04 }, m = measure(fig.title, o);
     title = text(f2(CX - (m.right - m.left) / 2), 124, fig.title, { ...o, fill: ink });
   }
-  return { svg: `<rect width="${W}" height="${H}" fill="${params.ground}"/>` + prims.map(svgOf).join('') + title, flags };
+  const body = prims.map(svgOf).join('');
+  return { svg: `<rect width="${W}" height="${H}" fill="${params.ground}"/>` + (dy ? `<g transform="translate(0 ${dy})">${body}</g>` : body) + title, flags };
 }
 
 function defaults(key) {

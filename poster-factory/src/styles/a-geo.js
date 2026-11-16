@@ -1,7 +1,7 @@
 // Junction geometry: redraws a window of the 1972 map on one 80 px lattice.
 // Ported from the Figma generator kitA2 (see 40-Marketing/Visual-Experiments/NYCTA-Posters/A-RULES.md). Pure: no DOM, no Figma.
 export function makeGeo(GEO, opt = {}) {
-const p=17,W=opt.W||80,k=W/p,PW=960,PH=1200,RIN=(opt.rin||1.5)*p;
+const p=17,W=opt.W||80,k=W/p,PW=opt.PW||960,PH=opt.PH||1200,RIN=(opt.rin||1.5)*p;
 const Q=0.7071067811865476,DIRS=[[1,0],[Q,Q],[0,1],[-Q,Q]];
 const off=(c,x,y)=>-DIRS[c][1]*x+DIRS[c][0]*y, alo=(c,x,y)=>DIRS[c][0]*x+DIRS[c][1]*y;
 const pt=(c,a,o)=>[a*DIRS[c][0]-o*DIRS[c][1],a*DIRS[c][1]+o*DIRS[c][0]];

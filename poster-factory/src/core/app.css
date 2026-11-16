@@ -111,3 +111,39 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 
 .pf-credit { margin-top: var(--space-24); max-width: 62ch; font-size: var(--text-13); line-height: 19px; color: var(--gray-900); text-wrap: pretty; }
 .pf-credit a { color: var(--gray-1100); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--gray-600); }
+
+/* ---- the street: picking tiles, the tray, the photograph */
+.pf-pick { position: absolute; top: 8px; left: 8px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: rgb(0 0 0 / .35); box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / .9); color: transparent; opacity: 0; transition: opacity var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), scale var(--dur-base) var(--ease-out); }
+.pf-pick svg { width: 14px; height: 14px; }
+.pf-pick:active { scale: .9; }
+@media (hover: hover) { .pf-tile:hover .pf-pick { opacity: 1; } }
+.pf-tile:focus-within .pf-pick, .pf-pick[aria-checked="true"] { opacity: 1; }
+.pf-pick[aria-checked="true"] { background: var(--gray-1200); color: var(--gray-100); box-shadow: 0 0 0 2px var(--gray-background); }
+.pf-tile:has(.pf-pick[aria-checked="true"]) .pf-thumb { outline: 2px solid var(--gray-1200); outline-offset: 2px; }
+@media (hover: none) { .pf-pick { opacity: 1; } }
+.pf-tray { position: fixed; left: 50%; bottom: 24px; translate: -50% 0; z-index: var(--z-overlay); display: flex; align-items: center; gap: 4px; padding: 6px 6px 6px 16px; border-radius: var(--radius-full); background: var(--preview-bg); box-shadow: var(--shadow-custom), 0 12px 32px -12px rgb(0 0 0 / .35); animation: tray-in 350ms var(--ease-spring) both; }
+@keyframes tray-in { from { opacity: 0; translate: -50% 12px; scale: .96; } }
+.pf-tray-n { margin-right: 8px; font-weight: var(--weight-medium); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pf-panel .pf-wide { flex: 1; }
+@media (prefers-reduced-motion: reduce) { .pf-tray { animation: none; } }
+
+/* ---- the wall view on the home screen */
+.pf-wall { display: flex; flex-direction: column; gap: var(--space-4); }
+.pf-wall-stage { position: relative; width: 100%; border-radius: var(--radius-xl); overflow: hidden; background: var(--gray-200); outline: 1px solid var(--img-outline); outline-offset: -1px; cursor: pointer; }
+.pf-wall-stage canvas { display: block; width: 100%; height: 100%; animation: wall-in 420ms var(--ease-out) both; }
+@keyframes wall-in { from { opacity: .35; } }
+.pf-wall-stage[data-busy="true"]:empty { animation: pulse 2s cubic-bezier(.4, 0, .6, 1) infinite; }
+.pf-wall-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
+.pf-wall-walls { display: flex; gap: var(--space-2); }
+.pf-wall-thumb { width: 88px; aspect-ratio: 1400 / 949; border-radius: var(--radius-md); overflow: hidden; opacity: .5; outline: 1px solid var(--img-outline); outline-offset: -1px; transition: opacity var(--dur-fast) var(--ease-out); }
+.pf-wall-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pf-wall-thumb:hover, .pf-wall-thumb[aria-pressed="true"] { opacity: 1; }
+.pf-wall-thumb[aria-pressed="true"] { outline: 2px solid var(--gray-1200); outline-offset: 2px; }
+.pf-wall-tools { display: flex; gap: var(--space-2); }
+.pf-wall-patterns { margin: 0; }
+.pf-wall-note { margin: 0; font-size: var(--text-13); color: var(--gray-1000); }
+.pf-wall-note .lib-link { color: var(--gray-1200); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--gray-600); }
+.pf-head .pf-controls { flex-wrap: wrap; }
+@media (prefers-reduced-motion: reduce) { .pf-wall-stage canvas { animation: none; } }
+
+.pf-wall-credit a { color: var(--gray-1100); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--gray-600); }

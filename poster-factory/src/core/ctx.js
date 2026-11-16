@@ -1,5 +1,10 @@
 // Shared context for every style module. See CONTRACT.md.
-export const W = 960, H = 1200;
+// Two formats. W and H are live bindings: the app calls setFormat() before render(), and every style reads W and H at render time.
+//   poster  960 x 1200 (4:5)  the tool's own posters
+//   street  960 x 1440 (2:3)  the shape of a street poster frame (bus shelter, wall frame); used by "See it on the street"
+export const FORMATS = { poster: { w: 960, h: 1200 }, street: { w: 960, h: 1440 } };
+export let W = 960, H = 1200, FORMAT = 'poster';
+export function setFormat(id) { const f = FORMATS[id] || FORMATS.poster; W = f.w; H = f.h; FORMAT = FORMATS[id] ? id : 'poster'; }
 
 export const PAL = { // 1970 Palette (Figma variables, file 0vb3k2RHQWz8FzH17fOMoA)
   yellow: '#f2a900', orange: '#ff671f', red: '#e4002b', magenta: '#e33485', green: '#00b140',
