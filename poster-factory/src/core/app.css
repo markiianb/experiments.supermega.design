@@ -147,3 +147,8 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
 @media (prefers-reduced-motion: reduce) { .pf-wall-stage canvas { animation: none; } }
 
 .pf-wall-credit a { color: var(--gray-1100); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--gray-600); }
+
+/* the wordmark: poster / factory, lowercase, two lines */
+.logo.pf-logo { width: auto; height: 36px; padding-inline: 4px; }
+.logo.pf-logo svg { width: 66px; height: 30px; }
+@media (hover: hover) { .logo.pf-logo:hover svg { scale: 1; rotate: 0deg; } }
